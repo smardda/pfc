@@ -109,6 +109,7 @@ subroutine termplane_readcon(self,kin)
  &self%termstore(nactive,3),stat=status)
   call log_alloc_check(m_name,s_name,2,status)
   self%ntermplane=nactive
+  self%termplanedir=0
   self%termstore=0
   self%termplane=0
 

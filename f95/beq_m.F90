@@ -1301,8 +1301,8 @@ subroutine beq_init(self,numerics,fmesh)
   else
      call log_value("Read B from disk, rsig",rsig)
      ! convert to dpsidz,dpsidr from Br,Bz respectively
-     do j=1,self%mz
-        do i=1,self%mr
+     do j=1,self%mz+1
+        do i=1,self%mr+1
            workr2(i,j)=-workr2(i,j)*(self%psi%pos1(i)-self%n%rmove)
            workz2(i,j)=workz2(i,j)*(self%psi%pos1(i)-self%n%rmove)
         end do
@@ -3979,9 +3979,9 @@ subroutine beq_rispld(self)
   allocate(workz2(self%mr+1,self%mz+1), stat=status)
   call log_alloc_check(m_name,s_name,2,status)
   ! evaluate R/I weighted derivatives
-  do j=1,self%mz
+  do j=1,self%mz+1
      zz=self%zmin+(j-1)*self%dz
-     do i=1,self%mr
+     do i=1,self%mr+1
         zr=self%rmin +(i-1)*self%dr
         call spl2d_evaln(self%dpsidr,zr,zz,1,zdpdr)
         call spl2d_evaln(self%dpsidz,zr,zz,2,zdpdz)

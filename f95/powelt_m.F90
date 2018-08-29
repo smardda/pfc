@@ -353,9 +353,9 @@ subroutine powelt_dep(self,powcal,gshadl)
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
      zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid)
-     print *, "psibdry",powcal%powres%beq%psibdry
-     print *, "zpsid",zpsid
-     print *, "zbdotn",zbdotn
+     !print *, "psibdry",powcal%powres%beq%psibdry
+     !print *, "zpsid",zpsid
+     !print *, "zbdotn",zbdotn
      !open(unit=out_unit,file="results.txt",action="write",position="")
      !write(out_unit,*) zpsid," ",zbdotn
      !close(out_unit)
