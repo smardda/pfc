@@ -9,6 +9,14 @@ module beq_h
 
 !> numerical control parameters for beq
   type, public :: bnumerics_t
+   !> number of points for gnuplot
+   !! display in direction of invariant coordinate \f$ \zeta \f$,
+   !! if equal to unity, output plane at \f$ \zeta=0 \f$
+     integer(ki4) :: mzetag !< -
+   !> number of points for vtk
+   !! display in direction of invariant coordinate \f$ \zeta \f$,
+   !! if equal to unity, output plane at \f$ \zeta=0 \f$
+     integer(ki4) :: mzetav !< -
    !> \f$ C_{opt} \f$. Set position of plasma centre \f$ R_{cen}, Z_{cen} \f$
    !! 1. User input of \f$ R_{cen}, Z_{cen} \f$
    !! 2. Find mesh-point with extremal psi value, start search at
@@ -129,6 +137,11 @@ module beq_h
      real(kr8) :: arip !< \f$ a \f$ for ripple coils
      logical :: leqok !< equilibrium helicity is ok, no need for override
      logical :: duct !< flag whether work in duct coordinates
+     integer(ki4), dimension(0:10) :: objadd !< number of objects of given description to add to geobjlist
+     logical :: skyl !< flag whether skylight present
+     logical :: skylpsi !< flag whether flux limited skylight(s) present
+     logical :: skylcen !< flag whether any skylight(s) defined by plasma centre line
+     integer(ki4) :: skyldbg !< level of output to help understand skylight production
   end type bnumerics_t
 
 !> data structure describing equilibrium field
@@ -156,6 +169,8 @@ module beq_h
      real(kr8) :: psiaxis !< \f$ \psi \f$ on axis
      real(kr8) :: psibdry !< \f$ \psi \f$ at reference boundary (limiter, X-point or user)
      real(kr8) :: psiltr !< \f$ \psi \f$ at limiter
+     real(kr8) :: rxpt !< \f$ R \f$ at X-point (\f$ R=0 \f$ implies no X-point defined)
+     real(kr8) :: zxpt !< \f$ Z \f$ at X-point
      real(kr8) :: psixpt !< \f$ \psi \f$ at X-point
      real(kr8) :: thetaxpt !< \f$ \theta \f$ at X-point
      real(kr8) :: psiotr !< Extreme value of \f$ \psi \f$ for geometry which is not limiter extremum
@@ -175,13 +190,17 @@ module beq_h
      integer(ki4) :: ntmin !< minimum valid value of \f$ N_\theta \f$
      integer(ki4) :: ntmax !< maximum valid value of \f$ N_\theta \f$
      real(kr8) :: dtheta !< \f$ (\theta_{\max}-\theta_{\min})/N_\theta \f$
-     real(kr8), dimension(:), allocatable :: srmin !< \f$ r_{\min}(\theta) \f$, set of \f$ r \f$  corresponding to \f$ \psi_{\min} \f$
-     real(kr8), dimension(:), allocatable :: srmax !< &  \f$ r_{\max}(\theta) \f$, set of \f$ r \f$  corresponding to \f$ \psi_{\max} \f$
+     real(kr8),dimension(:),allocatable :: srmin !< \f$ r_{\min}(\theta) \f$, set of \f$ r \f$  corresponding to \f$ \psi_{\min} \f$
+     real(kr8),dimension(:),allocatable :: srmax !< \f$ r_{\max}(\theta) \f$, set of \f$ r \f$  corresponding to \f$ \psi_{\max} \f$
      real(kr8) :: ivac !< \f$ I \f$ for vacuum field
      real(kr8) :: psicen !<  Computed \f$ \psi \f$ on axis, compare PSIAXIS from eqdsk
      logical :: replasi !< If .TRUE. geoq is replacing psiaxis and psiqbdry from EQDSK with its estimates
      type(spl3d_t)  :: vacfld  !< vacuum field structure
      type(fmesh_t)  :: fmesh  !< field mesh for calculation in duct coordinates
+     real(kr8), dimension(:,:), allocatable :: ctrackrz !< central track, of psi extremum through plasma centre
+     integer(ki4) :: nctrack !<  bound for ctrackrz array
+     real(kr8) :: rcenq !< quantised \f$ R_{cen} \f$
+     real(kr8) :: zcenq !< quantised \f$ Z_{cen} \f$
   end type beq_t
 
 ! public variables

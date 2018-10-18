@@ -21,8 +21,15 @@ module geobjlist_h
      integer(ki4)  :: nsampl !< no of geobjs in sample
      integer(ki2)  :: nquant !< estimated then actual quantising number (log)
      integer(ki4)  :: minobj !< minimum number of geobj in a bin
-     integer(ki4)  :: nparam=0 !< integer parameter from file header
-     real(kr4)  :: rparam=0._kr4 !< real parameter from file header
+     integer(ki2par)  :: numnparam=2 !< number of entries in nparam
+   !> Integer parameter(s) of vtk file header
+   !! Array index entries give
+   !! 1. infilelevel (level of refinement in file), default 1
+   !! 2. indicates triangles geometry coded as to type
+   !! (so labelled scalar Code in file, default 0, no type code)
+     integer(ki2par), dimension(2)  :: nparam =(/1,0/) !< .
+     integer(ki2par)  :: numrparam=1 !< number of entries in rparam
+     real(kr4), dimension(1) :: rparam=(/0._kr4/) !< real parameter(s) from file header (NOT USED)
      real(kr4), dimension(3,2) :: coordbb !< bb of geobj coord
      real(kr4), dimension(3,2) :: binbb !< bb for geobj binning
      real(kr4) :: tolerance !< max distance from face

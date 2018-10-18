@@ -2,6 +2,7 @@ module stlfile_m
 
   use const_kind_m
   use log_m
+  use misc_m
 
   implicit none
   private
@@ -24,9 +25,9 @@ module stlfile_m
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
-  integer(ki4) :: nin  !< file unit for input
-  integer(ki4) :: nplot  !< file unit for output
-  integer(ki4) :: status  !< status flag
+  integer :: nin  !< file unit for input
+  integer :: nplot  !< file unit for output
+  integer :: status  !< status flag
   logical :: iltest !< logical flag
 
   contains
@@ -37,22 +38,15 @@ subroutine stlfile_init(fplot,descriptor,kplot)
   !! arguments
   character(len=*), intent(in) :: fplot !< file name root
   character(len=*), intent(in) :: descriptor !< dataset descriptor
-  integer(ki4), intent(inout) :: kplot   !< unit number
+  integer, intent(inout) :: kplot   !< unit number
 
   !! local
   character(*), parameter :: s_name='stlfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
-  !! open file
+  !! open file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then kplot=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kplot=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(kplot)
   open(unit=kplot,file=trim(fplot)//'.stl')
 
   keepdesc=descriptor

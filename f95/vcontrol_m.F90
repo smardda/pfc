@@ -3,6 +3,7 @@ module vcontrol_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use position_h
   use vcontrol_h
   use position_m
@@ -20,9 +21,9 @@ module vcontrol_m
 
 ! private variables
   character(*), parameter :: m_name='vcontrol_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4)  :: nin      !< control file unit number
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: status   !< error status
+  integer  :: nin      !< control file unit number
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -42,23 +43,17 @@ subroutine vcontrol_init(fileroot)
   character(*), intent(in) :: fileroot !< file root
   !! local
   character(*), parameter :: s_name='vcontrol_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: controlfile !< control file name
 
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   controlfile=trim(fileroot)//".ctl"
   root=fileroot
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -115,10 +110,10 @@ subroutine vcontrol_read(file,numerics)
   integer(ki4), dimension(2) :: iswap !< swap array
   integer(ki4) :: ierr !< error return code
 
-  logical :: paneltfm !< apply transform if .TRUE.
+  logical :: paneltfm !< apply transform if .true.
   integer(ki4) :: max_bods_index !< dimension of bods index array
   integer(ki4) :: max_bods_in_file !< used to generate unique bods numbers over many files
-  logical :: preserve_input_structure !< bods remain distinct
+  logical :: preserve_internal_structure !< bods remain distinct
   logical :: extract !< extract objects according to key and limits
   character(len=80) :: extract_key !< key for extraction
   real(kr8), dimension(2) :: plasma_centre !< centre of discharge in \f$ (R,Z) \f$
@@ -131,7 +126,7 @@ subroutine vcontrol_read(file,numerics)
  &option, new_controls, &
  &max_number_of_files, angle_units, &
  &max_number_of_panels,max_number_of_transforms,&
- &max_bods_index, max_bods_in_file, preserve_input_structure,&
+ &max_bods_index, max_bods_in_file, preserve_internal_structure,&
  &number_of_panels,number_of_transforms
 
   !> vtktfm parameters
@@ -143,7 +138,7 @@ subroutine vcontrol_read(file,numerics)
  &max_number_of_panels,max_number_of_transforms,&
  &number_of_panels,number_of_transforms,&
  &paneltfm, extract, extract_key,&
- &max_bods_index, max_bods_in_file, preserve_input_structure,&
+ &max_bods_index, max_bods_in_file, preserve_internal_structure,&
  &plasma_centre, minimum_angle, maximum_angle
 
   !! file names
@@ -159,13 +154,13 @@ subroutine vcontrol_read(file,numerics)
 
   !---------------------------------------------------------------------
   !! set default misc parameters
-  new_controls = .FALSE.
+  new_controls = .false.
   max_number_of_panels = 1
   max_number_of_files = 1
   max_number_of_transforms = 1
   max_bods_index = 1000
   max_bods_in_file = 100
-  preserve_input_structure = .false.
+  preserve_internal_structure = .false.
   number_of_panels = 0
   number_of_transforms = 0
   angle_units = 'radians'
@@ -180,8 +175,8 @@ subroutine vcontrol_read(file,numerics)
      call log_error(m_name,s_name,1,error_fatal,'Error reading misc parameters')
   end if
 
-  split_file=.FALSE.
-  make_same=.TRUE.
+  split_file=.false.
+  make_same=.true.
   same_value=1
   process_by_name='Body'
   paneltfm = .true.
@@ -260,18 +255,8 @@ subroutine vcontrol_read(file,numerics)
  &call log_error(m_name,s_name,18,error_warning,'max size of index must be >=0')
   if(max_bods_in_file<=0) &
  &call log_error(m_name,s_name,19,error_fatal,'max number of bodies in file setting must be >0')
-  numerics%paneltfm =  paneltfm
-  numerics%maxindx =  max_bods_index
-  numerics%maxbodsf =  max_bods_in_file
-  numerics%preserve =  preserve_input_structure
-  numerics%extract  =  extract
-  numerics%angles=angle_units(1:6)
-  numerics%split=split_file
-  numerics%same=make_same
-  numerics%nvalue=same_value
-  numerics%name=process_by_name
 
-!---------------------------------------------------------------------
+  !---------------------------------------------------------------------
   !! read input file names and associated data
   vtk_input_file='null'
   vtk_output_file='null'
@@ -306,15 +291,37 @@ subroutine vcontrol_read(file,numerics)
            call log_error(m_name,s_name,22,error_fatal,'field data file not found')
         end if
         if (number_of_copies(j)<0) then
-           call log_error(m_name,s_name,24,error_fatal,'Number of copies is negative')
+           call log_error(m_name,s_name,23,error_fatal,'Number of copies is negative')
         end if
      end if
   end do
 
+  !! check parameters for consistency
+  if (file%nvtkdata==1) then
+     if (make_same.EQV.preserve_internal_structure) then
+        call log_error(m_name,s_name,24,error_warning,'make_same and preserve_internal_structure inputs inconsistent')
+        preserve_internal_structure=.NOT.make_same
+     else if (make_same.AND.split_file) then
+        call log_error(m_name,s_name,25,error_warning,'make_same and split_file inputs inconsistent')
+        split_file=.false.
+     end if
+  else
+     !! more than one file in input, no sense splitting or extracting
+     if (split_file) then
+        call log_error(m_name,s_name,26,error_warning,'split_file must be set false')
+        split_file=.false.
+     end if
+     if (extract) then
+        call log_error(m_name,s_name,27,error_warning,'extract must be set false')
+        extract=.false.
+     end if
+  end if
+
+
   ! allocate and assign files
   allocate(file%vtkdata(infil), file%vtkcopies(infil),&
  &file%vtklabel(infil), stat=status)
-  call log_alloc_check(m_name,s_name,23,status)
+  call log_alloc_check(m_name,s_name,30,status)
   do j=1,infil
      file%vtkdata(j)   = vtk_input_file(j)
      file%vtklabel(j)   = vtk_label(j)
@@ -473,11 +480,11 @@ subroutine vcontrol_read(file,numerics)
   !! bodies with codes 501...510 must appear in panel_bodies
 
   !write(*,*) inbod, (panel_bodies(l), l=1,inbod)
-  ilcopy=.FALSE.
+  ilcopy=.false.
   if (maxval(panel_bodies(:inbod))>100) then
      ! This implies copies exist, so bodies are not numbered contiguously
      ! so trick below to generate virtual bodies will not work
-     ilcopy=.TRUE.
+     ilcopy=.true.
      do j=1,infil
         do k=1,number_of_copies(j)
            icode=j*100+k
@@ -579,6 +586,17 @@ subroutine vcontrol_read(file,numerics)
   end do
   numerics%vptfm%ntfmtyp=intfm
   !F11 write(*,*) 'numerics%pantfm(j)',(numerics%pantfm(j),j=1,inpan)
+
+  numerics%paneltfm =  paneltfm
+  numerics%maxindx =  max_bods_index
+  numerics%maxbodsf =  max_bods_in_file
+  numerics%preserve =  preserve_internal_structure
+  numerics%extract  =  extract
+  numerics%angles=angle_units(1:6)
+  numerics%split=split_file
+  numerics%same=make_same
+  numerics%nvalue=same_value
+  numerics%name=process_by_name
 
 end subroutine vcontrol_read
 

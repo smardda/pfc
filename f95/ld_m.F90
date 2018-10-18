@@ -105,7 +105,7 @@ subroutine ld_read(self,kin)
 
   !! arguments
   type(ld_t), intent(out) :: self   !< doubly linked list data
-  integer(ki4), intent(in) :: kin   !< input channel for doubly linked list data
+  integer, intent(in) :: kin   !< input channel for doubly linked list data
 
 
   !! local
@@ -149,7 +149,7 @@ subroutine ld_write(self,kout)
 
   !! arguments
   type(ld_t), intent(in) :: self   !< doubly linked list data
-  integer(ki4), intent(in) :: kout   !< output channel for doubly linked list data
+  integer, intent(in) :: kout   !< output channel for doubly linked list data
 
 
   !! local
@@ -266,7 +266,7 @@ subroutine ld_addin(self,khoc,knew)
            self%conten(2,iconten)=khoc
            self%conten(3:,iconten)=knew(:)
         end if
-     else 
+     else
         call log_error(m_name,s_name,1,error_fatal,'Contents array not large enough')
      end if
   else
@@ -426,7 +426,7 @@ subroutine ld_write1(self,khoc,kout)
   !! arguments
   type(ld_t), intent(in) :: self   !< linked list
   integer(ki4) , intent(in) :: khoc !< hoc of linked list
-  integer(ki4), intent(in) :: kout   !< output channel for doubly linked list data
+  integer, intent(in) :: kout   !< output channel for doubly linked list data
 
   !! local
   character(*), parameter :: s_name='ld_write1' !< subroutine name
@@ -472,7 +472,7 @@ subroutine ld_write1(self,khoc,kout)
 end subroutine ld_write1
 !---------------------------------------------------------------------
 !> return next entry in doubly linked list
-integer(ki4) function ld_next1(self,khoc)
+  integer(ki4) function ld_next1(self,khoc)
 
 !! arguments
   type(ld_t), intent(inout) :: self   !< linked list

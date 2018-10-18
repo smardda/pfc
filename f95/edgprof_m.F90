@@ -2,6 +2,7 @@ module edgprof_m
 
   use edgprof_h
   use log_m
+  use misc_m
   use const_numphys_h
   use const_kind_m
   use pcontrol_h
@@ -28,12 +29,12 @@ module edgprof_m
 
 ! private variables
   character(*), parameter :: m_name='edgprof_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4), save  :: ninep=5     !< control file unit number
-  integer(ki4), save  :: noutep=6      !< output file unit number
+  integer  :: status   !< error status
+  integer, save  :: ninep=5     !< control file unit number
+  integer, save  :: noutep=6      !< output file unit number
   character(len=80), save :: controlfile !< control file name
   character(len=80), save :: outputfile !< output file name
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -43,28 +44,21 @@ module edgprof_m
   contains
 !---------------------------------------------------------------------
 !> open file
-subroutine edgprof_init(file,kin)
+subroutine edgprof_init(file,channel)
 
   !! arguments
   character(*), intent(in) :: file !< file name
-  integer(ki4), intent(out),optional :: kin   !< input channel for object data structure
+  integer, intent(out),optional :: channel   !< input channel for object data structure
   !! local
   character(*), parameter :: s_name='edgprof_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        ninep=i
-        kin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then ninep=i channel=i exit end if end do
 
   !! open file
   controlfile=trim(file)
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(ninep)
   open(unit=ninep,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -72,6 +66,7 @@ subroutine edgprof_init(file,kin)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open control data file')
      stop
   end if
+  if (present(channel)) channel=ninep
 
 end subroutine edgprof_init
 !---------------------------------------------------------------------
@@ -81,7 +76,7 @@ subroutine edgprof_readcon(self,pnumerics,kin)
   !! arguments
   type(edgprof_t), intent(out) :: self !< type which data will be assigned to
   type(pnumerics_t), intent(inout) :: pnumerics !< powcal general numerical paramete
-  integer(ki4), intent(in),optional :: kin   !< input channel for object data structure
+  integer, intent(in),optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='edgprof_readcon' !< subroutine name
@@ -148,7 +143,7 @@ subroutine edgprof_readcon(self,pnumerics,kin)
      read(ninep,nml=edgprofparameters,iostat=status)
      if(status/=0) then
         print '("Fatal error reading edgprofparameters")'
-     call log_getunit(ilog)
+        call log_getunit(ilog)
         write(ilog,nml=edgprofparameters)
         call log_error(m_name,s_name,1,error_fatal,'Error reading edgprofparameters')
      end if
@@ -317,7 +312,7 @@ subroutine edgprof_factors(self,rbdry,bpbdry,btotbdry,psign)
   case('eich')
      zrblfac=zrbfac/self%lmid
      self%slfac=self%sigma/(2*self%lmid)
-     self%rblfac=2*const_pid*zrblfac*psign
+     self%rblfac=2*const_pid*zrblfac*((-1.)*psign)
      self%fpfac=(self%f/2)*self%ploss*zrblfac
 
   case('samples')
@@ -339,6 +334,8 @@ subroutine edgprof_factors(self,rbdry,bpbdry,btotbdry,psign)
      self%fpfac=self%f*self%ploss*zrbfac/self%fint
 
   end select formula_chosen
+
+  !dbg write(*,*) "psign",psign,zrblfac,self%slfac,self%rblfac,self%fpfac
 
 end subroutine edgprof_factors
 !---------------------------------------------------------------------
@@ -505,29 +502,22 @@ function edgprof_fn(self,psi)
 end function edgprof_fn
 !---------------------------------------------------------------------
 !> open new file
-subroutine edgprof_initwrite(fileroot,kout)
+subroutine edgprof_initwrite(fileroot,channel)
 
   !! arguments
   character(*), intent(in) :: fileroot !< file root
-  integer(ki4), intent(out),optional :: kout   !< output channel for object data structure
+  integer, intent(out),optional :: channel   !< output channel for object data structure
   !! local
   character(*), parameter :: s_name='edgprof_initwrite' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: outputfile !< output file name
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kout=i
-        exit
-     end if
-  end do
-  noutep=i
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then channel=i exit end if end do noutep=i
 
   !! open file
   outputfile=trim(fileroot)//"_edgprof.out"
   call log_value("Control data file",trim(outputfile))
+  call misc_getfileunit(noutep)
   open(unit=noutep,file=outputfile,status='NEW',iostat=status)
   if(status/=0)then
      open(unit=noutep,file=outputfile,status='REPLACE',iostat=status)
@@ -538,6 +528,7 @@ subroutine edgprof_initwrite(fileroot,kout)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open output data file')
      stop
   end if
+  if (present(channel)) channel=noutep
 
 end subroutine edgprof_initwrite
 
@@ -547,11 +538,11 @@ subroutine edgprof_write(self,kout)
 
   !! arguments
   type(edgprof_t), intent(in) :: self   !< edgprof data structure
-  integer(ki4), intent(in), optional :: kout   !< output channel for edgprof data structure
+  integer, intent(in), optional :: kout   !< output channel for edgprof data structure
 
   !! local
   character(*), parameter :: s_name='edgprof_write' !< subroutine name
-  integer(ki4) :: iout   !< output channel for edgprof data structure
+  integer :: iout   !< output channel for edgprof data structure
 
   !! sort out unit
   if(present(kout)) then

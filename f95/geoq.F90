@@ -1,14 +1,15 @@
 program geoq_p
-
 #ifdef WITH_MPI
   use mpi
 #endif
+
   use const_kind_m
   use const_numphys_h
   use date_time_m
   use control_h
   use dcontrol_h
   use log_m
+  use misc_m
   use clock_m
   use position_h
   use fmesh_h
@@ -19,6 +20,9 @@ program geoq_p
   use vcontrol_h
   use mcontrol_h
   use mcontrol_m
+  use dcontrol_m
+  use skyl_h
+  use skyl_m
   use beq_m
   use beqan_m
   use posang_m
@@ -44,11 +48,12 @@ program geoq_p
 
   use spl2d_m
   use spl3d_m
-  use boutfile_m
+  use goutfile_m
   use moutfile_m
   use vfile_m
   use gfile_m
   use dfile_m
+  use geoq_h
 
   implicit none
 
@@ -67,21 +72,22 @@ program geoq_p
   character(len=256) :: vtkdesc !< descriptor line for vtk files
   character(len=80) :: mapfld !< field output in geoqm file
 
-  integer(ki4):: nplot !< unit for vtk files
-  integer(ki4):: nprint !< unit for gnuplot files
-  integer(ki4):: nin=0 !< unit for other data
-  integer(ki4):: nana=0 !< unit for analytic field data
-  integer(ki4):: ninfm=0 !< unit for field mesh data
+  integer:: nplot !< unit for vtk files
+  integer:: nprint !< unit for gnuplot files
+  integer:: nin=0 !< unit for other data
+  integer:: iunit=0 !< unit for other beq output data
+  integer:: nana=0 !< unit for analytic field data
+  integer:: ninfm=0 !< unit for field mesh data
   integer(ki4):: ifldspec !< field specification
   real(kr8):: zivac !< value of I in field file
   character(len=80) :: ibuf !< character workspace
+
 #ifdef WITH_MPI
   integer error, rank
   call MPI_Init ( error )
   call MPI_Comm_rank(MPI_COMM_WORLD, rank, error)
   if (rank .eq. 0) then
 #endif
-
 !--------------------------------------------------------------------------
 !! initialise timing
 
@@ -115,7 +121,8 @@ program geoq_p
 
   call clock_start(2,'bcontrol_init time')
   call bcontrol_init(fileroot)
-  call bcontrol_read(file,numerics,plot)
+  call bcontrol_read(file,numerics,geoq%skyl%n,plot)
+!! note bcontrol unit left open
   if (numerics%duct) then
      call fmesh_init(file%fmesh,ninfm)
      call fmesh_readcon(fmesh)
@@ -167,6 +174,11 @@ program geoq_p
      call gfile_init(trim(file%gnu)//'_dZ','dpsi/dZ sample in R-Z space',nprint)
      call spl2d_writeg(geoq%beq%dpsidz,'sampl',nprint)
      call gfile_close
+     if (geoq%beq%n%vacfile=='null') then
+        call gfile_init(trim(file%gnu)//'_cart','all in cartesian',nprint)
+        call beq_writeg(geoq%beq,'allcartesian',nprint)
+        call gfile_close
+     end if
      call clock_stop(18)
   end if
 
@@ -176,6 +188,15 @@ program geoq_p
   call clock_start(4,'geobjlist_read time')
   call geobjlist_read(geoq%objl,file%vtkdata)
   call clock_stop(4)
+
+!--------------------------------------------------------------------------
+!! initialise skylight construction
+
+  if (numerics%skyl) then
+     call clock_start(5,'gfile_gnu time')
+     call skyl_init(geoq%skyl,geoq%beq,geoq%objl,fileroot)
+     call clock_stop(5)
+  end if
 !--------------------------------------------------------------------------
 !! do the main work
 
@@ -188,6 +209,7 @@ program geoq_p
      call beq_bdryrb(geoq%beq)
      call beq_ipsi(geoq%beq)
      call beq_xilt(geoq%beq)
+     call geoq_objaddcon(geoq)
   case (3)
      call beq_centre(geoq%beq)
      call geoq_init(geoq)
@@ -195,6 +217,7 @@ program geoq_p
      call beq_ipsi(geoq%beq)
      call beq_rispld(geoq%beq)
      call beq_xilt(geoq%beq)
+     call geoq_objaddcon(geoq)
   case default
      call beq_centre(geoq%beq)
      call geoq_init(geoq)
@@ -246,7 +269,7 @@ program geoq_p
 !!plot cartesian B
   if(plot%geoqx) then
      call clock_start(10,'vfile_geoqx time')
-     call vfile_init(file%geoqx,'B in cartesian space',nplot)
+     call vfile_init(file%geoqx,'B in cartesian space mm',nplot)
      call beq_writev(geoq%beq,'cartesian',nplot)
      call vfile_close
      call clock_stop(10)
@@ -255,7 +278,7 @@ program geoq_p
 !!plot cartesian all B
   if(plot%geoqvolx) then
      call clock_start(11,'vfile_geoqvolx time')
-     call vfile_init(file%geoqvolx,'cartesian B in cylinder volume',nplot)
+     call vfile_init(file%geoqvolx,'cartesian B in cylinder volume mm',nplot)
      call beq_writev(geoq%beq,'allcartesian',nplot)
      call vfile_close
      call clock_stop(11)
@@ -264,7 +287,7 @@ program geoq_p
 !!plot cartesian all B
   if(plot%geoqvolxyz) then
      call clock_start(12,'vfile_geoqvolxyz time')
-     call vfile_init(file%geoqvolxyz,'cartesian B in cuboid volume',nplot)
+     call vfile_init(file%geoqvolxyz,'cartesian B in cuboid volume mm',nplot)
      call beq_writev(geoq%beq,'cubeallcartesian',nplot)
      call vfile_close
      call clock_stop(12)
@@ -283,7 +306,7 @@ program geoq_p
   if(plot%frzv) then
      call clock_start(17,'vfile_frzv time')
      call vfile_init(file%frzv,'fields in R-Z space',nplot)
-     call beq_writev(geoq%beq,'R-Z',nplot)
+     call beq_writev(geoq%beq,'R-Z',nplot) ! inert
      call vfile_close
      call clock_stop(17)
   end if
@@ -309,7 +332,7 @@ program geoq_p
 !!plot all geobjs
   if(plot%geoqm) then
      call clock_start(20,'vfile_geoqm time')
-     write(vtkdesc,'(A3,1X,A18,I3)') mapfld(1:3),'Integer_Parameter=',geoq%objl%nparam
+     call geobjlist_makehedline(geoq%objl,mapfld,vtkdesc)
      call vfile_init(file%geoqm,vtkdesc,nplot)
 ! in mapped position space
      call geoq_writev(geoq,mapfld,nplot)
@@ -319,7 +342,8 @@ program geoq_p
 
   if(plot%geofldx) then
      call clock_start(22,'vfile_geofldx time')
-     call vfile_init(file%geofldx,'allcart',nplot)
+     call geobjlist_makehedline(geoq%objl,'allcart',vtkdesc)
+     call vfile_init(file%geofldx,vtkdesc,nplot)
      ibuf=geoq%beq%n%vacfile
 !BB! in Cartesians, omit ripple contribution
 !BB         geoq%beq%n%vacfile='null'
@@ -332,15 +356,17 @@ program geoq_p
 !  if(plot%geofldxyz) then
 ! plot field in geometry coordinates on geometry in duct coordinates
 !     call clock_start(27,'vfile_geofldxyz time')
-!     call vfile_init(file%geofldxyz,'fxyz',nplot)
-!     call geoq_writev(geoq,'fldxyz',nplot)
+!     call geobjlist_makehedline(geoq%objl,'fxyz',vtkdesc)
+!     call vfile_init(file%geofldxyz,vtkdesc,nplot)
+!     call geoq_writev(geoq,'fxyz',nplot)
 !     call vfile_close
 !     call clock_stop(27)
 !  end if
 
   if(plot%frzzeta) then
      call clock_start(23,'vfile_frzzeta time')
-     call vfile_init(file%frzzeta,'frzzeta',nplot)
+     call geobjlist_makehedline(geoq%objl,'frzzeta',vtkdesc)
+     call vfile_init(file%frzzeta,vtkdesc,nplot)
      call geoq_writev(geoq,'frzzeta',nplot)
      call vfile_close
      call clock_stop(23)
@@ -350,7 +376,7 @@ program geoq_p
   if(plot%gnusil) then
      call clock_start(25,'vfile_gnusil time')
      call gfile_init(file%gnusil,'gnusil',nprint)
-     call geoq_writeg(geoq,'gnusil',nprint)
+     call geoq_writeg(geoq,'gnusil',nprint,0)
      call gfile_close
      call clock_stop(25)
   end if
@@ -359,7 +385,7 @@ program geoq_p
   if(plot%gnusilm) then
      call clock_start(26,'vfile_gnusilm time')
      call gfile_init(file%gnusilm,'gnusilm',nprint)
-     call geoq_writeg(geoq,'gnusilm',nprint)
+     call geoq_writeg(geoq,'gnusilm',nprint,0)
      call gfile_close
      call clock_stop(26)
   end if
@@ -379,13 +405,18 @@ program geoq_p
 !! output file
 
   call clock_start(30,'outfile_init time')
-  call boutfile_init(file,timestamp)
-  call boutfile_write(geoq%beq,timestamp)
-  call boutfile_close
+  call goutfile_init(file,timestamp)
+  call goutfile_write(geoq,timestamp)
+  call goutfile_close
   call clock_stop(30)
 !--------------------------------------------------------------------------
 !! cleanup and closedown
   call geoq_delete(geoq)
+  if (numerics%skyl) then
+     if (numerics%skylpsi) call skyl_delete(geoq%skyl)
+     if (geoq%beq%n%skyldbg>0) call skyl_delete(geoq%skyl,1)
+  end if
+  call bcontrol_closex()
 
   call clock_stop(1)
   call clock_summary
@@ -393,6 +424,7 @@ program geoq_p
   call log_close
   call clock_delete
 !--------------------------------------------------------------------------
+
 #ifdef WITH_MPI
   end if
   call MPI_Finalize ( error )

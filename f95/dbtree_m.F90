@@ -8,6 +8,7 @@ module dbtree_m
   use ld_m
   use dbtree_h
   use log_m
+  use misc_m
   use position_h
   use geobjlist_h
   use position_m
@@ -42,9 +43,9 @@ module dbtree_m
 
 ! private variables
   character(*), parameter :: m_name='dbtree_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4), save  :: nindbt=5     !< control file unit number
-  integer(ki4), save  :: noutbo=6      !< output file unit number
+  integer  :: status   !< error status
+  integer, save  :: nindbt=5     !< control file unit number
+  integer, save  :: noutbo=6      !< output file unit number
   character(len=80), save :: controlfile !< control file name
   character(len=80), save :: outputfile !< output file name
   integer(ki4) :: i !< loop counter
@@ -56,7 +57,7 @@ module dbtree_m
   integer(ki4) :: kk !< loop counter
   integer(ki4) :: icall !< loop counter
   integer(ki4), save :: iwarn=0 !< count warnings for inability to split node
-  integer(ki4) :: ilog !< file unit for logging
+  integer :: ilog !< file unit for logging
   integer(ki4) :: idummy !< dummy
 
   contains
@@ -66,24 +67,18 @@ subroutine dbtree_initfile(file,channel)
 
   !! arguments
   character(*), intent(in) :: file !< file name
-  integer(ki4), intent(out),optional :: channel   !< input channel for object data structure
+  integer, intent(out),optional :: channel   !< input channel for object data structure
   !! local
   character(*), parameter :: s_name='dbtree_initfile' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nindbt=i
-        if (present(channel)) channel=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nindbt=i
+  !! if (present(channel)) channel=i exit end if end do
 
   !! open file
   controlfile=trim(file)
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nindbt)
   open(unit=nindbt,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -91,6 +86,7 @@ subroutine dbtree_initfile(file,channel)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open control data file')
      stop
   end if
+  if (present(channel)) channel=nindbt
 
 end subroutine dbtree_initfile
 !---------------------------------------------------------------------
@@ -99,7 +95,7 @@ subroutine dbtree_readcon(selfn,channel)
 
   !! arguments
   type(dbnumerics_t), intent(out) :: selfn !< type which data will be assigned to
-  integer(ki4), intent(in),optional :: channel   !< input channel for object data structure
+  integer, intent(in),optional :: channel   !< input channel for object data structure
 
   integer(ki4) :: geometrical_type !< type of geometry
   real(kr4) :: min_tolerance !< numerical parameter
@@ -567,9 +563,9 @@ subroutine dbtree_initfm(self,qtfmdata,bbox)
 
   !!set quantising transform
   do j=1,2
-  zpos%posvec=self%binbb(:,j)
-  zposq=position_invqtfm(zpos,qtfmdata)
-  zbinbb(:,j)=zposq%posvec
+     zpos%posvec=self%binbb(:,j)
+     zposq=position_invqtfm(zpos,qtfmdata)
+     zbinbb(:,j)=zposq%posvec
   end do
 
   self%quantfm%nqtfm=2
@@ -1421,25 +1417,19 @@ subroutine dbtree_initwrite(fileroot,channel)
 
   !! arguments
   character(*), intent(in) :: fileroot !< file root
-  integer(ki4), intent(out),optional :: channel   !< output channel for object data structure
+  integer, intent(out),optional :: channel   !< output channel for object data structure
   !! local
   character(*), parameter :: s_name='dbtree_initwrite' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: outputfile !< output file name
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        if (present(channel)) channel=i
-        exit
-     end if
-  end do
-  noutbo=i
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then
+  !! if (present(channel)) channel=i exit end if end do noutbo=i
 
   !! open file
   outputfile=trim(fileroot)//"_dbtree.out"
   call log_value("Control data file",trim(outputfile))
+  call misc_getfileunit(noutbo)
   open(unit=noutbo,file=outputfile,status='NEW',iostat=status)
   if(status/=0)then
      open(unit=noutbo,file=outputfile,status='REPLACE',iostat=status)
@@ -1450,6 +1440,7 @@ subroutine dbtree_initwrite(fileroot,channel)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open output data file')
      stop
   end if
+  if (present(channel)) channel=noutbo
 
 end subroutine dbtree_initwrite
 !---------------------------------------------------------------------
@@ -1458,11 +1449,11 @@ subroutine dbtree_write(self,channel)
 
   !! arguments
   type(dbtree_t), intent(in) :: self   !< dbtree data structure
-  integer(ki4), intent(in), optional :: channel   !< output channel for dbtree data structure
+  integer, intent(in), optional :: channel   !< output channel for dbtree data structure
 
   !! local
   character(*), parameter :: s_name='dbtree_write' !< subroutine name
-  integer(ki4) :: iout   !< output channel for dbtree data structure
+  integer :: iout   !< output channel for dbtree data structure
 
   !! sort out unit
   if(present(channel)) then
@@ -1480,11 +1471,11 @@ subroutine dbtree_writeg(self,select,channel)
   !! arguments
   type(dbtree_t), intent(in) :: self   !< object data structure
   character(*), intent(in) :: select  !< case
-  integer(ki4), intent(in), optional :: channel   !< output channel for dbtree data structure
+  integer, intent(in), optional :: channel   !< output channel for dbtree data structure
 
   !! local
   character(*), parameter :: s_name='dbtree_writeg' !< subroutine name
-  integer(ki4) :: iout   !< output channel for dbtree data structure
+  integer :: iout   !< output channel for dbtree data structure
 
   call log_error(m_name,s_name,1,log_info,'gnuplot file produced')
 
@@ -1504,7 +1495,7 @@ subroutine dbtree_writev(self,kchar,kclab,channel,geobjl)
   type(dbtree_t), intent(in) :: self   !< binary tree data
   character(*),intent(in):: kchar !< control output geometry
   character(*),intent(in):: kclab !< control output data
-  integer(ki4), intent(in) :: channel   !< output channel for binary tree data
+  integer, intent(in) :: channel   !< output channel for binary tree data
   type(geobjlist_t), intent(in), optional :: geobjl   !< geobj list data
 
   !! local
@@ -1676,7 +1667,7 @@ subroutine dbtree_writev(self,kchar,kclab,channel,geobjl)
      write(channel,'(''CELL_DATA '', i8)',iostat=status) inode
      call log_write_check(m_name,s_name,1,status)
      islen1=len_trim(kclab)
-     write(channel,'(''SCALARS '',A,'' float 1'')',iostat=status), kclab(1:islen1)
+     write(channel,'(''SCALARS '',A,'' float 1'')',iostat=status)  kclab(1:islen1)
      call log_write_check(m_name,s_name,2,status)
      write(channel,'(''LOOKUP_TABLE default'')',iostat=status)
      call log_write_check(m_name,s_name,3,status)

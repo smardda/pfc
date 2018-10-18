@@ -25,6 +25,11 @@ module pcontrol_h
      integer(ki4)  :: nshapow !< calculate power deposited on shadowing geometry
      logical  :: ltermplane !< termination planes present
      logical  :: ledgprof !< more edge profile functions available
+     logical  :: lskyl !< use skylight(s) if true
+     logical  :: lflagtol !< use changed skylight_tolerance in preference to tolerance from beqparameters
+     real(kr8), dimension(3) :: tolin  !< input as skylight_tolerance
+     logical  :: lpfpower !< if .TRUE., power in private flux region
+     logical  :: lskylpfr !< if .TRUE., use skylights in private flux region
      type(termplane_t) :: termp !< termination planes
   end type pnumerics_t
 

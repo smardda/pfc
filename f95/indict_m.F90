@@ -84,7 +84,7 @@ subroutine indict_fromlist(self,list,kno)
   allocate(self(kno),stat=status)
   call log_alloc_check(m_name,s_name,3,status)
   self=iwork(1:kno)
-  
+
   deallocate(iwork)
 
 end subroutine indict_fromlist
@@ -180,32 +180,32 @@ function indict_ki4(dict,word,ndim)
   !write(*,*) 'word=',word
   !write(*,*) 'dict=',dict
   do ji=1,ndim
-      if (word==dict(ji)) then
-         indict_ki4=ji
-         return
-      end if
+     if (word==dict(ji)) then
+        indict_ki4=ji
+        return
+     end if
   end do
 end function indict_ki4
 
-function indict_kr4(dict,word,ndim)  !kr4
-  integer(ki4) :: indict_kr4 !< dictionary index  !kr4
-  real(kr4), dimension(*), intent(in) :: dict !< dictionary  !kr4
-  real(kr4), intent(in) :: word !< dictionary  !kr4
-  integer(ki4), intent(in) :: ndim !< dictionary size  !kr4
-  indict_kr4=0  !kr4
-  !write(*,*) 'ndim=',ndim  !kr4
-  !write(*,*) 'word=',word  !kr4
-  !write(*,*) 'dict=',dict  !kr4
-  indict_kr4=0  !kr4
-  do ji=1,ndim-1  !kr4
-     if (word>dict(ji).AND.word<=dict(ji)) then  !kr4
-        indict_kr4=ji  !kr4
-        return  !kr4
-     end if  !kr4
-  end do  !kr4
-  if (word>dict(ndim)) indict_kr4=ndim  !kr4
-end function indict_kr4  !kr4
-  
+function indict_kr4(dict,word,ndim)
+  integer(ki4) :: indict_kr4 !< dictionary index
+  real(kr4), dimension(*), intent(in) :: dict !< dictionary
+  real(kr4), intent(in) :: word !< dictionary
+  integer(ki4), intent(in) :: ndim !< dictionary size
+  indict_kr4=0
+  !write(*,*) 'ndim=',ndim
+  !write(*,*) 'word=',word
+  !write(*,*) 'dict=',dict
+  indict_kr4=0
+  do ji=1,ndim-1
+     if (word>dict(ji).AND.word<=dict(ji)) then
+        indict_kr4=ji
+        return
+     end if
+  end do
+  if (word>dict(ndim)) indict_kr4=ndim
+end function indict_kr4
+
 function indict_kr8(dict,word,ndim)
   integer(ki4) :: indict_kr8 !< dictionary index
   real(kr8), dimension(*), intent(in) :: dict !< dictionary
@@ -228,9 +228,9 @@ end function indict_kr8
 subroutine indict_write_ki4(self,ndim,nout)
   integer(ki4), dimension(*), intent(in) :: self !< dictionary
   integer(ki4), intent(in) :: ndim !< dictionary size
-  integer(ki4), intent(in) :: nout !< output unit name
+  integer, intent(in) :: nout !< output unit name
 
- !! local
+  !! local
   character(*), parameter :: s_name='indict_write_ki4' !< subroutine name
 
   write(nout,*,iostat=status) 'int_dictionary'
@@ -240,15 +240,15 @@ subroutine indict_write_ki4(self,ndim,nout)
      write(nout,*,iostat=status) ji,self(ji)
      call log_write_check(m_name,s_name,2,status)
   end do
- 
+
 end subroutine indict_write_ki4
 
 subroutine indict_write_kr4(self,ndim,nout)  !kr4
   real(kr4), dimension(*), intent(in) :: self !< dictionary  !kr4
   integer(ki4), intent(in) :: ndim !< dictionary size  !kr4
-  integer(ki4), intent(in) :: nout !< output unit name  !kr4
+  integer, intent(in) :: nout !< output unit name  !kr4
   !kr4
- !! local  !kr4
+  !! local  !kr4
   character(*), parameter :: s_name='indict_write_kr4' !< subroutine name  !kr4
   !kr4
   write(nout,*,iostat=status) 'real_dictionary'  !kr4
@@ -258,15 +258,15 @@ subroutine indict_write_kr4(self,ndim,nout)  !kr4
      write(nout,*,iostat=status) ji,self(ji)  !kr4
      call log_write_check(m_name,s_name,2,status)  !kr4
   end do  !kr4
-   !kr4
+  !kr4
 end subroutine indict_write_kr4  !kr4
 
 subroutine indict_write_kr8(self,ndim,nout)
   real(kr8), dimension(*), intent(in) :: self !< dictionary
   integer(ki4), intent(in) :: ndim !< dictionary size
-  integer(ki4), intent(in) :: nout !< output unit name
+  integer, intent(in) :: nout !< output unit name
 
- !! local
+  !! local
   character(*), parameter :: s_name='indict_write_kr8' !< subroutine name
 
   write(nout,*,iostat=status) 'real_kr8_dictionary'
@@ -276,7 +276,7 @@ subroutine indict_write_kr8(self,ndim,nout)
      write(nout,*,iostat=status) ji,self(ji)
      call log_write_check(m_name,s_name,2,status)
   end do
- 
+
 end subroutine indict_write_kr8
 
 end module indict_m

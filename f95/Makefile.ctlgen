@@ -10,6 +10,7 @@ SOURCES = \
 const_kind_m.F90 \
 date_time_m.F90 \
 log_m.F90 \
+misc_m.F90 \
 ccontrol_m.F90 \
 ctlgen.F90
  
@@ -35,14 +36,21 @@ clean:
 distclean: clean
 	rm -f $(PROG) 
 
+txt:
+	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
 .PHONY : clean distclean
 
 ctlgen.F90 : const_kind_m.mod
 ctlgen.F90 : date_time_m.mod
 ctlgen.F90 : log_m.mod
+ctlgen.F90 : misc_m.mod
 ctlgen.F90 : ccontrol_m.mod
 log_m.F90 : const_kind_m.mod
 log_m.F90 : date_time_m.mod
+misc_m.F90 : const_kind_m.mod
+misc_m.F90 : const_numphys_h.mod
+misc_m.F90 : log_m.mod
 ccontrol_m.F90 : const_kind_m.mod
 ccontrol_m.F90 : log_m.mod
+ccontrol_m.F90 : misc_m.mod

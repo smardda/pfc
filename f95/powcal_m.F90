@@ -25,6 +25,7 @@ module powcal_m
   use termplane_m
   use edgprof_h
   use edgprof_m
+
 #ifdef WITH_MPI
   use mpi
 #endif
@@ -56,8 +57,8 @@ module powcal_m
   integer(ki4) :: level=1   !< refinement level, dynamic if inlevel>1
   integer(ki4) :: inlevel=1   !< number of subelements at refinement level
   integer(ki4) :: imlevel=1   !< number of subelements at previous refinement level +1
-  integer(ki4) :: nin   !< input channel for geobj data
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer :: nin   !< input channel for geobj data
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -116,7 +117,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
   call powelt_init
 
   ! check refinement level
-  infilelevel=max(1,self%powres%geobjl%nparam)
+  infilelevel=max(1,self%powres%geobjl%nparam(1))
   call log_value("data file has refinement level ",infilelevel)
   call log_value("input demands refinement level ",self%n%nlevel)
   if (self%n%nlevel>infilelevel) then
@@ -148,11 +149,8 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
   case('afws','local','msus','global')
      ! set size of psista array
      allocate(self%powres%psista(self%powres%geobjl%ng), stat=status)
-     allocate(self%powres%angle(self%powres%geobjl%ng), stat=status)
-     allocate(self%powres%zbdotnvec(self%powres%geobjl%ng), stat=status)
      call log_alloc_check(m_name,s_name,4,status)
      self%powres%psista=0
-     self%powres%zbdotnvec = 0
   case default
   end select calcn_type
   ! set size and zero of mask array
@@ -217,6 +215,10 @@ subroutine powcal_quant(self,gnumerics)
   integer(ki4) :: itermp !< total number of termination planes
   integer(ki4) :: idir !< coordinate direction \f$ (R,Z,\xi) \f$ in order \f$ 1,2,3 \f$
   integer(ki4) :: idirc !< coordinate direction of auxilliary condition
+  integer(ki4), dimension(2) :: indbox   !<  extents of box arrays
+  integer(ki4) :: ibdim !<  second dimension of boxr,z arrays
+  integer(ki4) :: ntyps !<  upper or lower skylight type
+  integer(ki4) :: interm   !< index of dynamical entry in termplane
 
   zpar=0
   self%powres%beq%domlen=0
@@ -310,7 +312,7 @@ subroutine powcal_quant(self,gnumerics)
      end select field_typeinr
 
      ! domain control
-     allocate(zposl%pos(5),stat=status)
+     allocate(zposl%pos(6),stat=status)
      call log_alloc_check(m_name,s_name,30,status)
      zposl%pos(1)%posvec=(/0._kr8, 0._kr8, self%powres%beq%n%ximin/)
      zposl%pos(2)%posvec=(/0._kr8, 0._kr8, self%powres%beq%n%ximax/)
@@ -318,7 +320,8 @@ subroutine powcal_quant(self,gnumerics)
      zposl%pos(3)%posvec=(/0._kr8, 0._kr8, self%powres%beq%n%ximin+zepsdif/)
      zposl%pos(4)%posvec=(/0._kr8, 0._kr8, self%powres%beq%n%ximax-zepsdif/)
      zposl%pos(5)%posvec=(/0._kr8, self%odes%n%termcon(3), 0._kr8/)
-     zposl%np=5
+     zposl%pos(6)%posvec=(/self%powres%beq%n%rcen, self%powres%beq%n%zcen, 0._kr8/)
+     zposl%np=6
      call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
      self%powres%beq%n%ximin=zposl%pos(1)%posvec(3)
      self%powres%beq%n%ximax=zposl%pos(2)%posvec(3)
@@ -326,6 +329,8 @@ subroutine powcal_quant(self,gnumerics)
      self%powres%beq%ximinp=zposl%pos(3)%posvec(3)
      self%powres%beq%ximaxm=zposl%pos(4)%posvec(3)
      self%odes%n%termcon(3)=zposl%pos(5)%posvec(2)
+     self%powres%beq%rcenq=zposl%pos(6)%posvec(1)
+     self%powres%beq%zcenq=zposl%pos(6)%posvec(2)
      !
      inqtfm=self%powres%geobjl%quantfm%nqtfm
      ! case 1 only scales, as required here
@@ -343,7 +348,7 @@ subroutine powcal_quant(self,gnumerics)
      deallocate(zposl%pos)
 
      ! assuming termplane only in non-mapped field type
-     if (self%n%ltermplane) then 
+     if (self%n%ltermplane) then
         ! scale termination planes
         itermp=self%n%termp%ntermplane
         allocate(zposl%pos(2*itermp),stat=status)
@@ -411,6 +416,103 @@ subroutine powcal_quant(self,gnumerics)
      ! normalise termination controls
      self%odes%n%termcon(2)=self%odes%n%termcon(2)*self%powres%beq%domlen(3)
 
+     !! skylight
+     if (self%n%lskyl) then
+        if (self%powres%beq%n%skylpsi) then
+           ! overwrite with changed powcalparameters value
+           if (self%n%lflagtol) self%powres%skyl%n%toli=self%n%tolin
+           ! ctrackrz array
+           allocate(zposl%pos(self%powres%beq%nctrack),stat=status)
+           call log_alloc_check(m_name,s_name,51,status)
+           do j=1,self%powres%beq%nctrack
+              zposl%pos(j)%posvec=0
+              zposl%pos(j)%posvec(1)=self%powres%beq%ctrackrz(j,1)
+              zposl%pos(j)%posvec(2)=self%powres%beq%ctrackrz(j,2)
+           end do
+           zposl%np=self%powres%beq%nctrack
+           call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+           do j=1,self%powres%beq%nctrack
+              self%powres%beq%ctrackrz(j,1)=zposl%pos(j)%posvec(1)
+              self%powres%beq%ctrackrz(j,2)=zposl%pos(j)%posvec(2)
+           end do
+           deallocate(zposl%pos)
+           ibdim=mod(self%powres%skyl%n%skyltyp,2)
+           if (ibdim==2) then
+              indbox(1)=max( self%powres%skyl%dimbox(1,1),self%powres%skyl%dimbox(1,2) )
+              indbox(2)=max( self%powres%skyl%dimbox(2,1),self%powres%skyl%dimbox(2,2) )
+           else
+              indbox=self%powres%skyl%dimbox(:,1)
+           end if
+           !! inboxr,z arrays
+           allocate(zposl%pos(indbox(1)),stat=status)
+           call log_alloc_check(m_name,s_name,52,status)
+           do k=1,ibdim
+              do j=1,indbox(1)
+                 zposl%pos(j)%posvec=0
+                 zposl%pos(j)%posvec(1)=self%powres%skyl%inboxr(j,k)
+                 zposl%pos(j)%posvec(2)=self%powres%skyl%inboxz(j,k)
+              end do
+              zposl%np=indbox(1)
+              call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+              do j=1,indbox(1)
+                 self%powres%skyl%inboxr(j,k)=zposl%pos(j)%posvec(1)
+                 self%powres%skyl%inboxz(j,k)=zposl%pos(j)%posvec(2)
+              end do
+           end do
+           deallocate(zposl%pos)
+           !! ouboxr,z arrays
+           allocate(zposl%pos(indbox(2)),stat=status)
+           call log_alloc_check(m_name,s_name,53,status)
+           do k=1,ibdim
+              do j=1,indbox(2)
+                 zposl%pos(j)%posvec=0
+                 zposl%pos(j)%posvec(1)=self%powres%skyl%ouboxr(j,k)
+                 zposl%pos(j)%posvec(2)=self%powres%skyl%ouboxz(j,k)
+              end do
+              zposl%np=indbox(2)
+              call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+              do j=1,indbox(2)
+                 self%powres%skyl%ouboxr(j,k)=zposl%pos(j)%posvec(1)
+                 self%powres%skyl%ouboxz(j,k)=zposl%pos(j)%posvec(2)
+              end do
+           end do
+           deallocate(zposl%pos)
+           ntyps=self%powres%skyl%n%skyltyp
+           ! allow for divertor skylight
+           if (self%n%termp%ntermplane<=0) then
+              call log_error(m_name,s_name,60,error_fatal,'termplane(s) must be defined for flux-based  skylight(s)')
+           end if
+           ! quantise positions
+           allocate(zposl%pos(3),stat=status)
+           call log_alloc_check(m_name,s_name,30,status)
+           zposl%pos(1)%posvec=(/0._kr8, self%powres%beq%zmin, 0._kr8/)
+           zposl%pos(2)%posvec=(/0._kr8, self%powres%beq%zmax, 0._kr8/)
+           zposl%pos(3)%posvec=(/self%powres%beq%rxpt, self%powres%beq%zxpt, 0._kr8 /)
+           zposl%np=3
+           call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+           self%powres%beq%zmin=zposl%pos(1)%posvec(2)
+           self%powres%beq%zmax=zposl%pos(2)%posvec(2)
+           self%powres%beq%rxpt=zposl%pos(3)%posvec(1)
+           self%powres%beq%zxpt=zposl%pos(3)%posvec(2)
+           deallocate(zposl%pos)
+           allocate(zposl%pos(1),stat=status)
+           ! only scale
+           self%powres%geobjl%quantfm%nqtfm=1
+           zposl%pos(1)%posvec=(/0._kr8, self%powres%beq%dz, 0._kr8/)
+           zposl%np=1
+           call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+           self%powres%beq%dz=zposl%pos(1)%posvec(2)
+           ! restore
+           self%powres%geobjl%quantfm%nqtfm=inqtfm
+           deallocate(zposl%pos)
+        else
+           call log_error(m_name,s_name,61,error_warning,'skylight requested is not defined by flux')
+        end if
+     else
+        ! prevent application of flux skylight
+        self%powres%beq%n%skylpsi=.FALSE.
+     end if
+
   end select field_type
 
 end subroutine powcal_quant
@@ -420,7 +522,7 @@ subroutine powcal_readcon(selfn,kin)
 
   !! arguments
   type(pnumerics_t), intent(out) :: selfn   !< object control data structure
-  integer(ki4), intent(in) :: kin   !< input channel for object data structure
+  integer, intent(in) :: kin   !< input channel for object data structure
 
 
   !! local
@@ -438,9 +540,17 @@ subroutine powcal_readcon(selfn,kin)
   integer(ki4), dimension(maximum_number_of_tracks) :: element_numbers !< tracks selected by element number
   logical :: termination_planes !<  termination planes present
   logical :: more_profiles !<  use edgprofparameters
+  logical :: power_in_pfr !<  if .TRUE., power in private flux region
+  logical :: employ_skyl_pfr !<  if .TRUE., employ skylights in private flux region
   integer(ki4) :: analytic_launch_type !< analytic launch type
   integer(ki4) :: power_on_launch_geo !< power on launch geometry
   integer(ki4) :: power_on_shadow_geo !< power on shadow geometry
+  real(kr8), dimension(3) :: ztola !< default tolerance
+  !> Distance that assumes intersection with skylight, in quantised units, in each direction
+  !!  typically 1/1024 of geometry, default 1.
+  real(kr8), dimension(3) :: skylight_tolerance !< .
+  logical :: skylight !< activate skylights if present, default .TRUE.
+
   !! powcal parameters
   namelist /powcalparameters/ &
  &power_split, decay_length, power_loss, refine_level, shadow_control, &
@@ -450,6 +560,10 @@ subroutine powcal_readcon(selfn,kin)
  &number_of_tracks, element_numbers, &
  &termination_planes, &
  &more_profiles, &
+ &power_in_pfr, &
+ &employ_skyl_pfr, &
+ &skylight, &
+ &skylight_tolerance, &
  &analytic_launch_type, power_on_launch_geo, power_on_shadow_geo
 
   !! set default powcal parameters
@@ -470,6 +584,11 @@ subroutine powcal_readcon(selfn,kin)
   element_numbers=0
   termination_planes=.FALSE.
   more_profiles=.FALSE.
+  power_in_pfr=.TRUE.
+  employ_skyl_pfr=.TRUE.
+  skylight=.TRUE.
+  ztola=1._kr8
+  skylight_tolerance=ztola
   analytic_launch_type=0
   power_on_launch_geo=0
   power_on_shadow_geo=0
@@ -489,11 +608,11 @@ subroutine powcal_readcon(selfn,kin)
      ! valid options
      call log_value('calculation type', calculation_type)
   case('unset')
-  call log_error(m_name,s_name,5,error_warning,'calculation_type not set, default to local')
-  calculation_type='local'
+     call log_error(m_name,s_name,5,error_warning,'calculation_type not set, default to local')
+     calculation_type='local'
      call log_value('calculation type', calculation_type)
   case default
-  call log_error(m_name,s_name,6,error_fatal,'calculation_type not recognised')
+     call log_error(m_name,s_name,6,error_fatal,'calculation_type not recognised')
   end select calcn_type
   if(power_split<0.OR.power_split>1) &
  &call log_error(m_name,s_name,11,error_fatal,'power_split must be >=0 and <=1')
@@ -539,6 +658,11 @@ subroutine powcal_readcon(selfn,kin)
 
   selfn%ltermplane=termination_planes
   selfn%ledgprof=more_profiles
+  selfn%lpfpower=power_in_pfr
+  selfn%lskylpfr=employ_skyl_pfr
+  selfn%lskyl=skylight
+  selfn%lflagtol=ANY(skylight_tolerance/=ztola)
+  selfn%tolin=skylight_tolerance
   selfn%nanalau=analytic_launch_type
   selfn%nlaupow=power_on_launch_geo
   selfn%nshapow=power_on_shadow_geo
@@ -563,13 +687,15 @@ subroutine powcal_move(self,gshadl,btree)
   !! local
   character(*), parameter :: s_name='powcal_move' !< subroutine name
   type(powelt_t) :: zelt   !< power element
+
+  ! check for axisymmetric !mpi1!
 #ifdef WITH_MPI
   integer :: rank, processes, error, request !< Standard MPI layout variables
   integer :: mpi_status(MPI_STATUS_SIZE)
   integer, parameter :: blocklengths(2) = (/1, 1/)
   integer, parameter :: mpi_kr4_stride_array_types(2) = (/MPI_REAL4, MPI_UB/)
   integer, parameter :: mpi_ki4_stride_array_types(2) = (/MPI_INTEGER4,MPI_UB/)
-  integer, parameter :: num_arr_irecv = 1 !> num. of od arrays to IRecv
+  integer, parameter :: num_arr_irecv = 1 !> num. of arrays to IRecv
   integer :: displacements(2)
   integer, dimension(:,:), allocatable :: array_of_statuses
   integer, dimension(:), allocatable :: array_of_requests
@@ -604,7 +730,6 @@ subroutine powcal_move(self,gshadl,btree)
 #else
   integer, parameter :: rank = 0, processes = 1
 #endif
-  ! check for axisymmetric
   if (self%powres%beq%n%vacfile=='null') then
      if (self%powres%beq%n%mrip/=0) then
         ! not axisymmetric
@@ -649,7 +774,7 @@ subroutine powcal_move(self,gshadl,btree)
            end select calcn_type
         end select field_type
      end if
-  ! remaining cases non-axisymmetric, ripple defined by vacuum file
+     ! remaining cases non-axisymmetric, ripple defined by vacuum file
   else if (self%n%ltermplane) then
      ! more sophisticated termination criteria
      do i=1+rank,self%powres%npowe,processes
@@ -669,6 +794,7 @@ subroutine powcal_move(self,gshadl,btree)
         end do
      end do
   end if
+
 #ifdef WITH_MPI
   if (use_non_blocking_communication) then
      if (rank .eq. 0) then
@@ -704,7 +830,7 @@ subroutine powcal_move(self,gshadl,btree)
              mpi_kr4_stride_type, 0, 111, MPI_COMM_WORLD, error) 
      end if
   end if
-
+708,709d627
   call MPI_Type_free(mpi_kr4_stride_type, error)
 #endif
 end subroutine powcal_move
@@ -763,7 +889,7 @@ subroutine powcal_writev(self,kchar,kplot)
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   character(*), intent(in) :: kchar !< case
-  integer(ki4), intent(inout) :: kplot   !< output channel for vis. data
+  integer, intent(inout) :: kplot   !< output channel for vis. data
 
   !! local
   character(*), parameter :: s_name='powcal_writev' !< subroutine name
@@ -813,7 +939,12 @@ subroutine powcal_writev(self,kchar,kplot)
      allocate(workpos(self%powres%geobjl%np), stat=status)
      call log_alloc_check(m_name,s_name,21,status)
      workpos=self%powres%geobjl%posl%pos
-     self%powres%geobjl%posl%pos=self%powres%vecx%pos
+     ! have to explicitly code as loop
+     ! self%powres%geobjl%posl%pos=self%powres%vecx%pos
+     ! to avoid ifort 12.0.0 segfault
+     do l=1,self%powres%geobjl%np
+        self%powres%geobjl%posl%pos(l)=self%powres%vecx%pos(l)
+     end do
      ! rearrange nodl, keep copy of structure in work and ing
      ! reset number of objects to be output according to refine_level statistics input
      self%powres%geobjl%ng=ing*powelt_table(self%n%nlevel,2)/powelt_table(infilelevel,2)
@@ -835,17 +966,31 @@ subroutine powcal_writev(self,kchar,kplot)
      ! replace R-Z-xi positions with Cartesian
      allocate(workpos(self%powres%geobjl%np), stat=status)
      call log_alloc_check(m_name,s_name,40,status)
+     !DBG write(*,*) "np=",self%powres%geobjl%np !DBG
+     !DBG write(*,*) "vecx size=",size(self%powres%vecx%pos) !DBG
+     !DBG write(*,*) "geobjl size=",size(self%powres%geobjl%posl%pos) !DBG
      workpos=self%powres%geobjl%posl%pos
-     self%powres%geobjl%posl%pos=self%powres%vecx%pos
+     !DBG write(*,*) '01' !DBG
+     ! have to explicitly code as loop
+     ! self%powres%geobjl%posl%pos=self%powres%vecx%pos
+     ! to avoid ifort 12.0.0 segfault
+     do l=1,self%powres%geobjl%np
+        self%powres%geobjl%posl%pos(l)=self%powres%vecx%pos(l)
+     end do
+     !DBG write(*,*) '02' !DBG
      ! reset number of objects to be output according to refine_level input
      self%powres%geobjl%ng=ing*powelt_table(self%n%nlevel,2)/powelt_table(infilelevel,2)
+     !DBG write(*,*) '03' !DBG
      if (infilelevel>self%n%nlevel) then
+        !DBG write(*,*) '04' !DBG
+        !DBG write(*,*) infilelevel,self%n%nlevel !DBG
         allocate(work(3*self%powres%geobjl%ng), stat=status)
         call log_alloc_check(m_name,s_name,41,status)
         work=self%powres%geobjl%nodl(1:3*self%powres%geobjl%ng)
         call geobjlist_nodlmv(self%powres%geobjl,infilelevel,self%n%nlevel,self%powres%npowe)
      end if
      call geobjlist_writev(self%powres%geobjl,'geometry',kplot)
+     !DBG write(*,*) '05' !DBG
      allocate(rwork(self%powres%geobjl%ng), stat=status)
      call log_alloc_check(m_name,s_name,42,status)
      rwork=abs(self%powres%pow(:self%powres%geobjl%ng))
@@ -854,13 +999,6 @@ subroutine powcal_writev(self,kchar,kplot)
      if (allocated(self%powres%psista)) then
         call vfile_rscalarwrite(self%powres%psista,self%powres%geobjl%ng,'psista','CELL',kplot,0)
      end if
-     if (allocated(self%powres%angle)) then
-        call vfile_rscalarwrite(self%powres%angle,self%powres%geobjl%ng,'angle','CELL',kplot,0)
-     end if
-     if (allocated(self%powres%zbdotnvec)) then
-        call vfile_rscalarwrite(self%powres%zbdotnvec,self%powres%geobjl%ng,'zbdotn','CELL',kplot,0)
-     end if
-
      call vfile_iscalarwrite(self%powres%pmask,self%powres%geobjl%ng,'Msign','CELL',kplot,0)
      if (infilelevel>self%n%nlevel) then
         ! restore nodl
@@ -923,7 +1061,7 @@ subroutine powcal_write(self,kout)
 
   !! arguments
   type(powcal_t), intent(in) :: self   !< powcal data structure
-  integer(ki4), intent(in) :: kout   !< output channel for powcal data structure
+  integer, intent(in) :: kout   !< output channel for powcal data structure
 
   !! local
   character(*), parameter :: s_name='powcal_write' !< subroutine name
@@ -1058,8 +1196,6 @@ subroutine powcal_delete(self)
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
      deallocate(self%powres%psista)
-     deallocate(self%powres%angle)
-     deallocate(self%powres%zbdotnvec)
   case default
   end select calcn_type
 

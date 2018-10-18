@@ -2,6 +2,7 @@ module dfile_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use datline_h
   use datline_m
 
@@ -24,8 +25,8 @@ module dfile_m
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
-  integer(ki4) :: nread  !< file unit for read
-  integer(ki4) :: status  !< status flag
+  integer :: nread  !< file unit for read
+  integer :: status  !< status flag
   logical :: iltest !< logical flag
 
   contains
@@ -35,28 +36,22 @@ subroutine dfile_init(fileroot,kunit,kwrite)
 
   !! arguments
   character(len=*), intent(in) :: fileroot !< file name root
-  integer(ki4), intent(inout) :: kunit   !< unit number
+  integer, intent(inout) :: kunit   !< unit number
   integer(ki4), intent(in), optional :: kwrite   !< if unity, open for writing
 
   !! local
   character(*), parameter :: s_name='dfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
-  !! open file
-
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kunit=i
-        exit
-     end if
-  end do
+  !! open file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then kunit=i exit end if end do
 
   !! open file
   if(present(kwrite).AND.kwrite/=0) then
-  open(unit=kunit,file=trim(fileroot)//'.dat',status='NEW',iostat=status)
+     call misc_getfileunit(kunit)
+     open(unit=kunit,file=trim(fileroot)//'.dat',status='NEW',iostat=status)
   else
-  open(unit=kunit,file=trim(fileroot)//'.dat',status='OLD',form='FORMATTED',iostat=status)
+     call misc_getfileunit(kunit)
+     open(unit=kunit,file=trim(fileroot)//'.dat',status='OLD',form='FORMATTED',iostat=status)
   end if
 
   if(status/=0)then

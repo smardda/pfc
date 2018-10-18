@@ -7,6 +7,7 @@ module powres_h
   use fmesh_h
   use beq_h
   use odes_h
+  use skyl_h
 
 
 ! public types
@@ -27,6 +28,7 @@ module powres_h
      type(posveclis_t) :: vecx !< list of Cartesian position vectors
      type(geobjlist_t) :: geobjl !< geobj list
      type(beq_t) :: beq !< beq (only part defined)
+     type(skyl_t) :: skyl !< skylight definition(s)
      integer(ki4)  :: npowe !< number of powelts (ie. level 1 triangles)
      integer(ki4)  :: npow !< number of entries in pow
      integer(ki4)  :: npows !< number of entries in pows (normally use npowe)
@@ -40,10 +42,6 @@ module powres_h
      real(kr4), dimension(:), allocatable :: pows !< power statistic
      real(kr4), dimension(:), allocatable :: powa !< power average statistic
      real(kr4), dimension(:), allocatable :: psista !< \f$ \psi \f$ at start of fieldline
-     !-----------------
-     real(kr4), dimension(:), allocatable :: angle
-     real(kr4), dimension(:), allocatable :: zbdotnvec
-     !-----------------
      type(prnumerics_t) :: n !< control  parameters
      real(kr8) :: psimin !< minimum value of \f$ \psi \f$ for interpolation
      real(kr8) :: psimax !< maximum value of \f$ \psi \f$ for interpolation
@@ -54,7 +52,7 @@ module powres_h
      logical  :: flinends    !< gnuplot switch for field line ends
      logical  :: flinptz    !< plot switch for field line following in \f$ (\psi,\theta,\zeta) \f$
      logical  :: flinm    !< plot switch for field line following in \f$ (\psi,\theta,\zeta) \f$
-     integer(ki4)  :: nflends !< gnuplot file unit for field line ends
+     integer  :: nflends !< gnuplot file unit for field line ends
   end type powres_t
 
 end module powres_h

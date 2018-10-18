@@ -2,6 +2,7 @@ module control_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use position_h
   use control_h
   use position_m
@@ -21,9 +22,9 @@ module control_m
 
 ! private variables
   character(*), parameter :: m_name='control_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4)  :: nin      !< control file unit number
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: status   !< error status
+  integer  :: nin      !< control file unit number
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4)  :: i!< loop counter
   integer(ki4)  :: j        !< loop counter
   character(len=80) :: root !< file root
@@ -39,23 +40,17 @@ subroutine control_init(fileroot)
   character(*), intent(in) :: fileroot !< file root
   !! local
   character(*), parameter :: s_name='control_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: controlfile !< control file name
 
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   controlfile=trim(fileroot)//".ctl"
   root=fileroot
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -306,12 +301,12 @@ subroutine control_read(file,numerics,plot)
   plot%geoptq     = plot_geoptq
   plot%densitygeobj     = plot_densitygeobj
   if (plot_hds) then
-  plot%hdsm = plot_hds
-  call log_error(m_name,s_name,20,error_warning,'Obsolete plot selection feature activated')
+     plot%hdsm = plot_hds
+     call log_error(m_name,s_name,20,error_warning,'Obsolete plot selection feature activated')
   end if
   if (plot_geobj) then
-  plot%geobjq = plot_geobj
-  call log_error(m_name,s_name,21,error_warning,'Obsolete plot selection feature activated')
+     plot%geobjq = plot_geobj
+     call log_error(m_name,s_name,21,error_warning,'Obsolete plot selection feature activated')
   end if
 
 end  subroutine control_read

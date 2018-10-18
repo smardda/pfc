@@ -3,6 +3,7 @@ module query_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use control_h
   use position_h
   use position_m
@@ -47,22 +48,22 @@ module query_m
   end type querydata_t
 
 !public variables
-  integer(ki4) :: nqury   !< output channel for query position data
-  integer(ki4) :: ninr   !< input channel for query density data
+  integer :: nqury   !< output channel for query position data
+  integer :: ninr   !< input channel for query density data
 
 ! private types
 
 ! private variables
   character(*), parameter :: m_name='query_m' !< module name
   integer   :: status   !< error status
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
   character(len=80) :: ibuf1 !< local variable
   character(len=80) :: ibuf2 !< local variable
-  logical :: unitused !< flag to test unit is available
+!! logical :: unitused !< flag to test unit is available
   logical :: iltest !< logical flag
 
 
@@ -177,16 +178,10 @@ subroutine query_read(self,querydata,infile)
   real(kr4) :: zscalen !< local variable
 
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nqury=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nqury=i exit end if end do
 
   !! open file
+  call misc_getfileunit(nqury)
   open(unit=nqury,file=infile,status='OLD',form='FORMATTED',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -405,7 +400,7 @@ subroutine query_writev(self,numerics,kchar,kout)
   type(queryset_t), intent(in) :: self   !< query position data
   type(numerics_t), intent(in) :: numerics   !< numeric controls
   character(*),intent(in):: kchar !< control output (dummy)
-  integer(ki4), intent(in) :: kout   !< output channel for query position data
+  integer, intent(in) :: kout   !< output channel for query position data
 
 
   !! local

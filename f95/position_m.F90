@@ -2,6 +2,7 @@ module position_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use position_h
 
   implicit none
@@ -47,8 +48,8 @@ module position_m
   character(len=80) :: ibuf1 !< buffer for input/output
   character(len=80) :: ibuf2 !< buffer for input/output
   integer   :: status   !< error status
-  integer(ki4) :: nin   !< input channel for position list data
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer :: nin   !< input channel for position list data
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -282,7 +283,7 @@ subroutine position_readv(self,kin)
 
   !! arguments
   type(posvecl_t), intent(out) :: self   !< position data
-  integer(ki4), intent(in) :: kin   !< input channel for position data
+  integer, intent(in) :: kin   !< input channel for position data
 
 
   !! local
@@ -300,7 +301,7 @@ subroutine position_writev(self,kplot)
 
   !! arguments
   type(posvecl_t), intent(in) :: self   !< position data
-  integer(ki4), intent(in) :: kplot   !< output channel for position data
+  integer, intent(in) :: kplot   !< output channel for position data
 
 
   !! local
@@ -318,7 +319,7 @@ subroutine position_readcon(ztfmdata,kin,flag)
 
   !! arguments
   type(tfmdata_t), intent(out) :: ztfmdata   !< position transform numeric controls
-  integer(ki4) :: kin  !< unit for input
+  integer :: kin  !< unit for input
   integer(ki4), optional :: flag  !< local variable
 
   !! local
@@ -445,7 +446,7 @@ subroutine position_readtfm(tfmdata,kin)
 
   !! arguments
   type(tfmdata_t), intent(out) :: tfmdata   !< position transform numeric controls
-  integer(ki4), intent(in) :: kin   !< output channel for tfmdata
+  integer, intent(in) :: kin   !< output channel for tfmdata
 
   !! local
   character(*), parameter :: s_name='position_readtfm' !< subroutine name
@@ -522,7 +523,7 @@ subroutine position_writetfm(tfmdata,kout)
 
   !! arguments
   type(tfmdata_t), intent(in) :: tfmdata   !< position transform numeric controls
-  integer(ki4), intent(in) :: kout   !< output channel for tfmdata
+  integer, intent(in) :: kout   !< output channel for tfmdata
 
   !! local
   character(*), parameter :: s_name='position_writetfm' !< subroutine name
@@ -541,16 +542,16 @@ subroutine position_writetfm(tfmdata,kout)
 end subroutine position_writetfm
 !---------------------------------------------------------------------
 !> read (vtk) list of position coordinates
-subroutine position_readlis(self,infile,kin,kopt)
+subroutine position_readlis(self,infile,channel,kopt)
   !! arguments
   type(posveclis_t), intent(inout) :: self !< position list data
   character(*),intent(in) :: infile !< name of input file
-  integer(ki4), intent(out) :: kin   !< input channel for position list data
+  integer, intent(out) :: channel   !< input channel for position list data
   integer(ki4), intent(in), optional :: kopt   !< options
 
   !! local
   character(*), parameter :: s_name='position_readlis' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   integer(ki4) :: inpos    !< local variable
 
   logical :: isnumb !< local variable
@@ -558,20 +559,13 @@ subroutine position_readlis(self,infile,kin,kopt)
 
   if(present(kopt)) then
      !! assume unit already open and reading infile
-     nin=kin
+     nin=channel
   else
 
-     !! get file unit
-     do i=99,1,-1
-        inquire(i,opened=unitused)
-        if(.not.unitused)then
-           kin=i
-           exit
-        end if
-     end do
-     nin=kin
+     !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then channel=i exit end if end do nin=channel
 
      !! open file
+     call misc_getfileunit(nin)
      open(unit=nin,file=infile,status='OLD',form='FORMATTED',iostat=status)
      if(status/=0)then
         !! error opening file
@@ -579,6 +573,7 @@ subroutine position_readlis(self,infile,kin,kopt)
      else
         call log_error(m_name,s_name,1,log_info,'Position list data file opened')
      end if
+     channel=nin
 
   end if
   !! File unit sorted out
@@ -638,6 +633,8 @@ subroutine position_copylis(selfin,selfout,kopt)
   do j=1,selfout%np
      selfout%pos(j)%posvec=selfin%pos(j)%posvec
   end do
+  selfout%nparpos=selfin%nparpos
+  selfout%rparpos=selfin%rparpos
 
 end subroutine position_copylis
 !---------------------------------------------------------------------
@@ -645,7 +642,7 @@ end subroutine position_copylis
 subroutine position_readonlylis(self,kin,kfmt)
   !! arguments
   type(posveclis_t), intent(inout) :: self !< position list data
-  integer(ki4), intent(in) :: kin   !< input channel for position list data
+  integer, intent(in) :: kin   !< input channel for position list data
   integer(ki4), intent(in) :: kfmt   !< options
 
   !! local
@@ -689,13 +686,13 @@ subroutine position_readveclis(self,infile,kcname,kin,kfmt,kopt)
   type(posveclis_t), intent(inout) :: self !< vector list data
   character(*),intent(in) :: infile !< name of input file
   character(*),intent(in) :: kcname !< name of field required
-  integer(ki4), intent(inout) :: kin   !< input channel for vector list data
+  integer, intent(inout) :: kin   !< input channel for vector list data
   integer(ki4), intent(in) :: kfmt   !< numeric data format in file
   integer(ki4), intent(in), optional :: kopt   !< options
 
   !! local
   character(*), parameter :: s_name='position_readveclis' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   integer(ki4) :: invec   !< number of vectors
   character(len=80) :: vname !< name of vector
   integer(ki4) :: islen   !< length of vector field name
@@ -722,17 +719,10 @@ subroutine position_readveclis(self,infile,kcname,kin,kfmt,kopt)
      end if
   else
 
-     !! get file unit
-     do i=99,1,-1
-        inquire(i,opened=unitused)
-        if(.not.unitused)then
-           kin=i
-           exit
-        end if
-     end do
-     nin=kin
+     !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then kin=i exit end if end do nin=kin
 
      !! open file
+     call misc_getfileunit(nin)
      open(unit=nin,file=infile,status='OLD',form='FORMATTED',iostat=status)
      if(status/=0)then
         !! error opening file
@@ -740,6 +730,7 @@ subroutine position_readveclis(self,infile,kcname,kin,kfmt,kopt)
      else
         call log_error(m_name,s_name,2,log_info,'Vector list data file opened')
      end if
+     kin=nin
 
   end if
 
@@ -829,7 +820,7 @@ subroutine position_writelis(self,kchar,kplot)
   !! arguments
   type(posveclis_t), intent(in) :: self !< position list data
   character(*), intent(in) :: kchar  !< case, specifies objects
-  integer(ki4), intent(in) :: kplot   !< output channel for position list data
+  integer, intent(in) :: kplot   !< output channel for position list data
   !     type(beq_t), intent(inout), optional :: pbeq   !> beq data structure
 
   !! local
@@ -921,6 +912,7 @@ subroutine position_tfmlis(self,tfmdata)
      zpos=position_tfm(self%pos(j),tfmdata)
      self%pos(j)=zpos
   end do
+  self%nparpos(4)=self%nparpos(4)+1
 
 end subroutine position_tfmlis
 !---------------------------------------------------------------------
@@ -941,6 +933,7 @@ subroutine position_invtfmlis(self,tfmdata)
      zpos=position_invtfm(self%pos(j),tfmdata)
      self%pos(j)=zpos
   end do
+  self%nparpos(4)=self%nparpos(4)-1
 
 end subroutine position_invtfmlis
 !---------------------------------------------------------------------
@@ -962,6 +955,7 @@ subroutine position_qtfmlis(self,qtfmdata)
      zpos=position_qtfm(self%pos(j),qtfmdata)
      self%pos(j)=zpos
   end do
+  self%nparpos(3)=self%nparpos(3)+1
 
 end subroutine position_qtfmlis
 !---------------------------------------------------------------------
@@ -983,6 +977,7 @@ subroutine position_invqtfmlis(self,qtfmdata)
      zpos=position_invqtfm(self%pos(j),qtfmdata)
      self%pos(j)=zpos
   end do
+  self%nparpos(3)=self%nparpos(3)-1
 
 end subroutine position_invqtfmlis
 

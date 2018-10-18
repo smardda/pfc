@@ -3,6 +3,7 @@ module spl3d_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use position_h
   use position_m
   use spl2d_m
@@ -58,7 +59,7 @@ module spl3d_m
   real(kr8), dimension(:,:,:), allocatable :: work3 !< 3D work array
   real(kr8), dimension(:,:,:,:), allocatable :: work4 !< 4D work array
   integer   :: status   !< error status
-  integer(ki4) :: nin   !< input channel for spl3d data
+  integer :: nin   !< input channel for spl3d data
   integer(ki4) :: i !< loop counter
   integer(ki4) :: ij !< loop counter
   integer(ki4) :: j !< loop counter
@@ -87,11 +88,11 @@ subroutine spl3d_read(self,infile,kin)
   !! arguments
   type(spl3d_t), intent(out) :: self   !< object data structure
   character(len=80),intent(in) :: infile !< name of input file
-  integer(ki4), intent(in),optional :: kin   !< input channel for object data structure
+  integer, intent(in),optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='spl3d_read' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   integer(ki4) :: in1   !< first nominal dimension
   integer(ki4) :: in2   !< second nominal dimension
 
@@ -99,16 +100,10 @@ subroutine spl3d_read(self,infile,kin)
      !! assume unit already open and reading infile
      nin=kin
   else
-     !! get file unit
-     do i=99,1,-1
-        inquire(i,opened=unitused)
-        if(.not.unitused)then
-           nin=i
-           exit
-        end if
-     end do
+     !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
      !! open file
+     call misc_getfileunit(nin)
      open(unit=nin,file=infile,status='OLD',form='FORMATTED',iostat=status)
      if(status/=0)then
         !! error opening file
@@ -536,7 +531,7 @@ subroutine spl3d_writeg(self,kchar,kout)
   !! arguments
   type(spl3d_t), intent(in) :: self   !< object data structure
   character(*), intent(in) :: kchar  !< case
-  integer(ki4), intent(in) :: kout   !< output channel for object data structure
+  integer, intent(in) :: kout   !< output channel for object data structure
 
   !! local
   character(*), parameter :: s_name='spl3d_writeg' !< subroutine name
@@ -705,7 +700,7 @@ subroutine spl3d_write(self,kout)
 
   !! arguments
   type(spl3d_t), intent(in) :: self   !< object data structure
-  integer(ki4), intent(in) :: kout   !< output channel for object data structure
+  integer, intent(in) :: kout   !< output channel for object data structure
 
   !! local
   character(*), parameter :: s_name='spl3d_write' !< subroutine name

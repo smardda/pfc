@@ -22,7 +22,7 @@ module clock_m
 
 ! private variables
   character(*), parameter :: m_name='clock_m' !< module name
-  integer(ki4) :: status    !< error status flag
+  integer :: status    !< error status flag
   integer(ki4) :: noclock   !< number of active clocks
   integer(ki4) :: maxclocks !< max no of clocks
   integer(ki4) :: iclock    !< index of current clock

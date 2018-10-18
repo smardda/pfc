@@ -59,10 +59,10 @@ subroutine ls_init(self,ksizeh,ksize,ktype)
   isize=ksizeh
   !! check values
   if (present(ktype)) then
-   tree_type: select case (ktype)
-   case(1)
-   isize=0
-   end select tree_type
+     tree_type: select case (ktype)
+     case(1)
+        isize=0
+     end select tree_type
   end if
 
   !! allocate storage
@@ -99,7 +99,7 @@ subroutine ls_read(self,numerics,kin)
   !! arguments
   type(ls_t), intent(out) :: self   !< ls data
   type(numerics_t), intent(inout) :: numerics !< local variable
-  integer(ki4), intent(in) :: kin   !< input channel for ls data
+  integer, intent(in) :: kin   !< input channel for ls data
 
 
   !! local
@@ -136,7 +136,7 @@ subroutine ls_write(self,numerics,kout)
   !! arguments
   type(ls_t), intent(in) :: self   !< ls data
   type(numerics_t), intent(in) :: numerics !< local variable
-  integer(ki4), intent(in) :: kout   !< output channel for ls data
+  integer, intent(in) :: kout   !< output channel for ls data
 
 
   !! local
@@ -167,7 +167,7 @@ subroutine ls_write1(self,kadr,kout)
   !! arguments
   type(ls_t), intent(in) :: self   !< list
   integer(ki4) , intent(in) :: kadr !< start number of list
-  integer(ki4), intent(in) :: kout   !< output channel for ls data
+  integer, intent(in) :: kout   !< output channel for ls data
 
   !! local
   character(*), parameter :: s_name='ls_write1' !< subroutine name

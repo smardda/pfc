@@ -26,10 +26,10 @@ module datline_m
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
-  integer(ki4) :: status  !< status flag
+  integer :: status  !< status flag
   logical :: iltest !< logical flag
 
-  integer(ki4), save :: nread  !< file unit for input
+  integer, save :: nread  !< file unit for input
 
   contains
 !---------------------------------------------------------------------
@@ -38,7 +38,7 @@ subroutine datline_init(self,kread)
 
   !! arguments
   type(datline_t), intent(inout) :: self   !< datline data
-  integer(ki4), intent(inout) :: kread   !< unit number
+  integer, intent(inout) :: kread   !< unit number
 
   !! local
   character(*), parameter :: s_name='datline_init' !< subroutine name
@@ -55,11 +55,11 @@ subroutine datline_read(self,kbuff,kread)
   !! arguments
   type(datline_t), intent(out) :: self   !< datline data
   character(len=80), intent(in) :: kbuff   !< datline data
-  integer(ki4), intent(inout), optional :: kread   !< unit number
+  integer, intent(inout), optional :: kread   !< unit number
 
   !! local
   character(*), parameter :: s_name='datline_read' !< subroutine name
-  integer(ki4)  :: iread !< actual unit number
+  integer  :: iread !< actual unit number
   integer(ki4)  :: ilen !< length of character string
   integer(ki4)  :: ipos1!< positions in self
   integer(ki4)  :: ipos2 !< positions in self

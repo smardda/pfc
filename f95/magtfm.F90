@@ -1,8 +1,8 @@
 program magtfm_p
-
 #ifdef WITH_MPI
   use mpi
 #endif
+
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -10,6 +10,7 @@ program magtfm_p
   use dcontrol_h
   use apb_h
   use log_m
+  use misc_m
   use clock_m
   use position_h
   use fmesh_h
@@ -41,9 +42,9 @@ program magtfm_p
   character(len=80),save :: iched=' ' !< mag field file descriptor
 
   type(mplots_t)     :: plot      !< diagnostic plot selectors
-!     integer(ki4):: nplot !< unit for vtk files
-  integer(ki4):: nout !< unit for mag files
-  integer(ki4):: nprint !< unit for gnuplot files
+!     integer:: nplot !< unit for vtk files
+  integer:: nout !< unit for mag files
+  integer:: nprint !< unit for gnuplot files
   integer(ki4):: j !< loop variable
   real(kr8), dimension(3) :: zpt !< vector point
   real(kr8), dimension(3) :: zeval !< vector value
@@ -189,6 +190,7 @@ program magtfm_p
   call log_close
   call clock_delete
 !--------------------------------------------------------------------------
+
 #ifdef WITH_MPI
   end if
   call MPI_Finalize ( error )

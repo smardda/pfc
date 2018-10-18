@@ -30,8 +30,8 @@ module mtest_m
   end type mtest_t
 
 !public variables
-  integer(ki4) :: nmt   !< output channel for mtest position data
-  integer(ki4) :: ninr   !< input channel for mtest density data
+  integer :: nmt   !< output channel for mtest position data
+  integer :: ninr   !< input channel for mtest density data
 
 ! private types
 
@@ -110,7 +110,7 @@ subroutine mtest_writev(self,numerics,kchar,kout)
   type(mtest_t), intent(in) :: self   !< mtest position data
   type(numerics_t), intent(in) :: numerics   !< numeric controls
   character(*),intent(in):: kchar !< control output (dummy)
-  integer(ki4), intent(in) :: kout   !< output channel for mtest position data
+  integer, intent(in) :: kout   !< output channel for mtest position data
 
 
   !! local
@@ -177,7 +177,7 @@ subroutine mtest_writeptsv(self,numerics,kchar,kout)
   type(mtest_t), intent(in) :: self   !< mtest position data
   type(numerics_t), intent(in) :: numerics   !< numeric controls
   character(*),intent(in):: kchar !< control output (dummy)
-  integer(ki4), intent(in) :: kout   !< output channel for mtest position data
+  integer, intent(in) :: kout   !< output channel for mtest position data
 
 
   !! local

@@ -1,5 +1,5 @@
 module powelt_m
-  
+
   use const_kind_m
   use const_numphys_h
   use log_m
@@ -11,6 +11,7 @@ module powelt_m
   use edgprof_m
   use position_h
   use position_m
+  use geobj_m
   use spl2d_m
   use spl3d_m
   use posang_h
@@ -74,32 +75,26 @@ module powelt_m
   real(kr8), dimension(:), allocatable :: work1 !< 1D work array
   type(posveclis_t) :: wposl   !< list of position data
   integer   :: status   !< error status
-  integer(ki4) :: nplot   !< output channel for powelt data
+  integer :: nplot   !< output channel for powelt data
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
   integer(ki4) :: ij !< loop counter
   integer(ki4) :: idum !< dummy integer
-  logical :: iltest !< logical flag
+  logical, parameter :: debug=.FALSE. !< logical flag for debugging
   integer(ki4) :: ilevel   !< refinement level for address
   integer(ki4) :: iinlevel   !< number of subelements at refinement level
   integer(ki4) :: inpow   !< address of element
   integer(ki4) :: iiobj   !< geobj position
+  integer(ki4), save :: nskyl1=0   !< number of starting points "skylighted" 1
+  integer(ki4), save :: nskyl2=0   !< number of starting points "skylighted" 2
   integer(ki2) :: inn !< number of nodes defining geobj
   integer(ki4), dimension(8) :: inod !< nodes of obj
   real(kr4), dimension(3,8) :: xnodes !< x(compt,node) of obj
   character(len=80) :: ibuff !< buffer for input/output
   character(len=80) :: icfile !< local file-name
 
-  !angleVec
-  real, external :: angleVec
-  real :: num
-  integer :: igor
-
-  !write to file
-  integer, parameter :: out_unit = 20
-    
   contains
 !---------------------------------------------------------------------
 !> position of element centre in tracking coordinates
@@ -163,7 +158,7 @@ subroutine powelt_vec(self,powcal,pb)
 
   inpow=powelt_addr(self,powcal%powres%npowe)
   iiobj=powcal%powres%geobjl%obj2(inpow)%ptr
-  inn=geobj_entry_table(powcal%powres%geobjl%obj2(inpow)%typ)
+  inn=geobj_entry_table_fn(powcal%powres%geobjl%obj2(inpow)%typ)
   if (inn/=3) then
      call log_error(m_name,s_name,1,error_warning,'object is not a triangle')
      pb=0
@@ -172,7 +167,6 @@ subroutine powelt_vec(self,powcal,pb)
         inod(j)=powcal%powres%geobjl%nodl(iiobj+j-1)
         xnodes(:,j)=powcal%powres%vecb%pos(inod(j))%posvec
      end do
-    
      pb=powelt_weights(1,1)*xnodes(:,1)+&
  &   powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
   end if
@@ -278,10 +272,7 @@ subroutine powelt_dep(self,powcal,gshadl)
         call powelt_vec(self,powcal,zb)
         call powelt_normal(self,powcal,znormal)
         zbdotn=dot_product(zb,znormal)
-        !write (*,*) 'zb:', zb, 'znormal:', znormal
-  
      case('msum','middle')
-        
         field_type: select case (powcal%powres%beq%n%fldspec)
         case(1)
            call log_error(m_name,s_name,6,error_fatal,'No code for case')
@@ -311,7 +302,6 @@ subroutine powelt_dep(self,powcal,gshadl)
            call posang_tfm(zposang,-3)
            zb=zposang%vec
            zbdotn=dot_product(zb,znormal)
-         
         end select field_type
      end select calcn_type
 
@@ -353,23 +343,9 @@ subroutine powelt_dep(self,powcal,gshadl)
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
      zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid)
-     !print *, "psibdry",powcal%powres%beq%psibdry
-     !print *, "zpsid",zpsid
-     !print *, "zbdotn",zbdotn
-     !open(unit=out_unit,file="results.txt",action="write",position="")
-     !write(out_unit,*) zpsid," ",zbdotn
-     !close(out_unit)
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
-     powcal%powres%zbdotnvec(inpow)=zbdotn
-     !powcal%powres%angle(inpow) =zbdotn
-     if (nint(sign(1._kr4,zpow)) > 0) then
-        powcal%powres%angle(inpow) = 90 - angleVec(zb,znormal)
-     else
-        powcal%powres%angle(inpow) = angleVec(zb,znormal) - 90
-     end if
-     
      !        write(*,*) inpow, zpow, zbdotn, zpsi
   end if
 
@@ -426,9 +402,9 @@ subroutine powelt_move(self,powcal,gshadl,btree)
 
   ! find element number
   inpow=powelt_addr(self,powcal%powres%npowe)
-  !  write(*,*) "inpow=",inpow
-  !  write(*,*) powcal%n%ntrack
-  !  write(*,*) powcal%n%trackno
+  !dbgwr write(*,*) "inpow=",inpow !dbgwr
+  !  write(*,*) powcal%n%ntrack !dbgwr
+  !  write(*,*) powcal%n%trackno !dbgwr
   ! check whether looking at small number of tracks
   if (powcal%n%ntrack>0) then
      ! is this element track in the test set
@@ -477,7 +453,6 @@ subroutine powelt_move(self,powcal,gshadl,btree)
   call odes_rjstep1(powcal%odes,ierr,powcal%powres%qfac*zf,powcal%powres%beq%rjac)
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
-  
 
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
@@ -497,7 +472,6 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-    
   if (zpdotn*zpdotnm*beq_rsig()<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      !        zpdotn=sign(1._kr8,zpdotnm)
@@ -609,7 +583,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -708,6 +682,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
   integer(ki4), save :: firstcall  !< flag up first step of new trajectory
 
   inpow=powelt_addr(self,powcal%powres%npowe)
+  !dbgwr write(*,*) "inpow=",inpow !dbgwr
   ! check whether looking at small number of tracks
   if (powcal%n%ntrack>0) then
      ! is this element track in the test set
@@ -754,7 +729,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
-    
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -776,7 +751,6 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-     
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
@@ -855,8 +829,8 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
         !xi            zf1=(powcal%powres%beq%n%ximin-xo%posvec(3))/(zxi-xo%posvec(3))
         !xi            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
         !xi            xm%node=0
+        !xi! only terminate if trajectory is long enough
         !xi            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-        !xi! prevent termination due to very short trajectory
         !xi               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
         !xi     &         powcal%n%termp,nobjhit)
         !xi               lcoll=(nobjhit/=0)
@@ -878,8 +852,8 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
         !xi            zf1=(powcal%powres%beq%n%ximax-xo%posvec(3))/(zxi-xo%posvec(3))
         !xi            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
         !xi            xm%node=0
+        !xi! only terminate if trajectory is long enough
         !xi            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-        !xi! prevent termination due to very short trajectory
         !xi               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
         !xi     &         powcal%n%termp,nobjhit)
         !xi               lcoll=(nobjhit/=0)
@@ -888,7 +862,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
         !xi               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
         !xi               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
         !xi! record psi at boundary if hit termplane boundary
-        !xi               if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+        !xi               if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
         !xi               exit
         !xi            end if
         !xi            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -901,8 +875,8 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_movet(xo,xn,xo%node,gshadl,btree, &
  &         powcal%n%termp,nobjhit)
            lcoll=(nobjhit/=0)
@@ -911,7 +885,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xo,inpow,gshadl)
            !! record psi at boundary if hit termplane boundary
-           !           if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -1024,7 +998,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -1116,8 +1090,10 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   real(kr8) :: zdt !< time increment \f$ \Delta t \f$
   type(posvecl_t) :: zpos1   !< one position data
   type(posvecl_t) :: zpos2   !< one position data
-  type(posveclis_t) :: rposl   !< list of position data
+  type(posveclis_t), save :: rposl   !< list of position data
   real(kr4) :: phylenpath !< physical length of path
+  logical :: lpset   !< true if flux at fieldline start-point has been set
+  logical :: linpfr   !< true if fieldline start-point in private flux region
   logical :: lcoll   !< collision on path
   real(kr8) :: zpsim !< value of \f$ \psi \f$ at field line end (diagnostic)
   real(kr8) :: zpsi !<  \f$ \psi \f$ debugging diagnostic !DP
@@ -1125,8 +1101,18 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   real(kr8) :: zz !<  \f$ \z \f$ debugging diagnostic !DP
   real(kr8), dimension(2) :: zk !< sector number
   integer(ki4), save :: firstcall  !< flag up first step of new trajectory
+  integer(ki4) :: inou     !< whether on HFS (in, 1) or LFS (ou, 2) of centre
+  real(kr8) :: distrack     !< signed distance from central track
+  integer(ki4) :: itp   !< indexes psi limits array
+  integer(ki4) :: ityps   !< test versus lower (1) or upper (2) skylight type
+  integer(ki4) :: irid   !< \f$ \pm 1 \f$ depending whether below (+) or above (-) centre
+  integer(ki4) :: interm   !< index of dynamical entry in termplane
+  real(kr8), dimension(2) :: zrz    !<  Query point position \f$ (R,Z) \f$
+  real(kr8), dimension(2) :: zlts !< limits
+  real(kr8) :: zskyl !<  \f$ \z \f$ value for skylight
 
   inpow=powelt_addr(self,powcal%powres%npowe)
+  !dbgwr write(*,*) "inpow=",inpow !dbgwr
   ! check whether looking at small number of tracks
   if (powcal%n%ntrack>0) then
      ! is this element track in the test set
@@ -1163,6 +1149,17 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   znormald=znormalm
   zposd=zpos
   zt0=zposd(3)
+  lpset=.FALSE.
+  if (.NOT.powcal%n%lpfpower) then
+     ! if no power in private flux region, return if in private flux region
+     call spl2d_eval(powcal%powres%beq%psi,zposd(1),zposd(2),zpsi)
+     linpfr= ( beq_rsig()*(powcal%powres%beq%psibdry-zpsi)>0 )
+     if (linpfr) then
+        powcal%powres%pow(inpow)=0
+        return
+     end if
+     lpset=.TRUE.
+  end if
   ! start trajectory
   powcal%odes%ndt=1
   powcal%odes%t=zt0
@@ -1180,7 +1177,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
-    
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -1202,13 +1199,71 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-  
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
      ! default to shadowed
      powcal%powres%pow(inpow)=0
   end if
+  ! default number of active termplanes
+  interm=powcal%n%termp%ntermplane
+  if (powcal%powres%beq%n%skylpsi) then
+     if (.NOT.lpset) then
+        call spl2d_eval(powcal%powres%beq%psi,zposd(1),zposd(2),zpsi)
+     end if
+     linpfr=( beq_rsig()*(powcal%powres%beq%psibdry-zpsi)>0 )
+     !! optionally skip flux skylight test if in private flux region
+     !if (linpfr.AND..NOT.powcal%n%lskylpfr) go to 2
+     ! always skip skylight test if in private flux region
+     if (.NOT.linpfr) then
+        ityps=0
+        if (zposd(2)<powcal%powres%beq%zcenq) then
+           ! lower skylight active
+           if (powcal%powres%skyl%n%skyltyp<3) ityps=1
+        else
+           ! upper skylight only active
+           ityps=4-powcal%powres%skyl%n%skyltyp
+        end if
+        if (ityps==1.OR.ityps==2) then
+           zrz=(/zposd(1),zposd(2)/)
+           call beq_ctrackcq(powcal%powres%beq,powcal%powres%beq%ctrackrz,&
+           powcal%powres%beq%nctrack,zrz,distrack)
+           inou=2+sign(0.5_kr8,distrack) ! 1 if distrack<0, 2 if distrack>0
+           ! check within allowable range of psi
+           zlts=powcal%powres%skyl%psilts(1:2,inou,ityps)
+           if ( (zpsi-zlts(1))*(zpsi-zlts(2)) <= 0 ) then
+              itp=1+int((zpsi-zlts(1))/powcal%powres%skyl%psidelta(inou,ityps))
+              itp=min( itp, powcal%powres%skyl%dimbox(inou,ityps) )
+              if (inou==1) zskyl=powcal%powres%skyl%inboxz(itp,ityps)
+              if (inou==2) zskyl=powcal%powres%skyl%ouboxz(itp,ityps)
+              if(debug)write(800,*) "psi, Z values", zpsi, zskyl,zposd(2)
+              if (abs(zskyl-zposd(2))<powcal%powres%skyl%n%toli(2)) then
+                 if (debug) then
+                    nskyl1=nskyl1+1
+                    write(800,*) "coincident skylight", nskyl1
+                 end if
+                 return
+              else
+                 irid=3-2*ityps
+                 if ((zposd(2)-zskyl)*irid>0) then
+                    if (debug) then
+                       nskyl2=nskyl2+1
+                       write(800,*) "above skylight", nskyl2
+                    end if
+                    return
+                 end if
+              end if
+              ! set dynamic termplane based on skylight
+              interm=powcal%n%termp%ntermplane+1
+              powcal%n%termp%termplane(interm,1)=zskyl
+              powcal%n%termp%termplanedir(interm,2)=irid
+           end if
+        end if
+     end if
+  end if
+  !2     continue
+  ! set number of active termplanes
+  powcal%n%termp%ntermactive=interm
   ! adjust sign of timestep
   powcal%odes%dt=sign(1._kr8,zpdotn)*powcal%odes%dt
   ! scaling factor no longer carries timestep sign
@@ -1274,8 +1329,8 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximin-ztime)/(zxi-ztime)
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -1298,8 +1353,8 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximax-ztime)/(zxi-ztime)
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -1308,7 +1363,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -1322,8 +1377,8 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_movet(xo,xn,xo%node,gshadl,btree, &
  &         powcal%n%termp,nobjhit)
            lcoll=(nobjhit/=0)
@@ -1332,7 +1387,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -1428,7 +1483,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -1559,7 +1614,7 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
-   
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -1581,7 +1636,6 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-   
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
@@ -1633,10 +1687,10 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximin-xo%posvec(3))/(zt-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
-&             powcal%n%termp,nobjhit)
+ &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
            end if
            if (lcoll) then
@@ -1657,10 +1711,10 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximax-xo%posvec(3))/(zt-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
-&             powcal%n%termp,nobjhit)
+ &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
            end if
            if (lcoll) then
@@ -1679,10 +1733,10 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_movet(xo,xn,xo%node,gshadl,btree, &
-&          powcal%n%termp,nobjhit)
+ &         powcal%n%termp,nobjhit)
            lcoll=(nobjhit/=0)
         end if
         if (lcoll) then
@@ -1862,7 +1916,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
- 
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -1884,7 +1938,6 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-  
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
@@ -1947,8 +2000,8 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximin-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_move(xo,xm,xo%node,gshadl,btree,nobjhit)
               lcoll=(nobjhit/=0)
            end if
@@ -1969,8 +2022,8 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximax-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_move(xo,xm,xo%node,gshadl,btree,nobjhit)
               lcoll=(nobjhit/=0)
            end if
@@ -1989,8 +2042,8 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_move(xo,xn,xo%node,gshadl,btree,nobjhit)
            lcoll=(nobjhit/=0)
         end if
@@ -2107,7 +2160,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -2249,7 +2302,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
- 
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -2271,7 +2324,6 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-  
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
@@ -2343,8 +2395,8 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximin-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -2366,8 +2418,8 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximax-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -2376,7 +2428,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -2389,8 +2441,8 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_movet(xo,xn,xo%node,gshadl,btree, &
  &         powcal%n%termp,nobjhit)
            lcoll=(nobjhit/=0)
@@ -2399,7 +2451,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -2512,7 +2564,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -2659,7 +2711,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
   if (ierr>0) return
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
   zpdotnm=dot_product(xpath,znormald)
- 
+
   ! Check behaviour in Cartesians
   call powelt_normal(self,powcal,znormal)
   znormald=znormal
@@ -2681,7 +2733,6 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
      zs=-zs
   end do
   zpdotn=dot_product(xpath,znormald)
-   
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
      write(*,*) inpow, zpdotn, zpdotnm
@@ -2760,8 +2811,8 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximin-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -2783,8 +2834,8 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
            zf1=(powcal%powres%beq%n%ximax-xo%posvec(3))/(zxi-xo%posvec(3))
            xm%posvec=(1-zf1)*xo%posvec+zf1*xn%posvec
            xm%node=0
+           ! only terminate if trajectory is long enough
            if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-              ! prevent termination due to very short trajectory
               call pcle_movet(xo,xm,xo%node,gshadl,btree, &
  &            powcal%n%termp,nobjhit)
               lcoll=(nobjhit/=0)
@@ -2793,7 +2844,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -2806,8 +2857,8 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
 
         ! find new node and position if hits boundary
         xn%node=0
+        ! only terminate if trajectory is long enough
         if (abs(lenpath)>powcal%odes%n%termcon(1)) then
-           ! prevent termination due to very short trajectory
            call pcle_movet(xo,xn,xo%node,gshadl,btree, &
  &         powcal%n%termp,nobjhit)
            lcoll=(nobjhit/=0)
@@ -2816,7 +2867,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit==-2) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -2929,7 +2980,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
-  if (nobjhit==-2.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
+  if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
      ! first convert track points
      allocate(wposl%pos(3), stat=status)
@@ -3093,7 +3144,7 @@ subroutine powelt_write(self,kout)
 
   !! arguments
   type(powelt_t), intent(in) :: self   !< object data structure
-  integer(ki4), intent(in) :: kout   !< input channel for object data structure
+  integer, intent(in) :: kout   !< input channel for object data structure
 
 
   !! local
@@ -3109,7 +3160,7 @@ subroutine powelt_writev(self,kplot)
 
   !! arguments
   type(powelt_t), intent(in) :: self   !< object data structure
-  integer(ki4), intent(in) :: kplot   !< input channel for object data structure
+  integer, intent(in) :: kplot   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='powelt_writev' !< subroutine name
@@ -3164,7 +3215,7 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
      if (nobjhit==-1.OR.nobjhit==0) ihit=1
   end if
 
-  if (ihit>0)  then
+  if (ihit>0.OR. ihit==-10)  then
      ! really a collision
      calcn_type: select case (powcal%n%caltype)
      case('afws','local','msus','global')
@@ -3205,39 +3256,3 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
 end subroutine powelt_setpow
 
 end module powelt_m
-
-real function angleVec(a,b)
-    implicit none
-    real, dimension(3) :: a, b
-    real :: x1,y1,x2,y2,z1,z2, angle 
-    real :: abs_a,abs_b,product, pi
-    x1 = a(1)
-    y1 = a(2)
-    z1 = a(3)
-
-    x2 = b(1)
-    y2 = b(2)
-    z2 = b(3)
-
-    pi = 3.1415926535
-    angle = 0
-    abs_a = sqrt(x1**2+y1**2+z1**2)
-    !print *, 'abs_a:',abs_a
-
-    abs_b = sqrt(x2**2+y2**2+z2**2)
-    !print *, 'abs_b:',abs_b
-    
-    product = dot_product(a,b)
-    !print *, 'product',product
-    if (abs_b == 0 .OR. abs_a == 0) then
-        angle = 0
-    else
-       angle = acos(product/(abs_b*abs_a))
-    end if
-    angleVec = angle*180/pi
-
-    !print *, angleVec
-    return
- end function angleVec
-  
-

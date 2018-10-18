@@ -2,6 +2,7 @@ module geobjlist_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use const_numphys_h
   use position_h
   use bods_h
@@ -24,6 +25,7 @@ module geobjlist_m
   use datline_m
   use stack_m
   use indict_m
+  use vfile_m
 
   implicit none
   private
@@ -63,7 +65,14 @@ module geobjlist_m
   geobjlist_create3d, & !< create geobjlists by translation/rotation
   geobjlist_centroids, & !< calculate centroids of objects
   geobjlist_extract, & !< extract triangles according to criterion
-  geobjlist_area !< calculate area of objects
+  geobjlist_addgcode, & !< add geometry code to objects
+  geobjlist_addgcodes, & !< add array of geometry codes to objects
+  geobjlist_querygcode, & !< return number of geometry coded objects
+  geobjlist_area, & !< calculate areas of objects
+  geobjlist_totarea, & !< calculate total area of objects
+  geobjlist_angext, & !< angular extent limits of objects
+  geobjlist_readhedline, & !<  read 2nd line of header of legacy vtk file
+  geobjlist_makehedline !<  construct 2nd line for header of legacy vtk file
 
 ! public types
 
@@ -77,7 +86,7 @@ module geobjlist_m
   character(len=80) :: ibuf2 !< buffer for input/output
   character(len=132) :: bigbuf !<big buffer for input/output
   integer   :: status   !< error status
-  integer(ki4), save :: nin   !< input channel for geobj data
+  integer, save :: nin   !< input channel for geobj data
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -94,7 +103,14 @@ module geobjlist_m
   integer(ki4) :: iempt !< first empty entry lin list
   integer(ki4) :: inls !< number of entries in list
   integer(ki4) :: idum !< dummy integer
+  integer(ki4), dimension(:), allocatable :: iwork !< integer work array
   logical :: iltest !< logical flag
+  integer :: istatus   !< inner status variable
+!> integer parameter array
+!! dimension at least self%numnparam+self%posl%numnparpos (2+4)
+  integer(ki2par), dimension(6) :: ipara   !< -
+  character(len=256) :: vtkdesc !< descriptor line for vtk files
+  integer(ki4) :: inumnparam   !< number of descriptors in legacy vtk file 2nd line
 
   contains
 !---------------------------------------------------------------------
@@ -173,6 +189,8 @@ subroutine geobjlist_close(self)
      print '("Fatal error: Unable to close file unit, ",i5)',nin
      call log_error(m_name,s_name,1,error_fatal,'Cannot close data file')
      stop
+  else
+     call log_error(m_name,s_name,2,log_info,'unit closed')
   end if
 
 end subroutine geobjlist_close
@@ -183,11 +201,11 @@ subroutine geobjlist_read(self,infile,kched,kin)
   type(geobjlist_t), intent(inout) :: self !< geobj list data
   character(*),intent(in) :: infile !< name of input file
   character(len=80),intent(out), optional :: kched !< field file header
-  integer(ki4), intent(inout), optional :: kin   !< input channel for object data structure
+  integer, intent(inout), optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='geobjlist_read' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   logical :: ilnumb !< local variable
   integer(ki4) :: innd !< position of first entry for object in nodl
   integer(ki4) :: inobj !< local variable
@@ -202,6 +220,8 @@ subroutine geobjlist_read(self,infile,kched,kin)
   integer(ki4) :: isubstr !< start of substring in string
   integer(ki4), dimension(geobj_max_entry_table) :: inodl  !< local variable
   integer(ki4) :: ifmt   !< formatting of position vectors
+  integer(ki4) :: iopt !< option
+  character(len=30) :: iclabel !< label on line 2 of vtk file
 
   logical :: isnumb !< local variable
   external isnumb
@@ -211,17 +231,10 @@ subroutine geobjlist_read(self,infile,kched,kin)
      nin=kin
      rewind(nin)
   else
-     !! get file unit
-     do i=99,1,-1
-        inquire(i,opened=unitused)
-        if(.not.unitused)then
-           nin=i
-           exit
-        end if
-     end do
-     if (present(kin)) kin=nin
+     !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
      !! open file
+     call misc_getfileunit(nin)
      open(unit=nin,file=infile,status='OLD',form='FORMATTED',iostat=status)
      if(status/=0)then
         !! error opening file
@@ -230,6 +243,7 @@ subroutine geobjlist_read(self,infile,kched,kin)
      else
         call log_error(m_name,s_name,2,log_info,'geometrical object  data file opened')
      end if
+     if (present(kin)) kin=nin
   end if
 
   !! first set of reads to determine format of position vectors
@@ -285,16 +299,8 @@ subroutine geobjlist_read(self,infile,kched,kin)
         self%np=inpos
         exit
      end if
-     !! look for keys embedded in line if "=" present
-     ieq=index(ibuf2,'=')
-     if (ieq/=0) then
-        isubstr=index(ibuf2,'Integer_Parameter=')
-        if (isubstr/=0) then
-           ibuf1=ibuf2(isubstr:)
-           iieq=index(ibuf1,'=')
-           read(ibuf1(iieq+2:),'(I3)') self%nparam
-        end if
-     end if
+     !! extract keys embedded in line if "=" present
+     call geobjlist_readhedline(self,ibuf1,iclabel)
   end do
 
   if (self%ngtype==1) then
@@ -457,13 +463,12 @@ subroutine geobjlist_read(self,infile,kched,kin)
      end if
      !
      ! now set cell types
-
      do j=1,self%ng
         ityp=self%obj2(j)%typ
-        if (ityp==geobj_entry_table(5)) then
+        if (ityp==geobj_entry_table_fn(5)) then
            ! triangles
            self%obj2(j)%typ=VTK_TRIANGLE
-        else if (ityp==geobj_entry_table(9)) then
+        else if (ityp==geobj_entry_table_fn(9)) then
            ! quadrilaterals
            self%obj2(j)%typ=VTK_QUAD
         else
@@ -471,9 +476,22 @@ subroutine geobjlist_read(self,infile,kched,kin)
            call log_error(m_name,s_name,34,error_fatal,'Not all polydata recognised reading data')
         end if
      end do
-     ! General case of unstructured grid
+     !
+     if (self%nparam(2)==1) then
+        ! try to read geometry codes
+        iopt=1
+        call vfile_iscalarread(iwork,self%ng,' ','Code',nin,iopt)
+        if (iopt/=0) then
+           call log_error(m_name,s_name,35,error_warning,'Error reading cell geometry codes')
+           if (allocated(iwork)) deallocate(iwork)
+        else
+           call geobjlist_addgcodes(self,iwork)
+           deallocate(iwork)
+        end if
+     end if
      !
   case(3)
+     ! General case of unstructured grid
      innd=1
      inobj=0
      insto=0
@@ -574,6 +592,19 @@ subroutine geobjlist_read(self,infile,kched,kin)
            self%obj2(j)%typ=ityp
         end if
      end do
+     if (self%nparam(2)==1) then
+        ! try to read geometry codes
+        iopt=1
+        call vfile_iscalarread(iwork,self%ng,' ','Code',nin,iopt)
+        if (iopt/=0) then
+           call log_error(m_name,s_name,63,error_warning,'Error reading cell geometry codes')
+           if (allocated(iwork)) deallocate(iwork)
+        else
+           call geobjlist_addgcodes(self,iwork)
+           deallocate(iwork)
+        end if
+     end if
+
   end select geobject_typer
 
 
@@ -676,7 +707,7 @@ subroutine geobjlist_addcube(self)
      end do
      do i=1,12
         iobj2(ioffg+i)%ptr=ioffn+1
-        iobj2(ioffg+i)%typ=VTK_TRIANGLE
+        iobj2(ioffg+i)%typ=VTK_TRIANGLE+GEOBJ_ESCAPE*GEOBJ_POW
         ioffn=ioffn+3
      end do
      ioffg=ioffg+12
@@ -732,12 +763,13 @@ subroutine geobjlist_writev(self,kchar,kplot)
   !! arguments
   type(geobjlist_t), intent(in) :: self !< geobj list data
   character(*), intent(in) :: kchar  !< case
-  integer(ki4), intent(in) :: kplot   !< output channel for vis. data
+  integer, intent(in) :: kplot   !< output channel for vis. data
 
   !! local
   character(*), parameter :: s_name='geobjlist_writev' !< subroutine name
   integer(ki4) :: isum !< sum workspace
   integer(ki2) :: inn !< number of nodes
+  integer(ki4) :: ityp  !< local variable
 
   plot_type: select case (kchar)
   case('geometry')
@@ -752,7 +784,7 @@ subroutine geobjlist_writev(self,kchar,kplot)
      ! count entries in CELLS
      isum=0
      do j=1,self%ng
-        inn=geobj_entry_table(self%obj2(j)%typ)
+        inn=geobj_entry_table_fn(self%obj2(j)%typ)
         isum=isum+inn
      end do
 
@@ -760,7 +792,7 @@ subroutine geobjlist_writev(self,kchar,kplot)
      write(kplot,'(''CELLS '',I10,1X,I10)') self%ng,self%ng+isum
      i=1
      do j=1,self%ng
-        inn=geobj_entry_table(self%obj2(j)%typ)
+        inn=geobj_entry_table_fn(self%obj2(j)%typ)
         write(kplot,'(8(1X,I10))') inn,(self%nodl(i+ij-1)-1,ij=1,inn)
         i=i+inn
      end do
@@ -769,7 +801,8 @@ subroutine geobjlist_writev(self,kchar,kplot)
      ! output CELL types
      write(kplot,'(''CELL_TYPES '',I10)') self%ng
      do j=1,self%ng
-        write(kplot,'(1X,I10)') self%obj2(j)%typ
+        ityp=self%obj2(j)%typ
+        write(kplot,'(1X,I10)') geobj_type_fn(ityp)
      end do
 
      if (self%nwset==2) then
@@ -875,7 +908,7 @@ subroutine geobjlist_writestl(self,kchar,kplot)
   !! arguments
   type(geobjlist_t), intent(in) :: self !< geobj list data
   character(*), intent(in) :: kchar  !< case
-  integer(ki4), intent(in) :: kplot   !< output channel for stl data
+  integer, intent(in) :: kplot   !< output channel for stl data
 
   !! local
   character(*), parameter :: s_name='geobjlist_writestl' !< subroutine name
@@ -1142,7 +1175,7 @@ subroutine geobjlist_binbtree(self,dbtree,ksamp,mark)
   do j=1,self%ng
      innd=self%obj2(j)%ptr
      ityp=self%obj2(j)%typ
-     inumpts=geobj_entry_table(ityp)
+     inumpts=geobj_entry_table_fn(ityp)
      !! loop over points defining object
      do jj=1,inumpts
         ipt=self%nodl(innd-1+jj)
@@ -1541,7 +1574,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
   type(posang_t) :: zposang !< local variable
   integer(ki4) :: ibod   !< body identifier
   integer(ki4) :: ibod1  !< body identifier
-!dbgw  integer(ki4) :: iibod  !< body identifier !dbgw
+  !dbgw  integer(ki4) :: iibod  !< body identifier !dbgw
   integer(ki4) :: ipan   !< panel identifier
   integer(ki4) :: inbod   !< number of bodies
   integer(ki4) :: inpan   !< number of panels
@@ -1578,7 +1611,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
   self%obj%weight=-1.
   !! set up posang for mm to mm transform of position to R,Z
   zposang%vec=0.
-  zposang%units=3
+  zposang%units=-3
   !! set up factor for angles
   if (numerics%angles=='degree') angfac=const_degrad
 
@@ -1613,15 +1646,15 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
   !BP   !      write(*,*) 'ibodpan',ibodpan
 
   !! loop over objects to get panel centroids (if needed)
-!dbgw  write(*,*) 'inpan=', inpan !dbgw
+  !dbgw  write(*,*) 'inpan=', inpan !dbgw
   do j=1,self%ng
      !w write(*,*)'j=',j !w
      ibod=bods%list(j)
      ! object may have no associated body
      if (ibod==0) cycle
-!dbgw     iibod=ibod !dbgw
+     !dbgw     iibod=ibod !dbgw
      if (bods%nindx>0) ibod=bods%indx(ibod)
-!dbgw     write(110,*) j,iibod,ibod !dbgw
+     !dbgw     write(110,*) j,iibod,ibod !dbgw
      !BP      !w    ipan=ibodpan(ibod)
      ipan=indict2(inpan,numerics%panbod,ibod)
      if (ipan==0) then
@@ -1637,7 +1670,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
         if (itfm==6.OR.itfm==7.OR.itfm==42) then
            innd=self%obj2(j)%ptr
            ityp=self%obj2(j)%typ
-           inumpts=geobj_entry_table(ityp)
+           inumpts=geobj_entry_table_fn(ityp)
            !! loop over points defining object
            do jj=1,inumpts
               ipt=self%nodl(innd-1+jj)
@@ -1684,10 +1717,10 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
            zstr=sin(zthetar)
            zctr=cos(zthetar)
            zmctr=1-zctr
-           ! convert centroid to (R,Z,zeta)
+           ! convert centroid to (R,Z,zeta) same units
            zposang%opt=0
            zposang%pos=zpansum(:,i)
-           call posang_invtfm(zposang,3)
+           call posang_invtfm(zposang,-3)
            zetab=zposang%pos(3)
            zszb=sin(zetab)
            zczb=cos(zetab)
@@ -1740,7 +1773,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
            ! 1. convert centroid to (R,Z,zeta)
            zposang%opt=0
            zposang%pos=zpansum(:,i)
-           call posang_invtfm(zposang,3)
+           call posang_invtfm(zposang,-3)
            zpos%posvec=zposang%pos
            ! 2. calculate transform offset in (R,Z) from r displacement
            ! displacement in minor radius
@@ -1759,7 +1792,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
            ! 4. back to cartesians
            zposang%opt=1
            zposang%pos=zpos1%posvec
-           call posang_tfm(zposang,3)
+           call posang_tfm(zposang,-3)
            ! 5. difference determines new displacement vector for panel
            numerics%vpantfm%ntfm(i)=2
            numerics%vpantfm%offset(:,i)=zposang%pos-zpansum(:,i)
@@ -1778,9 +1811,9 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
      ibod=bods%list(j)
      ! object may have no associated body
      if (ibod==0) cycle
-!dbgw     iibod=ibod !dbgw
+     !dbgw     iibod=ibod !dbgw
      if (bods%nindx>0) ibod=bods%indx(ibod)
-!dbgw     write(110,*) j,iibod,ibod !dbgw
+     !dbgw     write(110,*) j,iibod,ibod !dbgw
      !BP      !w    ipan=ibodpan(ibod)
      ipan=indict2(inpan,numerics%panbod,ibod)
      if (ipan==0) then
@@ -1799,7 +1832,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
         ztfmdata%matrix=numerics%vpantfm%matrix(:,:,ipan)
         innd=self%obj2(j)%ptr
         ityp=self%obj2(j)%typ
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         if (ibod1/=ibod) then
            ibod1=ibod
            !F11            write(*,*) 'ibod1',ibod1 !F11
@@ -1834,7 +1867,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
                  ! first express in (R,Z,zeta) coordinates
                  zposang%opt=0
                  zposang%pos=self%posl%pos(ipt)%posvec
-                 call posang_invtfm(zposang,3)
+                 call posang_invtfm(zposang,-3)
                  zpos%posvec=zposang%pos
                  ! transform
                  ztfmdata%ntfm=2
@@ -1842,7 +1875,7 @@ subroutine geobjlist_paneltfm(self,bods,numerics)
                  ! back to cartesians
                  zposang%opt=1
                  zposang%pos=zpos1%posvec
-                 call posang_tfm(zposang,3)
+                 call posang_tfm(zposang,-3)
                  zpos%posvec=zposang%pos
                  self%posl%pos(ipt)=zpos
               end if
@@ -2277,7 +2310,7 @@ end subroutine geobjlist_mbin
 subroutine geobjlist_dread(self,kread)
   !! arguments
   type(geobjlist_t), intent(out) :: self   !< geobj list data
-  integer(ki4), intent(inout) :: kread   !< input channel for dat file
+  integer, intent(inout) :: kread   !< input channel for dat file
   !integer(ki4), intent(in), optional :: kopt   !< options
 
   !! local
@@ -2543,7 +2576,7 @@ subroutine geobjlist_copy(selfin,selfout,kopt)
 end subroutine geobjlist_copy
 !---------------------------------------------------------------------
 !> append geobjlist to first
-subroutine geobjlist_cumulate(self,selfin,start,copy,kopt)
+subroutine geobjlist_cumulate(self,selfin,start,copy,kopt,kgcode)
 
   !! arguments
   type(geobjlist_t), intent(inout) :: self !< module object
@@ -2551,6 +2584,10 @@ subroutine geobjlist_cumulate(self,selfin,start,copy,kopt)
   integer(ki4), intent(in) :: start !< start number of copies required
   integer(ki4), intent(in) :: copy !< stop number of copies required
   integer(ki4), intent(in) :: kopt   !< if nonzero, try to copy weights
+  !> geometry code for new objects
+  !! if negative or zero, ignored, except that
+  !! if negative, do not update %posl%np, only %np
+  integer(ki2par), intent(in) :: kgcode   !< .
   !! local
   character(*), parameter :: s_name='geobjlist_cumulate' !< subroutine name
   real(kr4), dimension(:), allocatable :: rwork !< real work array
@@ -2564,7 +2601,9 @@ subroutine geobjlist_cumulate(self,selfin,start,copy,kopt)
   integer(ki4) :: inpt !< number of points in geobjlist
   integer(ki4) :: inobj !< number of objects in geobjlist
   integer(ki4) :: innod !< number of nodal data in geobjlist
+  integer(ki2par) :: igcode !< integer scalar geometry code
 
+  igcode=max(kgcode,0)
   if (copy<=0) return
   icopy=copy+1-start
   !set up replacement posl array and destroy old posl
@@ -2655,7 +2694,7 @@ subroutine geobjlist_cumulate(self,selfin,start,copy,kopt)
         inn=self%nnod+(k-start)*selfin%nnod
         do j=1,selfin%ng
            zobj2(i)%ptr=selfin%obj2(j)%ptr+inn
-           zobj2(i)%typ=selfin%obj2(j)%typ
+           zobj2(i)%typ=selfin%obj2(j)%typ+igcode*GEOBJ_POW
            i=i+1
         end do
      end do
@@ -2673,6 +2712,8 @@ subroutine geobjlist_cumulate(self,selfin,start,copy,kopt)
   self%np=inpt
   self%ng=inobj
   self%nnod=innod
+  if (kgcode>=0) self%posl%np=inpt
+  if (kgcode/=0) self%nparam(2)=1
 
 end subroutine geobjlist_cumulate
 !---------------------------------------------------------------------
@@ -2801,10 +2842,11 @@ subroutine geobjlist_create(self,kchar,prc,pzc,prs,pzs,knear,pdist)
 end subroutine geobjlist_create
 !---------------------------------------------------------------------
 !> create geobjlists by translation/rotation
-subroutine geobjlist_create3d(self,numerics)
+subroutine geobjlist_create3d(self,numerics,kgcode)
   !! arguments
   type(geobjlist_t), intent(out) :: self !< geobj list data
   type(dnumerics_t), intent(in) :: numerics !< input numerical parameters
+  integer(ki2par), intent(in) :: kgcode   !< geometry code for new objects
 
   !! local
   character(*), parameter :: s_name='geobjlist_create3d' !< subroutine name
@@ -2814,6 +2856,7 @@ subroutine geobjlist_create3d(self,numerics)
   integer(ki4) :: mp1    !<  number of repeat segments
   real(kr8) :: zeta !< value of \f$ \zeta \f$
   real(kr8) :: delzeta !< increment of \f$ \zeta \f$
+  real(kr4), dimension(3) :: zdisp !< Cartesian displacement
   type(posang_t) :: zposang   !< posang data structure
   type(posvecl_t) :: zpos1   !< one position data
   integer(ki4) :: innd !< position of first entry for object in nodl
@@ -2822,6 +2865,7 @@ subroutine geobjlist_create3d(self,numerics)
   integer(ki4) :: inumpts !< length of object in nodl array
   integer(ki4) :: io !< loop counter
   integer(ki4) :: ip !< loop counter
+  integer(ki4) :: ipp !< loop counter
   ! integer(ki4), dimension(geobj_max_entry_table) :: inodl !< one object as nodes
 
   n=numerics%npos
@@ -2844,7 +2888,36 @@ subroutine geobjlist_create3d(self,numerics)
   ! surface grid of triangles
   !! define positions
   tfm_type: select case (numerics%tfm)
-  case ('rotate')
+  case ('translate')
+     zeta=numerics%stang
+     ip=0
+     ! convert set of (R,Z) points to (X,Y,Z)
+     do i=1,n
+        ip=ip+1
+        zpos1%posvec(1)=numerics%r(i)
+        zpos1%posvec(2)=numerics%z(i)
+        zpos1%posvec(3)=zeta
+        zposang%pos=zpos1%posvec
+        zposang%opt=1 ; zposang%units=0
+        call posang_tfm(zposang,0)
+        self%posl%pos(ip)%posvec=zposang%pos
+     end do
+     zdisp=(numerics%stpos-numerics%finpos)/m
+     zpos1%posvec(1)=zdisp(1)
+     zpos1%posvec(2)=zdisp(2)
+     zpos1%posvec(3)=zdisp(3)
+     ipp=ip
+     do j=2,mp1
+        ip=0
+        do i=1,n
+           ip=ip+1
+           ipp=ipp+1
+           self%posl%pos(ipp)%posvec=self%posl%pos(ip)%posvec+zpos1%posvec
+        end do
+     end do
+
+  case default
+     ! rotate
      zeta=numerics%stang
      delzeta=(numerics%finang-numerics%stang)/m
      ip=0
@@ -2862,7 +2935,6 @@ subroutine geobjlist_create3d(self,numerics)
         zeta=zeta+delzeta
      end do
 
-  case ('translate')
   end select tfm_type
   ! end of position creation
   print '("number of geobj coordinates created = ",i10)',self%np
@@ -2919,15 +2991,20 @@ subroutine geobjlist_create3d(self,numerics)
         ip=ip+inumpts
      end do
   end do
-  ! now set cell type as triangle
+  ! now set cell type as triangle with geometry code kgcode
   do j=1,self%ng
-     self%obj2(j)%typ=VTK_TRIANGLE
+     self%obj2(j)%typ=VTK_TRIANGLE+kgcode*GEOBJ_POW
   end do
 
   print '("number of geobj created = ",i10)',self%ng
   call log_value("number of geobj created ",self%ng)
 
   call log_error(m_name,s_name,70,log_info,'geobjlist created')
+
+  !SKDBG idum=820 !SKDBG
+  !SKDBG call geobjlist_makehedline(self,'skylight',vtkdesc) !SKDBG
+  !SKDBG call vfile_init('skyl',vtkdesc,idum) !SKDBG
+  !SKDBG call geobjlist_writev(self,'geometry',idum) !SKDBG
 
 end subroutine geobjlist_create3d
 !---------------------------------------------------------------------
@@ -2958,7 +3035,7 @@ subroutine geobjlist_ptcompress(self)
   do j=1,self%ng
      innd=self%obj2(j)%ptr
      ityp=self%obj2(j)%typ
-     inumpts=geobj_entry_table(ityp)
+     inumpts=geobj_entry_table_fn(ityp)
      !! loop over points defining object
      do k=1,inumpts
         inpt=inpt+1
@@ -3064,10 +3141,10 @@ subroutine geobjlist_orientri(self)
   ip=0
   do j=1,self%ng
      ityp=self%obj2(j)%typ
-     if (ityp==VTK_TRIANGLE) then
+     if (geobj_type_fn(ityp)==VTK_TRIANGLE) then
         ! triangles only
         innd=self%obj2(j)%ptr
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         !! loop over points defining object, add corresponding edges
         do k=1,inumpts
            ip=ip+1
@@ -3115,10 +3192,10 @@ subroutine geobjlist_orientri(self)
            ij=j
            if (imark(j)==0) then
               ityp=self%obj2(j)%typ
-              if (ityp==VTK_TRIANGLE) then
+              if (geobj_type_fn(ityp)==VTK_TRIANGLE) then
                  ! triangles only
                  innd=self%obj2(j)%ptr
-                 inumpts=geobj_entry_table(ityp)
+                 inumpts=geobj_entry_table_fn(ityp)
                  !! loop over points defining object, add corresponding edges
                  do k=1,inumpts
                     ikp=1+mod(k,inumpts)
@@ -3193,7 +3270,7 @@ subroutine geobjlist_orientri(self)
         iob=iobjm(ip)
         innd=self%obj2(iob)%ptr
         ityp=self%obj2(iob)%typ
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         !! loop over points defining object, find matching
         do k=1,inumpts
            ikp=1+mod(k,inumpts)
@@ -3241,10 +3318,10 @@ subroutine geobjlist_fliptri(self)
 
   do j=1,self%ng
      ityp=self%obj2(j)%typ
-     if (ityp==VTK_TRIANGLE) then
+     if (geobj_type_fn(ityp)==VTK_TRIANGLE) then
         ! triangles only
         innd=self%obj2(j)%ptr
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         !! interchange first and second points defining object
         ip=self%nodl(innd)
         self%nodl(innd)=self%nodl(innd+1)
@@ -3319,7 +3396,7 @@ subroutine geobjlist_shelltets(self,geobjtri)
      if (ityp==10) then
         ! tetrahedra only
         innd=self%obj2(j)%ptr
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         !! loop over points defining object, index by object
         do k=1,inumpts
            ip=ip+1
@@ -3370,7 +3447,7 @@ subroutine geobjlist_shelltets(self,geobjtri)
               if (ityp==10) then
                  ! tetrahedra only
                  innd=self%obj2(j)%ptr
-                 inumpts=geobj_entry_table(ityp)
+                 inumpts=geobj_entry_table_fn(ityp)
                  !! loop over points defining object, add corresponding faces
                  do k=1,inumpts
                     ikp=1+mod(k,inumpts)
@@ -3462,7 +3539,7 @@ subroutine geobjlist_shelltets(self,geobjtri)
         iob=iobjm(ip)
         innd=self%obj2(iob)%ptr
         ityp=self%obj2(iob)%typ
-        inumpts=geobj_entry_table(ityp)
+        inumpts=geobj_entry_table_fn(ityp)
         !! ignore matching face, add other faces to stack
         !! loop over points defining object
         do k=1,inumpts
@@ -3495,7 +3572,7 @@ subroutine geobjlist_shelltets(self,geobjtri)
 
   ! create new geobjl
   ityp=VTK_TRIANGLE
-  inumpts=geobj_entry_table(ityp)
+  inumpts=geobj_entry_table_fn(ityp)
   inobj=inw/inumpts
   call geobjlist_iinit(geobjtri,self%np,inobj,inw,2,1)
   ! copy node list and points list
@@ -3718,7 +3795,7 @@ subroutine geobjlist_centroids(self,key,dict,kndict,centroids)
      indx=indict(dict,ikey,kndict)
      innd=self%obj2(j)%ptr
      ityp=self%obj2(j)%typ
-     inumpts=geobj_entry_table(ityp)
+     inumpts=geobj_entry_table_fn(ityp)
      !! loop over points defining object
      do jj=1,inumpts
         ipt=self%nodl(innd-1+jj)
@@ -3802,7 +3879,7 @@ subroutine geobjlist_extract(self,kbods,numerics)
   do j=1,self%ng
      innd=self%obj2(j)%ptr
      ityp=self%obj2(j)%typ
-     inumpts=geobj_entry_table(ityp)
+     inumpts=geobj_entry_table_fn(ityp)
      !! loop over points defining object
      do k=1,inumpts
         ipt=self%nodl(innd-1+k)
@@ -3816,11 +3893,82 @@ subroutine geobjlist_extract(self,kbods,numerics)
 
 end subroutine geobjlist_extract
 !---------------------------------------------------------------------
-!> calculate area of objects
-subroutine geobjlist_area(self,area)
+!> add geometry code to objects
+subroutine geobjlist_addgcode(self,kgcode,lforce)
   !! arguments
   type(geobjlist_t), intent(inout) :: self !< geobj list data
-  real(kr4), dimension(:), allocatable, intent(out) :: area  !< area position data
+  integer(ki2par), intent(in) :: kgcode !< integer scalar geometry code
+  logical, intent(in), optional :: lforce !< force overwrite if true
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_addgcode' !< subroutine name
+  integer(ki2par) :: igcode !< integer scalar geometry code
+  logical :: ileave !< leave overwrite if true
+  integer(ki4) :: ityp !< local variable
+
+  ileave=.TRUE.
+  if (present(lforce)) ileave=.NOT.lforce
+  igcode=abs(kgcode)
+  do j=1,self%ng
+     ityp=self%obj2(j)%typ
+     if (ityp==1) cycle ! ignore points
+     if (ityp>GEOBJ_POW.AND.ileave) cycle
+     ityp=ibits(self%obj2(j)%typ,0,GEOBJ_BIT_SHIFT)+GEOBJ_POW*igcode
+     self%obj2(j)%typ=ityp
+  end do
+
+end subroutine geobjlist_addgcode
+!---------------------------------------------------------------------
+!> add array of geometry codes to objects
+subroutine geobjlist_addgcodes(self,kgcode,lforce)
+  !! arguments
+  type(geobjlist_t), intent(inout) :: self !< geobj list data
+  integer(ki4), dimension(:), intent(in) :: kgcode !< integer array geometry code
+  logical, intent(in), optional :: lforce !< force overwrite if true
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_addgcodes' !< subroutine name
+  integer(ki2par) :: igcode !< integer scalar geometry code
+  logical :: ileave !< leave overwrite if true
+  integer(ki4) :: ityp !< local variable
+
+  ileave=.TRUE.
+  if (present(lforce)) ileave=.NOT.lforce
+  do j=1,self%ng
+     ityp=self%obj2(j)%typ
+     if (ityp==1) cycle ! ignore points
+     if (ityp>GEOBJ_POW.AND.ileave) cycle
+     igcode=abs(kgcode(j))
+     ityp=ibits(self%obj2(j)%typ,0,GEOBJ_BIT_SHIFT)+GEOBJ_POW*igcode
+     self%obj2(j)%typ=ityp
+  end do
+
+end subroutine geobjlist_addgcodes
+!---------------------------------------------------------------------
+!> return number of geometry coded objects
+subroutine geobjlist_querygcode(self,kgcode,kset)
+  !! arguments
+  type(geobjlist_t), intent(inout) :: self !< geobj list data
+  integer(ki2par), intent(in) :: kgcode !< integer scalar geometry code
+  integer(ki4), intent(out) :: kset !< data already geometry coded
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_querygcode' !< subroutine name
+  integer(ki4) :: ityp !< local variable
+
+  kset=0
+  do j=1,self%ng
+     ityp=self%obj2(j)%typ
+     if (ityp>GEOBJ_POW) kset=kset+1
+  end do
+
+end subroutine geobjlist_querygcode
+!---------------------------------------------------------------------
+!> calculate areas of objects
+subroutine geobjlist_area(self,area)
+  !! arguments
+  type(geobjlist_t), intent(in) :: self !< geobj list data
+  real(kr4), dimension(:), allocatable, intent(out) :: area  !< areas of objects
 
   !! local
   character(*), parameter :: s_name='geobjlist_area' !< subroutine name
@@ -3838,6 +3986,186 @@ subroutine geobjlist_area(self,area)
   end do
 
 end subroutine geobjlist_area
+!---------------------------------------------------------------------
+!> calculate total area of objects
+subroutine geobjlist_totarea(self,area)
+  !! arguments
+  type(geobjlist_t), intent(in) :: self !< geobj list data
+  real(kr4), intent(out) :: area  !< total area
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_totarea' !< subroutine name
+  real(kr4) :: zarea !< local variable
+  real(kr8) :: ztotarea !< local variable
+  type(geobj_t) :: igeobj   !< geobj definition
+
+  ztotarea=0
+  do j=1,self%ng
+     igeobj%geobj=self%obj2(j)%ptr
+     igeobj%objtyp=self%obj2(j)%typ
+     call geobj_area(igeobj,self%posl,self%nodl,zarea)
+     ztotarea=ztotarea+zarea
+  end do
+
+  ! convert to msq
+  area=ztotarea*(0.001)**2
+
+end subroutine geobjlist_totarea
+!---------------------------------------------------------------------
+!> angular extent limits of objects
+subroutine geobjlist_angext(self,angmin,angmax)
+  !! arguments
+  type(geobjlist_t), intent(in) :: self !< geobj list data
+  real(kr4), intent(out) :: angmin  !< minimum angle
+  real(kr4), intent(out) :: angmax  !< maximum angle
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_angext' !< subroutine name
+  type(posang_t) :: posang !< position and vector involving angle
+  real(kr4) :: zeta    !<  \f$ \zeta \f$
+
+  angmin=const_pushinf
+  angmax=-const_pushinf
+  do i=1,self%posl%np
+     ! transform positions to R-Z-zeta space
+     posang%pos=self%posl%pos(i)%posvec
+     posang%opt=0 ; posang%units=-3
+     call posang_invtfm(posang,0)
+     ! get angular extent of geometry
+     zeta=posang%pos(3)
+     angmin=min(angmin,zeta)
+     angmax=max(angmax,zeta)
+  end do
+
+end subroutine geobjlist_angext
+!---------------------------------------------------------------------
+!>  read 2nd line of header of legacy vtk file
+subroutine geobjlist_readhedline(self,descriptor,kclabel)
+  !! arguments
+  type(geobjlist_t), intent(inout) :: self !< geobj list data
+  character(len=*), intent(in) :: descriptor !< line
+  character(len=*), intent(out) :: kclabel !< tidied up label at start of line
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_readhedline' !< subroutine name
+  character(len=30) :: iclabel !< input label at start of line
+  character(len=17) :: icpar !< label before equals sign (not returned)
+  integer(ki4) :: ieq !< position of equals in string
+  integer(ki4) :: iieq !< position of another or same equals in string
+  integer(ki4) :: isubstr !< start of substring in string
+  integer(ki4) :: ii   !< number of nparpos descriptors
+  integer(ki4) :: iclen !< real length of label
+
+  !! look for keys embedded in line if "=" present
+  ieq=index(descriptor,'=')
+  if (ieq/=0) then
+     isubstr=index(descriptor,'Number_Parameters=')
+     if (isubstr/=0) then
+        ibuf2=descriptor(isubstr:)
+        iieq=index(ibuf2,'=')
+        read(ibuf2(iieq+1:),'(I3)',iostat=istatus,end=1) inumnparam
+        if(istatus/=0) call log_error(m_name,s_name,1,error_warning,'Error reading inumparam')
+        read(ibuf2(iieq+4:),'(9(1x,i4))',iostat=istatus,end=1) (ipara(l),l=1,inumnparam)
+        if(istatus/=0) call log_error(m_name,s_name,2,error_warning,'Error reading line 2 parameters')
+        do j=1,min(inumnparam,self%numnparam)
+           self%nparam(j)=ipara(j)
+        end do
+        if (inumnparam>self%numnparam) then
+           ii=inumnparam-self%numnparam
+           self%posl%nparpos(1:ii)=ipara(self%numnparam+1:self%numnparam+ii)
+        end if
+     else
+        isubstr=index(descriptor,'Integer_Parameter=')
+        if (isubstr/=0) then
+           ibuf2=descriptor(isubstr:)
+           iieq=index(ibuf2,'=')
+           read(ibuf2(iieq+2:),'(I3)',iostat=istatus,end=1) self%nparam(1)
+           if(istatus/=0) call log_error(m_name,s_name,3,error_warning,'Error reading nparam')
+        end if
+     end if
+  else
+     return
+  end if
+
+  read(descriptor,'(A30,1X,A17)',iostat=istatus,end=1) iclabel,icpar
+  if(istatus/=0) call log_error(m_name,s_name,4,error_warning,'Error reading labels')
+
+  !! strip trailing '-'
+  do l=30,1,-1
+     if (iclabel(l:l)=='-') then
+        iclabel(l:l)=' '
+     else
+        exit
+     end if
+  end do
+  iclen=len_trim(adjustl(iclabel))
+  kclabel(1:iclen)=trim(adjustl(iclabel))
+  return
+
+1     continue
+  call log_error(m_name,s_name,10,error_warning,'Unexpected end of buffer')
+
+end subroutine geobjlist_readhedline
+!---------------------------------------------------------------------
+!>  construct 2nd line for header of legacy vtk file
+subroutine geobjlist_makehedline(self,kclabel,descriptor)
+  !! arguments
+  type(geobjlist_t), intent(in) :: self !< geobj list data
+  character(len=*), intent(in) :: kclabel !< label at start of line
+  character(len=*), intent(out) :: descriptor !< dataset descriptor
+
+  !! local
+  character(*), parameter :: s_name='geobjlist_makehedline' !< subroutine name
+  character(len=80) :: iclabel !< tidied label at start of line
+  integer(ki4) :: iclen !< real length of label
+
+  iclabel=repeat('-',80)
+  iclen=min(len_trim(adjustl(kclabel)),80)
+  iclabel(1:iclen)=trim(adjustl(kclabel))
+
+  ! defaults
+  ipara(1:self%numnparam)=self%nparam(1:self%numnparam)
+  ipara(self%numnparam+1:)=self%posl%nparpos
+  inumnparam=self%numnparam+self%posl%numnparpos
+  ! specials depending on kclabel.
+  ! these cases arise because the the write...v routines may optionally
+  ! transform the position vectors before ultimate output.
+  posveclis : select case (iclabel(1:iclen))
+  case('all','frzzeta')
+     ipara(4)=2
+  case('frzxi')
+     ipara(4)=3
+  case('fxyz')
+     ipara(3)=0
+  case('hds lowest','hds dbtree')
+     ! hdsgen , fldiff
+     ! dequantised HDS  in mapped coordinates
+     ipara(1:2)=(/1,0/)
+     ipara(5)=0
+  case('hds quantised')
+     ! quantised HDS  in mapped coordinates
+     ipara(1:2)=(/1,0/)
+  case('density on hds', 'scalars on hds')
+     ! dequantised Cartesian HDS (m) (n)nucode
+     ipara=(/1,0,0,0,0,0/)
+  case default
+     !case('assigned geobj', 'unassigned geobj', 'all geoptq', 'density geobj')
+     !! no special mapping on output
+     !! quantised, mapped coordinates, either flux or cylindricals
+     !case('allcart','all end points')
+     !! no special mapping on output
+     !! Cartesian mm
+     !case('all end points', 'hds current on geometry', 'hds power on geometry')
+     !case('hds power on geometry', 'hds power on mapped geometry') ! fldiff
+     !! no special mapping on output
+     !case('power','power statistics')
+     !! no special mapping on output
+  end select posveclis
+
+  write(descriptor,'(a30,1x,a18,i3,9(1x,i4))') iclabel(1:30),'Number_Parameters=', &
+ &inumnparam,(ipara(l),l=1,inumnparam)
+
+end subroutine geobjlist_makehedline
 !---------------------------------------------------------------------
 
 function indict2(ndim,dict,word)
@@ -3866,7 +4194,7 @@ subroutine misc_countnos(bigbuf,kfmt)
   integer(ki4), intent(out) :: kfmt !< format of buffer - number of 3-vectors
   character(len=132) :: ibuf !< buffer for input/output
   integer(ki4) :: ilen !< length of string
-  integer(ki4) :: iblan !< number of bank substrings
+  integer(ki4) :: iblan !< number of blank substrings
   integer(ki4) :: isw !< switch on if last character was not blank
   integer(ki4) :: ji !< loop variable
   iblan=0

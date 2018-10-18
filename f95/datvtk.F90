@@ -1,14 +1,15 @@
 program datvtk_p
-
 #ifdef WITH_MPI
   use mpi
 #endif
+
   use const_kind_m
   use const_numphys_h
   use date_time_m
   use control_h
   use dcontrol_h
   use log_m
+  use misc_m
   use clock_m
   use spl2d_m
   use spl3d_m
@@ -61,9 +62,9 @@ program datvtk_p
   character(len=80),save :: iched !< vtk field file descriptor
 
   type(bods_t) :: bods !< type of bods for geometrical objects
-  integer(ki4):: nplot !< unit for vtk files
-  integer(ki4):: nread !< unit for dat files
-  integer(ki4):: nin !< unit for other data
+  integer:: nplot !< unit for vtk files
+  integer:: nread !< unit for dat files
+  integer:: nin !< unit for other data
   integer(ki4):: i !< loop variable
   integer(ki4):: j !< loop variable
   integer(ki4) :: islen   !< length of input field filename
@@ -154,11 +155,11 @@ program datvtk_p
      iopt=1
      call vfile_iscalarread(bods%list,geobjl%ng,trim(fileroot)//'.vtk','Body',nread,iopt)
   case('c')
-     iched='converted dat files in '//fileroot//'.ctl'
-     call geobjlist_create3d(geobjl,numerics)
+     iched='converted dat files in '//trim(fileroot)//'.ctl'
+     call geobjlist_create3d(geobjl,numerics,0_ki2par)
      call bods_initlist(bods,geobjl,1)
   case default
-     iched='converted dat file '//fileroot//'.dat'
+     iched='converted dat file '//trim(fileroot)//'.dat'
      call dfile_init(fileroot,nread)
      call geobjlist_dread(geobjl,nread)
      call bods_initlist(bods,geobjl,1)
@@ -192,17 +193,18 @@ program datvtk_p
      call bods_write(bods,geobjl,fileroot,'none','Body',1)
      call vfile_close
   case('t')
-     ! stl, one set of triangles
+! stl, one set of triangles
      call stlfile_init(trim(fileroot),'triangles',nplot)
      call geobjlist_writestl(geobjl,'triangles',nplot)
      call stlfile_close
   case('b')
-     ! stl, split by body number (TO DO)
+! stl, split by body number (TO DO)
      call stlfile_init(trim(fileroot),'bodies',nplot)
      call geobjlist_writestl(geobjl,'bodies',nplot)
      call stlfile_close
   case default
-     call vfile_init(trim(fileroot)//'_out',iched,nplot)
+     call geobjlist_makehedline(geobjl,iched,vtkdesc)
+     call vfile_init(trim(fileroot)//'_out',vtkdesc,nplot)
      call geobjlist_writev(geobjl,'geometry',nplot)
      if (optarg(3:3)=='m') bods%list=1 ! suppress body information
      call vfile_iscalarwrite(bods%list,bods%nbod,'Body','CELL',nplot,1)
@@ -220,6 +222,7 @@ program datvtk_p
   call log_close
   call clock_delete
 !--------------------------------------------------------------------------
+
 #ifdef WITH_MPI
   end if
   call MPI_Finalize ( error )

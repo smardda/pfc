@@ -21,7 +21,10 @@ module geobj_m
   geobj_area, &  !< calculate area of geobj
   geobj_nodes, &  !< return geobj nodal values
   geobj_centre, &  !< calculate barycentre of geobj
-  geobj_sample !< calculate sample point of geobj
+  geobj_sample, & !< calculate sample point of geobj
+  geobj_entry_table_fn, &  !< return number of entries in geobj_entry_table
+  geobj_type_fn, &  !< extract last 8 bits in geobj_entry_table
+  geobj_code_fn  !< get geometry code
 
 
 ! public types
@@ -36,7 +39,20 @@ module geobj_m
    !! geobj2 data type ! type 2 - list of labels
    ! identifiers
      integer(ki4) :: ptr !< geobj2 identifier (pointer to label array)
-     integer(ki2) :: typ !< geobj2 type
+   !> geobj2
+   !! geometry type coded using vtk type (5 for triangles etc.) plus
+   !! code describing function of each object (type+256*integer in list)
+   !! 0. geometry
+   !! 1. periodic boundary (high)
+   !! 2. periodic boundary (low)
+   !! 3. transparent geometry, totally ignored
+   !! 4. skylight
+   !! 5. terminating geometry, no termplane instructions
+   !! 6. beancan
+   !! 7. cutout
+   !! 32+ptr. termination plane
+   !! 64+ptr. boundary interface
+     integer(ki2) :: typ !< -
   end type geobj2_t
 
   type, public :: geobj_t
@@ -70,6 +86,22 @@ module geobj_m
   integer(ki2par),  parameter, public :: VTK_QUADRATIC_QUAD=23 !< vtk variable
   integer(ki2par),  parameter, public :: VTK_QUADRATIC_TETRA=24 !< vtk variable
   integer(ki2par),  parameter, public :: VTK_QUADRATIC_HEXAHEDRON=25 !< vtk variable
+
+  integer(ki2par),  parameter, public :: GEOBJ_BIT_SHIFT=8 !< for encoding geometry
+  integer(ki2par),  parameter, public :: GEOBJ_POW=2**GEOBJ_BIT_SHIFT !< for encoding geometry
+  integer(ki2par),  parameter, public :: GEOBJ_ABSORB=0!< First wall (absorbing boundary)
+  integer(ki2par),  parameter, public :: GEOBJ_PERMAX=1!< Periodic boundary (Max third angle)
+  integer(ki2par),  parameter, public :: GEOBJ_PERMIN=2!< Periodic boundary (Min third angle)
+  integer(ki2par),  parameter, public :: GEOBJ_INVISI=3!< Transparent geometry, totally ignored
+  integer(ki2par),  parameter, public :: GEOBJ_SKYLIT=4!< Skylight
+  integer(ki2par),  parameter, public :: GEOBJ_ESCAPE=5!< Escape boundary (Loss)
+  integer(ki2par),  parameter, public :: GEOBJ_ERRLOS=6!< Beancan (Error Loss)
+  integer(ki2par),  parameter, public :: GEOBJ_CUTOUT=7!< Cutout (Intended Loss)
+  integer(ki2par),  parameter, public :: GEOBJ_TERMPL=32!< Terminating plane, pointer to %termplane array
+  integer(ki2par),  parameter, public :: GEOBJ_INTERF=64!< Boundary interface, pointer to boundary array TO BE DONE
+!> Offset between geometry and handling codes
+!!  Plan is to remove use of nobjhit codes -1 and -2 so this can be set to zero
+  integer(ki2par),  parameter, public :: GEOBJ_OFFSET=-2!< -
 ! private types
 
 ! private variables
@@ -90,7 +122,7 @@ subroutine geobj_readv(self,k,kin)
   !! arguments
   type(geobj_t), intent(out) :: self   !< geobj data
   integer(ki4), intent(in) :: k   !< part of geobj data
-  integer(ki4), intent(in) :: kin   !< input channel for geobj data
+  integer, intent(in) :: kin   !< input channel for geobj data
 
 
   !! local
@@ -116,7 +148,7 @@ subroutine geobj_writev(self,k,kout)
   !! arguments
   type(geobj_t), intent(in) :: self   !< geobj data
   integer(ki4), intent(in) :: k   !< part of geobj data
-  integer(ki4), intent(in) :: kout   !< output channel for geobj data
+  integer, intent(in) :: kout   !< output channel for geobj data
 
 
   !! local
@@ -144,7 +176,7 @@ subroutine geobj_writestl(self,posl,nodl,k,kout)
   type(posveclis_t), intent(in) :: posl   !< list of positions
   integer(ki4), dimension(*), intent(in) :: nodl   !< list of nodes
   integer(ki4), intent(in) :: k   !< part of geobj data (inert, but keep for consistency)
-  integer(ki4), intent(in) :: kout   !< output channel for geobj data
+  integer, intent(in) :: kout   !< output channel for geobj data
 
   !! local
   character(*), parameter :: s_name='geobj_writestl' !< subroutine name
@@ -154,9 +186,12 @@ subroutine geobj_writestl(self,posl,nodl,k,kout)
   integer(ki4), dimension(8) :: inod !< nodes of obj
   real(kr4), dimension(3) :: znormal !< unit normal vector
   real(kr4) :: zmag !< magnitude of normal vector
+  integer(ki2) :: ityp !< object type
 
-  if (self%objtyp==VTK_TRIANGLE) then
-     inn=geobj_entry_table(self%objtyp)
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE) then
+     ! triangle type
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -187,10 +222,9 @@ function geobj_inbox(self,posl,nodl,box)
   integer(ki4), dimension(*), intent(in) :: nodl   !< list of nodes
   real(kr4), dimension(3,2), intent(in) :: box !< bounding box corners
 
-
   !! local
   character(*), parameter :: s_name='geobj_inbox' !< subroutine name
-  logical :: geobj_inbox !< local variable
+  logical :: geobj_inbox !< function variable type
   type(posvecl_t) :: zpos   !< position
   logical :: linint   !< geobj in interval
   logical :: linbox   !< geobj in interval
@@ -200,7 +234,9 @@ function geobj_inbox(self,posl,nodl,box)
   integer(ki4), dimension(8) :: inod !< nodes of obj
   real(kr4), dimension(3) :: xc !< centre of  box
   real(kr4), dimension(3) :: hh !< half side of box
+  integer(ki2) :: ityp !< object type
 
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
 
   if (self%objtyp==1) then
      ! particle type
@@ -213,17 +249,21 @@ function geobj_inbox(self,posl,nodl,box)
         linbox=linbox.and.linint
      end do
 
-  else if (self%objtyp==VTK_TRIANGLE) then
-     inn=geobj_entry_table(self%objtyp)
-     ! triangle type
-     ii=self%geobj
-     do jj=1,inn
-        inod(jj)=nodl(ii+jj-1)
-        xnodes(:,jj)=posl%pos(inod(jj))%posvec
-     end do
-     xc=0.5*(box(:,1)+box(:,2))
-     hh=0.500005*abs(box(:,2)-box(:,1))
-     linbox=geobj_trihitsbox(xc,hh,xnodes)
+  else
+
+     ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+     if (ityp==VTK_TRIANGLE) then
+        ! triangle type
+        inn=geobj_entry_table(ityp)
+        ii=self%geobj
+        do jj=1,inn
+           inod(jj)=nodl(ii+jj-1)
+           xnodes(:,jj)=posl%pos(inod(jj))%posvec
+        end do
+        xc=0.5*(box(:,1)+box(:,2))
+        hh=0.500005*abs(box(:,2)-box(:,1))
+        linbox=geobj_trihitsbox(xc,hh,xnodes)
+     end if
   end if
 
   geobj_inbox=linbox
@@ -242,7 +282,7 @@ function geobj_innbox(self,posl,kcorn,kext)
 
   !! local
   character(*), parameter :: s_name='geobj_innbox' !< subroutine name
-  logical :: geobj_innbox !< local variable
+  logical :: geobj_innbox !< function variable type
   type(posvecl_t) :: zpos   !< position
   logical :: linbox   !< geobj in interval
   integer(ki4) :: ii   !< geobj position
@@ -320,14 +360,16 @@ subroutine geobj_linehits(self,poso,posn,posl,nodl,posh,ps,psmin,lhit)
   real(kr4), dimension(3) :: z0p !< intersection point relative to triangle
   real(kr4) :: zalpha !< local coordinate of intersection point
   real(kr4) :: zbeta !< local coordinate of intersection point
+  integer(ki2) :: ityp !< object type
 
   ! defaults
   lhit=.false.
   ps=0.
 
-  if (self%objtyp==VTK_TRIANGLE) then
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE) then
      ! triangle type
-     inn=geobj_entry_table(self%objtyp)
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -389,7 +431,7 @@ function geobj_trihitsbox(xc,hh,xnodes)
 
   !! local
   character(*), parameter :: s_name='geobj_trihitsbox' !< subroutine name
-  logical :: geobj_trihitsbox !< local variable
+  logical :: geobj_trihitsbox !< function variable type
   real(kr4), dimension(3) :: fnormal !< normal to face element
   real(kr4), dimension(3) :: s1 !< edge vector 1 of face element
   real(kr4), dimension(3) :: s2 !< edge vector 2 of face element
@@ -521,10 +563,12 @@ subroutine geobj_normal(self,posl,nodl,pnormal,pmag)
   real(kr4) :: zdsq !< dot product squared
   real(kr4) :: zd !< dot product
   real(kr4) :: zref !< reference length based on maximum component length
+  integer(ki2) :: ityp !< object type
 
-  if (self%objtyp==VTK_TRIANGLE) then
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE) then
      ! triangle type
-     inn=geobj_entry_table(self%objtyp)
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -576,10 +620,12 @@ subroutine geobj_area(self,posl,nodl,parea)
   real(kr4) :: zarea !< cumulative area
   real(kr4) :: zd !< dot product
   real(kr4) :: zref !< reference length based on maximum component length
+  integer(ki2) :: ityp !< object type
 
-  if (self%objtyp==VTK_TRIANGLE.OR.self%objtyp==VTK_QUAD) then
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE.OR.ityp==VTK_QUAD) then
      ! triangle or quad type
-     inn=geobj_entry_table(self%objtyp)
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -624,8 +670,10 @@ subroutine geobj_nodes(self,posl,nodl,pnodes)
   integer(ki4) :: jj   !< loop counter
   integer(ki2) :: inn !< number of nodes defining geobj
   integer(ki4), dimension(8) :: inod !< nodes of obj
+  integer(ki2) :: ityp !< object type
 
-  inn=geobj_entry_table(self%objtyp)
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  inn=geobj_entry_table(ityp)
   if (inn>=1.AND.inn<=8) then
      ii=self%geobj
      do jj=1,inn
@@ -655,10 +703,12 @@ subroutine geobj_centre(self,posl,nodl,pcentr)
   integer(ki2) :: inn !< number of nodes defining geobj
   integer(ki4), dimension(8) :: inod !< nodes of obj
   real(kr4), dimension(3,8) :: xnodes !< x(compt,node) of obj
+  integer(ki2) :: ityp !< object type
 
-  if (self%objtyp==VTK_TRIANGLE) then
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE) then
      ! triangle type
-     inn=geobj_entry_table(self%objtyp)
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -688,10 +738,12 @@ subroutine geobj_sample(self,posl,nodl,pt,psampl)
   integer(ki2) :: inn !< number of nodes defining geobj
   integer(ki4), dimension(8) :: inod !< nodes of obj
   real(kr4), dimension(3,8) :: xnodes !< x(compt,node) of obj
+  integer(ki2) :: ityp !< object type
 
-  if (self%objtyp==VTK_TRIANGLE) then
+  ityp=ibits(self%objtyp,0,GEOBJ_BIT_SHIFT)
+  if (ityp==VTK_TRIANGLE) then
      ! triangle type
-     inn=geobj_entry_table(self%objtyp)
+     inn=geobj_entry_table(ityp)
      ii=self%geobj
      do jj=1,inn
         inod(jj)=nodl(ii+jj-1)
@@ -703,6 +755,54 @@ subroutine geobj_sample(self,posl,nodl,pt,psampl)
   end if
 
 end subroutine geobj_sample
+!---------------------------------------------------------------------
+!> return number of entries in geobj_entry_table
+function geobj_entry_table_fn(ktyp)
+
+  !! arguments
+  integer(ki2), intent(in) :: ktyp   !< object type
+
+  !! local
+  character(*), parameter :: s_name='geobj_entry_table_fn' !< subroutine name
+  integer(ki2) :: geobj_entry_table_fn !< function variable type
+  integer(ki2) :: ityp   !< geobj type unscrambled
+
+  ityp=ibits(ktyp,0,GEOBJ_BIT_SHIFT)
+  geobj_entry_table_fn=geobj_entry_table(ityp)
+
+end function geobj_entry_table_fn
+!---------------------------------------------------------------------
+!> extract last 8 bits in geobj_entry_table
+function geobj_type_fn(ktyp)
+
+  !! arguments
+  integer(ki2), intent(in) :: ktyp   !< object type
+
+  !! local
+  character(*), parameter :: s_name='geobj_type_fn' !< subroutine name
+  integer(ki2par) :: geobj_type_fn !< function variable type
+  integer(ki2par) :: ityp   !< geobj type unscrambled
+
+  ityp=ibits(ktyp,0,GEOBJ_BIT_SHIFT)
+  geobj_type_fn=ityp
+
+end function geobj_type_fn
+!---------------------------------------------------------------------
+!> get geometry code
+function geobj_code_fn(ktyp)
+
+  !! arguments
+  integer(ki2), intent(in) :: ktyp   !< object type
+
+  !! local
+  character(*), parameter :: s_name='geobj_code_fn' !< subroutine name
+  integer(ki2par) :: geobj_code_fn !< function variable type
+  integer(ki2par) :: igcode   !< code for geometry
+
+  igcode=ishft(ktyp,-GEOBJ_BIT_SHIFT)
+  geobj_code_fn=igcode
+
+end function geobj_code_fn
 !---------------------------------------------------------------------
 !> vector cross product (kr4) of the input vectors a and b
 subroutine cross_product(a,b,crossout)

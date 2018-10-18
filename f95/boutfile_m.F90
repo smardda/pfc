@@ -2,6 +2,7 @@ module boutfile_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use bcontrol_m
   use date_time_m
   use position_h
@@ -15,14 +16,14 @@ module boutfile_m
 
 ! public subroutines
   public :: &
- &boutfile_init, &
- &boutfile_write, &
+ &boutfile_init, & !< find unit, open file and write header
+ &boutfile_write, & !< write data structure
+ &boutfile_getunit,  & !< get unit number
  &boutfile_close
-! public types
-  integer(ki4) :: nout !< output file unit
 
 ! private variables
   character(*), parameter :: m_name='boutfile_m' !< module name
+  integer, save :: nout=-1 !< output file unit
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -43,16 +44,10 @@ subroutine boutfile_init(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='boutfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+   !! logical :: unitused !< flag to test unit is available
+!! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%geoqout),status='new',form='FORMATTED',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -90,6 +85,16 @@ subroutine boutfile_write(beq,timestamp)
   !dbg     call beq_write(beq,nout)
 
 end  subroutine boutfile_write
+!---------------------------------------------------------------------
+!> get unit number for output
+subroutine boutfile_getunit(kunit)
+
+  !! arguments
+  integer, intent(out) :: kunit    !< log unit number
+
+  kunit=nout
+
+end subroutine boutfile_getunit
 !---------------------------------------------------------------------
 !> close output files
 subroutine boutfile_close

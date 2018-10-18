@@ -3,6 +3,7 @@ module soutfile_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use scontrol_h
   use date_time_m
   use geobj_m
@@ -20,7 +21,7 @@ module soutfile_m
  &soutfile_write, &
  &soutfile_close
 ! public types
-  integer(ki4) :: nout !< output file unit
+  integer :: nout !< output file unit
 
 ! private variables
   character(*), parameter :: m_name='soutfile_m' !< module name
@@ -44,16 +45,10 @@ subroutine soutfile_init(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='soutfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%smanalout),status='new',form='FORMATTED',iostat=status)
   if(status/=0)then
      !! error opening file

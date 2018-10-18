@@ -2,9 +2,9 @@ module dbtree_h
 
   use const_kind_m
   use position_h
-  use ls_m 
-  use li_m 
-  use ld_m 
+  use ls_m
+  use li_m
+  use ld_m
 
 ! public types
 

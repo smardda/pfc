@@ -2,6 +2,7 @@ module beqan_m
 
   use beqan_h
   use log_m
+  use misc_m
   use const_kind_m
 
   implicit none
@@ -23,12 +24,12 @@ module beqan_m
 
 ! private variables
   character(*), parameter :: m_name='beqan_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4),save  :: ninba=5      !< control file unit number
-  integer(ki4),save  :: noutba=6      !< output file unit number
+  integer  :: status   !< error status
+  integer,save  :: ninba=5      !< control file unit number
+  integer,save  :: noutba=6      !< output file unit number
   character(len=80), save :: controlfile !< control file name
   character(len=80), save :: outputfile !< output file name
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -38,29 +39,21 @@ module beqan_m
   contains
 !---------------------------------------------------------------------
 !> open file
-subroutine beqan_init(file,kin)
+subroutine beqan_init(file,channel)
 
   !! arguments
   character(*), intent(in) :: file !< file name
-  integer(ki4), intent(out),optional :: kin   !< input channel for object data structure
+  integer, intent(out),optional :: channel   !< input channel for object data structure
   !! local
   character(*), parameter :: s_name='beqan_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
-
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kin=i
-        exit
-     end if
-  end do
-  ninba=i
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then channel=i exit end if end do ninba=i
 
   !! open file
   controlfile=trim(file)
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(ninba)
   open(unit=ninba,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -68,6 +61,7 @@ subroutine beqan_init(file,kin)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open control data file')
      stop
   end if
+  if (present(channel)) channel=ninba
 
 end  subroutine beqan_init
 !---------------------------------------------------------------------
@@ -76,7 +70,7 @@ subroutine beqan_readcon(self,kin)
 
   !! arguments
   type(beqan_t), intent(out) :: self !< type which data will be assigned to
-  integer(ki4), intent(in),optional :: kin   !< input channel for object data structure
+  integer, intent(in),optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='beqan_readcon' !< subroutine name
@@ -383,30 +377,22 @@ subroutine beqan_generic(self,y,B,psi)
 end subroutine beqan_generic
 !---------------------------------------------------------------------
 !> open new file
-subroutine beqan_initwrite(fileroot,kout)
+subroutine beqan_initwrite(fileroot,channel)
 
   !! arguments
   character(*), intent(in) :: fileroot !< file root
-  integer(ki4), intent(out),optional :: kout   !< output channel for object data structure
+  integer, intent(out),optional :: channel   !< output channel for object data structure
   !! local
   character(*), parameter :: s_name='beqan_initwrite' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: outputfile !< output file name
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kout=i
-        exit
-     end if
-  end do
-
-  noutba=i
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then channel=i exit end if end do noutba=i
 
   !! open file
   outputfile=trim(fileroot)//"_beqan.out"
   call log_value("Control data file",trim(outputfile))
+  call misc_getfileunit(noutba)
   open(unit=noutba,file=outputfile,status='NEW',iostat=status)
   if(status/=0)then
      open(unit=noutba,file=outputfile,status='REPLACE',iostat=status)
@@ -417,6 +403,7 @@ subroutine beqan_initwrite(fileroot,kout)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open output data file')
      stop
   end if
+  if (present(channel)) channel=noutba
 
 end subroutine beqan_initwrite
 !---------------------------------------------------------------------
@@ -425,11 +412,11 @@ subroutine beqan_write(self,kout)
 
   !! arguments
   type(beqan_t), intent(in) :: self   !< beqan data structure
-  integer(ki4), intent(in), optional :: kout   !< output channel for beqan data structure
+  integer, intent(in), optional :: kout   !< output channel for beqan data structure
 
   !! local
   character(*), parameter :: s_name='beqan_write' !< subroutine name
-  integer(ki4) :: iout   !< output channel for beqan data structure
+  integer :: iout   !< output channel for beqan data structure
 
   !! sort out unit
   if(present(kout)) then

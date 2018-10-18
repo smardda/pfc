@@ -42,8 +42,9 @@ module bods_m
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
-  integer(ki4) :: status  !< status flag
+  integer :: status  !< status flag
   logical :: iltest !< logical flag
+  character(len=256) :: vtkdesc !< descriptor line for vtk files
 
   contains
 !---------------------------------------------------------------------
@@ -63,12 +64,12 @@ subroutine bods_init(self,geobjl,numerics)
   !! allocate array
   iobod=geobjl%ng
   if( .NOT.allocated(self%list) ) then
-  if( iobod>0 ) then
-     allocate(self%list(iobod),stat=status)
-     call log_alloc_check(m_name,s_name,1,status)
-  else
-     call log_error(m_name,s_name,2,error_fatal,'No bods data')
-  end if
+     if( iobod>0 ) then
+        allocate(self%list(iobod),stat=status)
+        call log_alloc_check(m_name,s_name,1,status)
+     else
+        call log_error(m_name,s_name,2,error_fatal,'No bods data')
+     end if
   end if
   self%nbod=iobod
 
@@ -190,7 +191,7 @@ subroutine bods_write(self,geobjl,fileroot,kctyp,kcname,kheader)
   integer(ki4)  :: innodsmall !< number of nodal data in small geobjlist
   integer(ki4)  :: iostart!< end points of object list if bods' objects contiguous
   integer(ki4)  :: ioend !< end points of object list if bods' objects contiguous
-  integer(ki4) :: iplot   !< output channel for bods list data
+  integer :: iplot   !< output channel for bods list data
   integer(ki4) :: innd !< position of first entry for object in nodl
   integer(ki4) :: iobj !< local variable
   integer(ki4) :: inumpts !< length of object in nodl array
@@ -209,8 +210,9 @@ subroutine bods_write(self,geobjl,fileroot,kctyp,kcname,kheader)
      !! make up icplot from fileroot, iched from fileroot
      write(ic5,'(I5.5)') i
      icplot=trim(fileroot)//'_'//ic5
-     iched='original filename root '//fileroot
-     call vfile_init(icplot,iched,iplot)
+     iched='root was '//fileroot
+     call geobjlist_makehedline(geobjl,iched,vtkdesc)
+     call vfile_init(icplot,vtkdesc,iplot)
 
      !! construct small geobjl, first allocate storage
 
@@ -223,7 +225,7 @@ subroutine bods_write(self,geobjl,fileroot,kctyp,kcname,kheader)
            inobjsmall=inobjsmall+1
            !     iobj=geobjl%obj2(j)%ptr
            ityp=geobjl%obj2(j)%typ
-           inumpts=geobj_entry_table(ityp)
+           inumpts=geobj_entry_table_fn(ityp)
            innodsmall=innodsmall+inumpts
         end if
      end do
@@ -244,7 +246,7 @@ subroutine bods_write(self,geobjl,fileroot,kctyp,kcname,kheader)
            inobj=inobj+1
            iobj=geobjl%obj2(j)%ptr
            ityp=geobjl%obj2(j)%typ
-           inumpts=geobj_entry_table(ityp)
+           inumpts=geobj_entry_table_fn(ityp)
            do k=1,inumpts
               glsmall%nodl(innd-1+k)=geobjl%nodl(iobj-1+k)
            end do

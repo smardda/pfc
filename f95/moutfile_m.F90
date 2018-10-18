@@ -2,6 +2,7 @@ module moutfile_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use mcontrol_h
   use date_time_m
 
@@ -18,7 +19,7 @@ module moutfile_m
 
 ! private variables
   character(*), parameter :: m_name='moutfile_m' !< module name
-  integer(ki4) :: nout !< output file unit
+  integer :: nout !< output file unit
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -37,22 +38,14 @@ subroutine moutfile_init(fout,numerics,descriptor,kout)
   character(len=*), intent(in) :: fout !< file name root
   type(mnumerics_t), intent(in)  :: numerics  !< numerical control parameters
   character(len=*), intent(in) :: descriptor !< dataset descriptor
-  integer(ki4), intent(inout) :: kout   !< unit number
+  integer, intent(inout) :: kout   !< unit number
 
   !! local
   character(*), parameter :: s_name='moutfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then kout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kout=i
-        exit
-     end if
-  end do
-
-  nout=kout
-
+  call misc_getfileunit(kout)
   open(unit=kout,file=trim(fout),status='new',form='FORMATTED',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -60,6 +53,7 @@ subroutine moutfile_init(fout,numerics,descriptor,kout)
   else
      call log_error(m_name,s_name,2,log_info,'data structure file opened')
   end if
+  nout=kout
 
   !! header information
 
@@ -76,21 +70,15 @@ subroutine moutfile_read(infile,pvar,kin)
   !! arguments
   character(len=*), intent(in) :: infile !< file name
   real(kr8), intent(out) :: pvar !< real variable to read
-  integer(ki4), intent(inout) :: kin   !< unit number
+  integer, intent(inout) :: kin   !< unit number
 
   !! local
   character(*), parameter :: s_name='moutfile_read' !< subroutine name
-  logical :: unitused !< flag to test unit is available
-
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        kin=i
-        exit
-     end if
-  end do
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then kin=i exit end if end do
 
   !! open file
+  call misc_getfileunit(kin)
   open(unit=kin,file=trim(infile),status='OLD',form='FORMATTED',iostat=status)
   if(status/=0)then
      !! error opening file

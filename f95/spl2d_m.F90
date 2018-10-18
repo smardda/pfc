@@ -3,6 +3,7 @@ module spl2d_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use position_h
   use position_m
 
@@ -18,6 +19,7 @@ module spl2d_m
   spl2d_scale,  &  !< scale spline values
   spl2d_delete,   & !< delete  spl2d data structure
   spl2d_writeg, & !< write in gnuplot format
+  spl2d_writev, & !< write in paraview format
   spl2d_write, & !< write in data structure format
   spl2d_locpos, & !< find integer coordinates of point
   spl2d_deriv, & !< differentiate with respect to coordinate
@@ -68,7 +70,7 @@ module spl2d_m
   character(*), parameter :: m_name='spl2d_m' !< module name
   real(kr8), dimension(:,:), allocatable :: work2 !< 2D work array
   integer   :: status   !< error status
-  integer(ki4) :: nin   !< input channel for spl2d data
+  integer :: nin   !< input channel for spl2d data
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -88,26 +90,20 @@ subroutine spl2d_read(self,infile,kin)
   !! arguments
   type(spl2d_t), intent(out) :: self   !< object data structure
   character(len=80),intent(in) :: infile !< name of input file
-  integer(ki4), intent(in),optional :: kin   !< input channel for object data structure
+  integer, intent(in),optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='spl2d_read' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
 
   if(present(kin).AND.kin/=0) then
      !! assume unit already open and reading infile
      nin=kin
   else
-     !! get file unit
-     do i=99,1,-1
-        inquire(i,opened=unitused)
-        if(.not.unitused)then
-           nin=i
-           exit
-        end if
-     end do
+     !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
      !! open file
+     call misc_getfileunit(nin)
      open(unit=nin,file=infile,status='OLD',form='FORMATTED',iostat=status)
      if(status/=0)then
         !! error opening file
@@ -119,6 +115,7 @@ subroutine spl2d_read(self,infile,kin)
 
 
   read(nin,*,iostat=status) ibuff
+  !write(*,*) ibuff
   read(nin,*,iostat=status) self%lunif
   if(status/=0) then
      call log_error(m_name,s_name,7,error_fatal,'Error reading object data')
@@ -588,7 +585,7 @@ subroutine spl2d_writeg(self,kchar,kout)
   !! arguments
   type(spl2d_t), intent(in) :: self   !< object data structure
   character(*), intent(in) :: kchar  !< case
-  integer(ki4), intent(in) :: kout   !< output channel for object data structure
+  integer, intent(in) :: kout   !< output channel for object data structure
 
 
   !! local
@@ -614,12 +611,42 @@ subroutine spl2d_writeg(self,kchar,kout)
 
 end subroutine spl2d_writeg
 !---------------------------------------------------------------------
+!> write in paraview format
+subroutine spl2d_writev(self,kchar,kout)
+
+  !! arguments
+  type(spl2d_t), intent(in) :: self   !< object data structure
+  character(*), intent(in) :: kchar  !< case
+  integer, intent(in) :: kout   !< output channel for object data structure
+
+
+  !! local
+  character(*), parameter :: s_name='spl2d_writev' !< subroutine name
+
+  plot_type: select case (kchar)
+  case('sampl')
+
+     do j=1,self%n2p
+        do i=1,self%n1p
+           write(kout,cfmtbs1,iostat=status) self%sampl(i,j)
+        end do
+     end do
+     if(status/=0) then
+        call log_error(m_name,s_name,1,error_fatal,'Error writing sampl')
+     end if
+
+  case default
+
+  end select plot_type
+
+end subroutine spl2d_writev
+!---------------------------------------------------------------------
 !> write in data format
 subroutine spl2d_write(self,kout)
 
   !! arguments
   type(spl2d_t), intent(in) :: self   !< object data structure
-  integer(ki4), intent(in) :: kout   !< output channel for object data structure
+  integer, intent(in) :: kout   !< output channel for object data structure
 
 
   !! local
@@ -778,14 +805,14 @@ subroutine spl2d_eval(self,p1,p2,pe)
   integer(ki4) :: ii   !<  integer loop work
   integer(ki4) :: ij   !<  integer loop work
   integer(ki4) :: iflag   !<  warning flag
-  real(kr8) :: zz   !< 
+  real(kr8) :: zz    !< local variable
   real(kr8) :: p1f   !< fractional part of p1
   real(kr8) :: p2f   !< fractional part of p2
-!dbgwval1  real(kr8), dimension(4) :: zwork   !< workspace !dbgwval1
+  !dbgwval1  real(kr8), dimension(4) :: zwork   !< workspace !dbgwval1
 
   zz=0
   if (self%lunif==0) then
-  ! assumes points non-uniformly distributed
+     ! assumes points non-uniformly distributed
      call interv(self%knot1,self%n1p+self%nord,p1,ipp,iflag)
      if (iflag>0) then
         call log_error(m_name,s_name,1,error_warning,'Point not in range of spline')
@@ -806,20 +833,20 @@ subroutine spl2d_eval(self,p1,p2,pe)
            self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(j+ip,ii)
         end do
      end do
-   
+
      call bsplvn(self%knot2,self%nord,1,p2,iqq,self%val1)
      do i=1,self%nord
         zz=zz+self%val2(i)*self%val1(i)
      end do
-   
+
   else if (self%lunif==1) then
-  ! assume uniform distribution for point location, not for final evaluation
+     ! assume uniform distribution for point location, not for final evaluation
      call interu(self%rh1,self%n1p,p1-self%org1,ipp,self%pad1,self%noff,self%nord)
      call interu(self%rh2,self%n2p,p2-self%org2,iqq,self%pad2,self%noff,self%nord)
      ip=ipp-self%nord
      iq=iqq-self%nord
      call bsplvn(self%knot1,self%nord,1,p1,ipp,self%val1)
-!dbgwval1     write(121,*) 'val1 array 1',ip,(self%val1(i),i=1,4) !dbgwval1
+     !dbgwval1     write(121,*) 'val1 array 1',ip,(self%val1(i),i=1,4) !dbgwval1
      do i=1,self%nord
         ii=i+iq
         self%val2(i)=0
@@ -827,40 +854,40 @@ subroutine spl2d_eval(self,p1,p2,pe)
            self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(j+ip,ii)
         end do
      end do
-   
+
      call bsplvn(self%knot2,self%nord,1,p2,iqq,self%val1)
-!dbgwval1     write(121,*) 'val1 array 2',iq,(self%val1(i),i=1,4) !dbgwval1
+     !dbgwval1     write(121,*) 'val1 array 2',iq,(self%val1(i),i=1,4) !dbgwval1
      do i=1,self%nord
         zz=zz+self%val2(i)*self%val1(i)
      end do
-   
+
   else if (self%lunif==2) then
-  ! assume uniform distribution for both point location and final evaluation
+     ! assume uniform distribution for both point location and final evaluation
      call interw(self%rh1,self%n1p,p1-self%org1,self%pad1,self%noff,self%nord,ipp,p1f)
      call interw(self%rh2,self%n2p,p2-self%org2,self%pad2,self%noff,self%nord,iqq,p2f)
      ip=ipp-self%nord
      iq=iqq-self%nord
      call bsplwn(ipp,p1f,self%n1p,self%val1)
-!dbgwval1     zwork(1:4)=self%val1 !dbgwval1
-!dbgwval1     write(122,*) 'val1 array 1',ip,(zwork(i),i=1,4) !dbgwval1
-!optw     ii=iq
-!optw     do i=1,self%nord
-!optw        ii=ii+1
-!optw        self%val2(i)=0
-!optw        ij=ip
-!optw        do j=1,self%nord
-!optw           ij=ij+1
-!optw           self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(ij,ii)
-!optw        end do
-!optw     end do
+     !dbgwval1     zwork(1:4)=self%val1 !dbgwval1
+     !dbgwval1     write(122,*) 'val1 array 1',ip,(zwork(i),i=1,4) !dbgwval1
+     !optw     ii=iq
+     !optw     do i=1,self%nord
+     !optw        ii=ii+1
+     !optw        self%val2(i)=0
+     !optw        ij=ip
+     !optw        do j=1,self%nord
+     !optw           ij=ij+1
+     !optw           self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(ij,ii)
+     !optw        end do
+     !optw     end do
      self%val2=matmul(self%val1,self%coeff(ip+1:ipp,iq+1:iqq))
-   
+
      call bsplwn(iqq,p2f,self%n2p,self%val1)
-!dbgwval1     zwork(1:4)=self%val1 !dbgwval1
-!dbgwval1     write(122,*) 'val1 array 2',iq,(zwork(i),i=1,4) !dbgwval1
-!optw     do i=1,self%nord
-!optw        zz=zz+self%val2(i)*self%val1(i)
-!optw     end do
+     !dbgwval1     zwork(1:4)=self%val1 !dbgwval1
+     !dbgwval1     write(122,*) 'val1 array 2',iq,(zwork(i),i=1,4) !dbgwval1
+     !optw     do i=1,self%nord
+     !optw        zz=zz+self%val2(i)*self%val1(i)
+     !optw     end do
      zz=dot_product(self%val2,self%val1)
   end if
 
@@ -887,10 +914,10 @@ subroutine spl2d_evaln(self,p1,p2,kcall,pe)
   integer(ki4) :: ii   !<  integer loop work
   integer(ki4) :: ij   !<  integer loop work
   integer(ki4) :: iflag   !<  warning flag
-  real(kr8) :: zz   !< 
+  real(kr8) :: zz    !< local variable
   real(kr8) :: p1f   !< fractional part of p1
   real(kr8) :: p2f   !< fractional part of p2
-!dbgwval1  real(kr8), dimension(4) :: zwork   !< workspace !dbgwval1
+  !dbgwval1  real(kr8), dimension(4) :: zwork   !< workspace !dbgwval1
   integer(ki4), save :: sip   !< reusable index
   integer(ki4), save :: sipp  !< reusable index
   integer(ki4), save :: siq   !< reusable index
@@ -900,7 +927,7 @@ subroutine spl2d_evaln(self,p1,p2,kcall,pe)
 
   zz=0
   if (self%lunif==0) then
-  ! assumes points non-uniformly distributed
+     ! assumes points non-uniformly distributed
      call interv(self%knot1,self%n1p+self%nord,p1,ipp,iflag)
      if (iflag>0) then
         call log_error(m_name,s_name,1,error_warning,'Point not in range of spline')
@@ -921,20 +948,20 @@ subroutine spl2d_evaln(self,p1,p2,kcall,pe)
            self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(j+ip,ii)
         end do
      end do
-   
+
      call bsplvn(self%knot2,self%nord,1,p2,iqq,self%val1)
      do i=1,self%nord
         zz=zz+self%val2(i)*self%val1(i)
      end do
-   
+
   else if (self%lunif==1) then
-  ! assume uniform distribution for point location, not for final evaluation
+     ! assume uniform distribution for point location, not for final evaluation
      call interu(self%rh1,self%n1p,p1-self%org1,ipp,self%pad1,self%noff,self%nord)
      call interu(self%rh2,self%n2p,p2-self%org2,iqq,self%pad2,self%noff,self%nord)
      ip=ipp-self%nord
      iq=iqq-self%nord
      call bsplvn(self%knot1,self%nord,1,p1,ipp,self%val1)
-!dbgwval1     write(121,*) 'val1 array 1',ip,(self%val1(i),i=1,4) !dbgwval1
+     !dbgwval1     write(121,*) 'val1 array 1',ip,(self%val1(i),i=1,4) !dbgwval1
      do i=1,self%nord
         ii=i+iq
         self%val2(i)=0
@@ -942,15 +969,15 @@ subroutine spl2d_evaln(self,p1,p2,kcall,pe)
            self%val2(i)=self%val2(i)+self%val1(j)*self%coeff(j+ip,ii)
         end do
      end do
-   
+
      call bsplvn(self%knot2,self%nord,1,p2,iqq,self%val1)
-!dbgwval1     write(121,*) 'val1 array 2',iq,(self%val1(i),i=1,4) !dbgwval1
+     !dbgwval1     write(121,*) 'val1 array 2',iq,(self%val1(i),i=1,4) !dbgwval1
      do i=1,self%nord
         zz=zz+self%val2(i)*self%val1(i)
      end do
-   
+
   else if (self%lunif==2) then
-  ! assume uniform distribution for both point location and final evaluation
+     ! assume uniform distribution for both point location and final evaluation
      if (kcall==1) then
         call interw(self%rh1,self%n1p,p1-self%org1,self%pad1,self%noff,self%nord,ipp,p1f)
         call interw(self%rh2,self%n2p,p2-self%org2,self%pad2,self%noff,self%nord,iqq,p2f)

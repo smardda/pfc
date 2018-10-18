@@ -40,8 +40,8 @@ module odes_m
   character(*), parameter :: m_name='odes_m' !< module name
   real(kr8), dimension(:), allocatable :: work1 !< 1D work array
   integer   :: status   !< error status
-!integer(ki4) :: nin   !< input channel for ZZZZ data
-  integer(ki4)  :: ilog      !< for namelist dump after error
+!integer :: nin   !< input channel for ZZZZ data
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -125,7 +125,7 @@ subroutine odes_readcon(selfn,kin)
 
   !! arguments
   type(onumerics_t), intent(out) :: selfn   !< object numerics data structure
-  integer(ki4), intent(in),optional :: kin   !< input channel for object data structure
+  integer, intent(in),optional :: kin   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='odes_readcon' !< subroutine name

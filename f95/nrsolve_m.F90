@@ -3,6 +3,7 @@ module nrsolve_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use date_time_m
   use spl2d_m
   use pcontrol_h
@@ -19,7 +20,7 @@ module nrsolve_m
  &nrsolve_funct
 
 ! public types
-  integer(ki4) :: nout !< output file unit
+  integer :: nout !< output file unit
 
 ! private variables
   character(*), parameter :: m_name='nrsolve_m' !< module name
@@ -45,16 +46,10 @@ subroutine nrsolve_init(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='nrsolve_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file='nrsolve.log',status='replace')
 
   !! header information

@@ -98,7 +98,7 @@ subroutine li_read(self,kin)
 
   !! arguments
   type(li_t), intent(out) :: self   !< simple linked list data
-  integer(ki4), intent(in) :: kin   !< input channel for simple linked list data
+  integer, intent(in) :: kin   !< input channel for simple linked list data
 
 
   !! local
@@ -141,7 +141,7 @@ subroutine li_write(self,kout)
 
   !! arguments
   type(li_t), intent(in) :: self   !< simple linked list data
-  integer(ki4), intent(in) :: kout   !< output channel for simple linked list data
+  integer, intent(in) :: kout   !< output channel for simple linked list data
 
 
   !! local
@@ -249,7 +249,7 @@ subroutine li_addin(self,khoc,knew)
            self%conten(knew)=khoc
            khoc=knew
         end if
-     else 
+     else
         call log_error(m_name,s_name,1,error_fatal,'Contents array not large enough')
      end if
   else
@@ -355,7 +355,7 @@ subroutine li_write1(self,khoc,kout)
   !! arguments
   type(li_t), intent(in) :: self   !< linked list
   integer(ki4) , intent(in) :: khoc !< hoc of linked list
-  integer(ki4), intent(in) :: kout   !< output channel for simple linked list data
+  integer, intent(in) :: kout   !< output channel for simple linked list data
 
   !! local
   character(*), parameter :: s_name='li_write1' !< subroutine name
@@ -401,7 +401,7 @@ subroutine li_write1(self,khoc,kout)
 end subroutine li_write1
 !---------------------------------------------------------------------
 !> return next entry in simple linked list
-integer(ki4) function li_next1(self,khoc)
+  integer(ki4) function li_next1(self,khoc)
 
 !! arguments
   type(li_t), intent(inout) :: self   !< linked list

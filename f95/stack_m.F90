@@ -215,7 +215,7 @@ function stack_empty(vself,kdim)
 
   !! local
   character(*), parameter :: s_name='stack_empty' !< subroutine name
-  logical :: stack_empty !< local variable
+  logical :: stack_empty !< function return
 
   stack_empty=(stack%head<=0)
 

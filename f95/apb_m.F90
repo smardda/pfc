@@ -3,6 +3,7 @@ module apb_m
   use const_kind_m
 !      use const_numphys_h
   use log_m
+  use misc_m
   use mcontrol_h
   use mcontrol_m
   use date_time_m
@@ -20,7 +21,7 @@ module apb_m
  &apb_convert !< Fourier transform in \f$ \zeta \f$
 
 ! public types
-  integer(ki4) :: nin !< input file unit
+  integer :: nin !< input file unit
 
 ! private subroutines
   private :: &
@@ -34,7 +35,7 @@ module apb_m
   integer(ki4) :: l !< loop counter
   integer(ki4) :: ij !< loop counter
   integer(ki4) :: idum !< dummy integer
-  integer(ki4) :: status   !< status variable
+  integer :: status   !< status variable
   character(len=80) :: ibuff !< buffer for input/output
   integer(ki4), parameter :: ip1diag=64 !< diagnostic in 1 coordinate
   integer(ki4), parameter :: ip2diag=64 !< diagnostic in 2 coordinate
@@ -55,27 +56,21 @@ subroutine apb_readmlab(self,infile)
   character(*), parameter :: s_name='apb_readmlab' !< subroutine name
   character(13), parameter :: cfmt0='(1x,f14.7)'
   character(13), parameter :: cfmt1='(5(f14.7,1x))'
-  logical :: unitused !< flag to test unit is available
-  integer(ki4) :: iin   !< input channel for object data structure
+  !! logical :: unitused !< flag to test unit is available
+  integer :: iin   !< input channel for object data structure
 
   integer(ki4), parameter :: geoffdata=0 !< flag for Geoff's data format
   real(kr8), dimension(:,:), allocatable :: workv2 !< vector work array
   real(kr8) :: zalph !< rotation angle (clockwise)
   real(kr8) :: zcosa !< cosine of rotation angle
   real(kr8) :: zsina !< sine of rotation angle
-  real(kr8) :: zbx!< field components
-  real(kr8) :: zby!< field components
+  real(kr8) :: zbx !< field components
+  real(kr8) :: zby !< field components
   real(kr8) :: zbz !< field components
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        iin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then iin=i exit end if end do
 
+  call misc_getfileunit(iin)
   open(unit=iin, file=infile,status='OLD',form='FORMATTED',iostat=status)
   !!eof or error
   if (status/=0) then
@@ -554,7 +549,7 @@ subroutine apb_fileafter(kfind,kin)
   !< move to point in file after line beginning with string
   !! arguments
   character(len=*), intent(in) :: kfind   !< character string to find
-  integer(ki4), intent(in) :: kin   !< file unit for reading
+  integer, intent(in) :: kin   !< file unit for reading
 
   !! local
   character(*), parameter :: s_name='apb_fileafter' !< subroutine name

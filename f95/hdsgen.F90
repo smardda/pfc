@@ -1,8 +1,8 @@
 program hdsgen_p
-
 #ifdef WITH_MPI
   use mpi
 #endif
+
   use const_kind_m
   use const_numphys_h
   use control_h
@@ -11,6 +11,7 @@ program hdsgen_p
   use date_time_m
   use control_m
   use log_m
+  use misc_m
   use clock_m
   use position_m
   use geobj_m
@@ -55,16 +56,17 @@ program hdsgen_p
   type(geobjlist_t) :: geobjl !< geometrical objects
   type(date_time_t) :: timestamp !< timestamp of run
   character(len=80) :: fileroot !< reference name for all files output by run
+  character(len=256) :: vtkdesc !< descriptor line for vtk files
 
-  integer(ki4):: nplot !< unit for vfiles
-  integer(ki4):: nouth !< unit for hdsfiles
+  integer:: nplot !< unit for vfiles
+  integer:: nouth !< unit for hdsfiles
+
 #ifdef WITH_MPI
   integer error, rank
   call MPI_Init ( error )
   call MPI_Comm_rank(MPI_COMM_WORLD, rank, error)
   if (rank .eq. 0) then
 #endif
-
 !--------------------------------------------------------------------------
 !! initialise timing
 
@@ -139,7 +141,8 @@ program hdsgen_p
 !!plot mapped HDS
   if(plot%hdsm) then
      call clock_start(10,'vfile_hdsm time')
-     call vfile_init(file%hdsm,'hds lowest',nplot)
+     call geobjlist_makehedline(geobjl,'hds lowest',vtkdesc)
+     call vfile_init(file%hdsm,vtkdesc,nplot)
      call btree_writev(btree,numerics,'hds lowest',nplot)
      call vfile_close
      call clock_stop(10)
@@ -148,7 +151,8 @@ program hdsgen_p
 !!plot HDS quantised (default)
   if(plot%hdsq) then
      call clock_start(11,'vfile_hdsq time')
-     call vfile_init(file%hdsq,'hds quantised',nplot)
+     call geobjlist_makehedline(geobjl,'hds quantised',vtkdesc)
+     call vfile_init(file%hdsq,vtkdesc,nplot)
      call btree_writev(btree,numerics,'hds quantised',nplot)
      call vfile_close
      call clock_stop(11)
@@ -157,7 +161,8 @@ program hdsgen_p
 !!plot assigned geobj
   if(plot%geobjq) then
      call clock_start(14,'vfile_assignedgeobj time')
-     call vfile_init(file%geobjq,'assigned geobj',nplot)
+     call geobjlist_makehedline(geobjl,'assigned geobj',vtkdesc)
+     call vfile_init(file%geobjq,vtkdesc,nplot)
 ! in quantised space
      call geobjlist_writev(geobjl,'geometry',nplot)
      call vfile_close
@@ -167,7 +172,8 @@ program hdsgen_p
 !!plot unassigned geobjs
   if(plot%lostgeobj) then
      call clock_start(15,'vfile_unassignedgeobj time')
-     call vfile_init(file%lostgeobj,'unassigned geobj',nplot)
+     call geobjlist_makehedline(geobjl,'unassigned geobj',vtkdesc)
+     call vfile_init(file%lostgeobj,vtkdesc,nplot)
 ! in quantised space
      call geobjlist_writev(geobjl,'unassigned quantised',nplot)
      call vfile_close
@@ -177,7 +183,8 @@ program hdsgen_p
 !!plot all geobj points
   if(plot%geoptq) then
      call clock_start(16,'vfile_allgeoptq time')
-     call vfile_init(file%geoptq,'all geoptq',nplot)
+     call geobjlist_makehedline(geobjl,'all geoptq',vtkdesc)
+     call vfile_init(file%geoptq,vtkdesc,nplot)
 ! in quantised space
      call geobjlist_writev(geobjl,'all quantised',nplot)
      call vfile_close
@@ -187,7 +194,8 @@ program hdsgen_p
 !!plot density geobjs
   if(plot%densitygeobj) then
      call clock_start(17,'vfile_densitygeobj time')
-     call vfile_init(file%densitygeobj,'density geobj',nplot)
+     call geobjlist_makehedline(geobjl,'density geobj',vtkdesc)
+     call vfile_init(file%densitygeobj,vtkdesc,nplot)
 ! in quantised space
      call geobjlist_writev(geobjl,'density quantised',nplot)
      call vfile_close
@@ -224,6 +232,7 @@ program hdsgen_p
   call clock_delete
 
 !--------------------------------------------------------------------------
+
 #ifdef WITH_MPI
   end if
   call MPI_Finalize ( error )

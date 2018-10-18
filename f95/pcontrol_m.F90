@@ -3,6 +3,7 @@ module pcontrol_m
   use const_kind_m
   use const_numphys_h
   use log_m
+  use misc_m
   use position_h
   use position_m
   use spl2d_m
@@ -29,9 +30,9 @@ module pcontrol_m
 
 ! private variables
   character(*), parameter :: m_name='pcontrol_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4)  :: nin      !< control file unit number
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: status   !< error status
+  integer  :: nin      !< control file unit number
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -48,23 +49,17 @@ subroutine pcontrol_init(fileroot)
   character(*), intent(in) :: fileroot !< file root
   !! local
   character(*), parameter :: s_name='pcontrol_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: controlfile !< control file name
 
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   controlfile=trim(fileroot)//".ctl"
   root=fileroot
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -93,7 +88,7 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot)
   character(len=80) :: geoq_input_file  !< geoq output format data input file
   character(len=80) :: lau_input_file  !< launch data input file
   logical :: filefound !< true of file exists
-  integer(ki4) :: max_number_of_tracks !< maximum number of tracks 
+  integer(ki4) :: max_number_of_tracks !< maximum number of tracks
   logical :: plot_cartv !< DUPLICATE  vtk plot selector
   logical :: plot_powstatx !< vtk plot selector
   logical :: plot_allcartv !< DUPLICATE  vtk plot selector
@@ -299,12 +294,12 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot)
   plot%gnu     = plot_gnu
   plot%flinends    = plot_flinends
   if (plot_flincart) then
-  plot%flinx = plot_flincart
-  call log_error(m_name,s_name,30,error_warning,'Obsolete file handling feature activated')
+     plot%flinx = plot_flincart
+     call log_error(m_name,s_name,30,error_warning,'Obsolete file handling feature activated')
   end if
   if (plot_flinptz) then
-  plot%flinm = plot_flinptz
-  call log_error(m_name,s_name,31,error_warning,'Obsolete file handling feature activated')
+     plot%flinm = plot_flinptz
+     call log_error(m_name,s_name,31,error_warning,'Obsolete file handling feature activated')
   end if
 
   call powcal_readcon(numerics,nin)

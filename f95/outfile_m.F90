@@ -2,6 +2,7 @@ module outfile_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use control_h
   use date_time_m
   use geobj_m
@@ -23,7 +24,7 @@ module outfile_m
  &outfile_mwrite, &
  &outfile_close
 ! public types
-  integer(ki4) :: nout !< output file unit
+  integer :: nout !< output file unit
 
 ! private variables
   character(*), parameter :: m_name='outfile_m' !< module name
@@ -53,16 +54,10 @@ subroutine outfile_init(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='outfile_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%hdsgenout),status='new')
 
   !! header information
@@ -81,16 +76,10 @@ subroutine outfile_dinit(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='outfile_dinit' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%dengenout),status='new')
 
   !! header information
@@ -107,22 +96,16 @@ subroutine outfile_linit(file,timestamp,kout)
   !! argument
   type(files_t), intent(in) :: file !< file names
   type(date_time_t), intent(in) :: timestamp !< timestamp of run
-  integer(ki4), intent(out) :: kout   !< output channel
+  integer, intent(out) :: kout   !< output channel
 
 
   !! local
   character(*), parameter :: s_name='outfile_linit' !< subroutine name
-  logical :: unitused !< flag to test unit is available
-
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
   kout=nout
 
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%legtfmout),status='new')
 
   !! header information
@@ -143,16 +126,10 @@ subroutine outfile_minit(file,timestamp)
 
   !! local
   character(*), parameter :: s_name='outfile_minit' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
+  !! get file do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
-
+  call misc_getfileunit(nout)
   open(unit=nout,file=trim(file%moveout),status='new')
 
   !! header information

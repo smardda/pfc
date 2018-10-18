@@ -2,6 +2,7 @@ module ccontrol_m
 
   use const_kind_m
   use log_m
+  use misc_m
 
   implicit none
 
@@ -26,9 +27,9 @@ module ccontrol_m
   character(len=40), dimension(maximum_number_of_namelists), save :: namel !< name of namelist
   integer(ki4), save :: inpfile      !< number of input files
 
-  integer(ki4)  :: status   !< error status
-  integer(ki4), save  :: nin      !< input file unit number
-  integer(ki4), save  :: nout      !< output file unit number
+  integer  :: status   !< error status
+  integer, save  :: nin      !< input file unit number
+  integer, save  :: nout      !< output file unit number
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -50,26 +51,20 @@ subroutine ccontrol_init(fileroot,code)
   character(len=80), intent(out) :: code   !< code input file intended for
   !! local
   character(*), parameter :: s_name='ccontrol_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: inputfile !< input file name
   character(len=80) :: outputfile !< output file name
-  character(len=3) :: key !< key 
+  character(len=3) :: key !< key
   character(len=80) :: icode !< code input file intended for
-  logical lok
+  logical :: lok !< local variable
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   inputfile=trim(fileroot)//".ctlin"
   root=fileroot
   call log_value("Control data input file",trim(inputfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=inputfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -78,18 +73,12 @@ subroutine ccontrol_init(fileroot,code)
      stop
   end if
   !---------------------------------------------------------------------
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nout=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nout=i exit end if end do
 
   !! open file
   outputfile=trim(fileroot)//".ctl"
   call log_value("Control data output file",trim(outputfile))
+  call misc_getfileunit(nout)
   open(unit=nout,file=outputfile,iostat=status,recl=1610,delim='apostrophe')
   if(status/=0)then
      !! error opening file
@@ -101,7 +90,7 @@ subroutine ccontrol_init(fileroot,code)
   read(nin,'(A3,A)',iostat=status) key, icode
   call log_read_check(m_name,s_name,3,status)
   if (key/='STA') then
-    call log_error(m_name,s_name,2,error_fatal,'Input data must start with STA <progname>')
+     call log_error(m_name,s_name,2,error_fatal,'Input data must start with STA <progname>')
   end if
   code=trim(adjustl(icode))
   rewind(nin)
@@ -116,10 +105,10 @@ subroutine ccontrol_readctlin(code)
 
   !!local
   character(*), parameter :: s_name='ccontrol_readctlin' !< subroutine name
-  character(len=3) :: key !< key 
+  character(len=3) :: key !< key
   character(len=80) :: icode !< code input file intended for
   integer(ki4) :: isub !< subtract
-  logical lok
+  logical :: lok !< local variable
 
   !! namelist names (not used at present)
   namel(1)='miscparameters'
@@ -131,34 +120,36 @@ subroutine ccontrol_readctlin(code)
   call log_read_check(m_name,s_name,1,status)
   lok=(key=='STA'.AND.trim(adjustl(icode))==trim(code))
   if (.NOT.lok) then
-    call log_error(m_name,s_name,2,error_fatal,'Input data must start with STA <matching progname>')
+     call log_error(m_name,s_name,2,error_fatal,'Input data must start with STA <matching progname>')
   end if
 
   i=2
   do
      read(nin,'(A3,A)',iostat=status) filekey(1), filecon(1)
 
-     if(status<0) then !!eof
-       exit
-     else if (status>0) then !! error
-       call log_error(m_name,s_name,3,error_fatal,'Error reading input data')
+     if(status<0) then
+        !!eof
+        exit
+     else if (status>0) then
+        !! error
+        call log_error(m_name,s_name,3,error_fatal,'Error reading input data')
      else if (filekey(1)=='STA') then
-         icode=filecon(1)
-         exit
+        icode=filecon(1)
+        exit
      else
-       isub=0
-       filekey(i)=filekey(1)
-       filecon(i)=filecon(1)
-       look_for_match: do j=2,i-1
-          if (filekey(j)==filekey(1)) then
-             filecon(j)=filecon(1)
-             isub=1
-             exit
-          end if
-       end do look_for_match
-       i=i-isub+1
+        isub=0
+        filekey(i)=filekey(1)
+        filecon(i)=filecon(1)
+        look_for_match: do j=2,i-1
+           if (filekey(j)==filekey(1)) then
+              filecon(j)=filecon(1)
+              isub=1
+              exit
+           end if
+        end do  look_for_match
+        i=i-isub+1
      end if
-    
+
   end do
 
   nincon=i
@@ -173,7 +164,7 @@ end subroutine ccontrol_readctlin
 !> write  ctl data for this code
 subroutine ccontrol_writectl
 
-!local
+  !local
   character(*), parameter :: s_name='ccontrol_writectl' !< subroutine name
   integer(ki4) :: iscan !< position of blank
   character(len=80),dimension(:), allocatable:: vtk_input_file !< vtk format geometry data input file
@@ -199,62 +190,62 @@ subroutine ccontrol_writectl
   character(len=20) :: transform_desc !< describes transformation type
   integer(ki4):: ntfm  !< number of transformations
 
-  !! misc parameters 
+  !! misc parameters
   namelist /miscparameters/ &
  &option, &
  &angle_units, &
  &max_number_of_panels,max_number_of_transforms ,&
  &max_number_of_files !, &
-! &number_of_panels,number_of_transforms
+  ! &number_of_panels,number_of_transforms
 
   !! file names
   namelist /vtkfiles/ &
  &vtk_input_file, number_of_copies!, &
-! &vtk_label, vtk_label_number, &
-! &vtk_output_file
+  ! &vtk_label, vtk_label_number, &
+  ! &vtk_output_file
 
   !! panelarray parameters
   namelist /panelarrayparameters/ &
  &panel_bodies,panel_transform !, &
- !&transform_id !omitted
+  !&transform_id !omitted
 
   !! position parameters
   namelist /positionparameters/ &
- &position_scale , & 
- &position_offset , & 
+ &position_scale , &
+ &position_offset , &
  &position_transform !, &
-! &position_matrix , &  ! omitted
-! &transform_desc, & !omitted
-! &transform_id !omitted
+  ! &position_matrix , &  ! omitted
+  ! &transform_desc, & !omitted
+  ! &transform_id !omitted
 
   ! determine useful globals and assign namelist numbers
   ntfm=0
   do j=2,nincon
-    nml_key: select case (filekey(j))
-    case('DEF')
-       nmlno(j)=1
-    case('FIL')
-       nmlno(j)=2
-       !count  file entries
-       iscan=1
-       inpfile=1
-       buff=filecon(j)
-       do k=1,maximum_number_of_files
-          buff=adjustl(buff(iscan:))
-          islen=len_trim(buff)
-          iscan=scan(buff(:islen),' ')
-          if (iscan>0.AND.iscan<islen) then
-             inpfile=inpfile+1
-          else
-             exit
-          end if
-       end do
-    case('TFM')
-       ntfm=1
-       nmlno(j)=4
-    case('SCA','OFS')
-       nmlno(j)=4
-    end select nml_key
+     nml_key: select case (filekey(j))
+     case('DEF')
+        nmlno(j)=1
+     case('FIL')
+        nmlno(j)=2
+        !count  file entries
+        iscan=1
+        inpfile=1
+        buff=filecon(j)
+        do k=1,maximum_number_of_files
+           buff=adjustl(buff(iscan:))
+           islen=len_trim(buff)
+           iscan=scan(buff(:islen),' ')
+           if (iscan>0.AND.iscan<islen) then
+              inpfile=inpfile+1
+           else
+              exit
+           end if
+        end do
+     case('TFM')
+        ntfm=1
+        nmlno(j)=4
+     case('SCA','OFS')
+        nmlno(j)=4
+     end select nml_key
   end do
 
   !! allocate arrays
@@ -359,7 +350,7 @@ subroutine ccontrol_writectl
   end select
   write(nout,nml=positionparameters, iostat=status)
   call log_write_check(m_name,s_name,14,status)
-  
+
   close(unit=nout)
 
 end subroutine ccontrol_writectl

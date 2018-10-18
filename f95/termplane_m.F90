@@ -3,7 +3,6 @@ module termplane_m
   use const_kind_m
   use const_numphys_h
   use log_m
-  use control_h
   use termplane_h
 
   implicit none
@@ -21,7 +20,7 @@ module termplane_m
 ! private variables
   character(*), parameter :: m_name='termplane_m' !< module name
   integer   :: status   !< error status
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -40,7 +39,7 @@ subroutine termplane_readcon(self,kin)
 
   !! arguments
   type(termplane_t), intent(out) :: self   !< termination planes numeric controls
-  integer(ki4) :: kin !< input unit number
+  integer :: kin !< input unit number
 
   !! local
   character(*), parameter :: s_name='termplane_readcon' !< subroutine name
@@ -105,10 +104,12 @@ subroutine termplane_readcon(self,kin)
      end if
   end do
 
-  allocate(self%termplanedir(nactive,5),self%termplane(nactive,2),&
- &self%termstore(nactive,3),stat=status)
+  ! allow one extra space in arrays for possible dynamical test
+  allocate(self%termplanedir(nactive+1,5),self%termplane(nactive+1,2),&
+ &self%termstore(nactive+1,3),stat=status)
   call log_alloc_check(m_name,s_name,2,status)
   self%ntermplane=nactive
+  self%ntermactive=nactive
   self%termplanedir=0
   self%termstore=0
   self%termplane=0
@@ -152,6 +153,9 @@ subroutine termplane_readcon(self,kin)
         self%termplanedir(nactive,5)=self%termplanedir(nactive,2)
      end if
   end do
+  ! dynamical values (skylight for lower or upper divertor, here lower)
+  self%termplanedir(nactive+1,1)=2
+  self%termplanedir(nactive+1,2)=1
 
 end subroutine termplane_readcon
 !---------------------------------------------------------------------

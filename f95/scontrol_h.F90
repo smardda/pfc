@@ -10,6 +10,10 @@ module scontrol_h
      character(len=80) :: mode !< control mode of operation
      character(len=80) :: namekey !< sort key identifier of scalar field
      character(len=80) :: namescal !< identifier of scalar field to analyse
+     logical :: lurcen !< user sets nominal central \f$ R \f$ for poloidal angle analysis
+     logical :: luzcen !< user sets nominal central \f$ Z \f$ for poloidal angle analysis
+     real(kr8) :: urcen !< user defined value of central \f$ R \f$
+     real(kr8) :: uzcen !< user defined value of central \f$ Z \f$
      integer(ki4) :: totstat !< number of active entries in namstat
      character(len=80) :: newkey !< name of new key (only angle allowed)
      logical :: rekey !< logical control parameter

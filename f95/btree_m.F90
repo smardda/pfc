@@ -36,7 +36,7 @@ module btree_m
 
 ! public types
 
-  !> type storing tree coord data
+!> type storing tree coord data
   type, public :: btree_t
      integer(ki4)  :: nt !< number of entries in tree
      integer(ki4), dimension(:,:), allocatable :: pter !< tree links
@@ -72,7 +72,7 @@ module btree_m
   integer(ki4) :: jj !< loop counter
   integer(ki4) :: kk !< loop counter
   integer(ki2):: idepth !< max depth of tree
-  integer(ki4) :: ilog !< file unit for logging
+  integer :: ilog !< file unit for logging
 
   contains
 
@@ -166,7 +166,7 @@ subroutine btree_init(self,numerics)
   if (ittype==2) then
      iquante=numerics%nquante-1
   else
-  iquante=numerics%nquante
+     iquante=numerics%nquante
   end if
   self%nexten=1
   self%exten(:,1)=(/iquante,iquante,iquante/)
@@ -175,9 +175,9 @@ subroutine btree_init(self,numerics)
   ! define dummy first record (0 objects) in list 0 and 2
   call ls_add(self%objectls,1,0,0)
   call ls_add(self%objectls,1,2,0)
-!INERT  call ls_add(self%objectls,2,0,0)
-!INERT  call ls_add(self%objectls,1,1,0)
-!INERT  call ls_add(self%objectls,2,1,1)
+  !INERT  call ls_add(self%objectls,2,0,0)
+  !INERT  call ls_add(self%objectls,1,1,0)
+  !INERT  call ls_add(self%objectls,2,1,1)
   ! define list of objects
   igeobj=numerics%ngeobj
   call ls_add(self%objectls,2,2,igeobj)
@@ -193,7 +193,7 @@ subroutine btree_write(self,numerics,kout)
   !! arguments
   type(btree_t), intent(in) :: self   !< binary tree data
   type(numerics_t), intent(in) :: numerics    !< local variable
-  integer(ki4), intent(in) :: kout   !< output channel for binary tree data
+  integer, intent(in) :: kout   !< output channel for binary tree data
 
   !! local
   character(*), parameter :: s_name='btree_write' !< subroutine name
@@ -273,7 +273,7 @@ subroutine btree_read(self,numerics,kchar,kin)
   type(btree_t), intent(inout) :: self   !< binary tree data
   type(numerics_t), intent(out) :: numerics    !< local variable
   character(len=5) :: kchar !< local variable
-  integer(ki4), intent(in) :: kin   !< output channel for binary tree data
+  integer, intent(in) :: kin   !< output channel for binary tree data
 
 
   !! local
@@ -383,7 +383,7 @@ subroutine btree_writev(self,numerics,kchar,kout)
   type(btree_t), intent(in) :: self   !< binary tree data
   type(numerics_t), intent(inout) :: numerics !< local variable
   character(*),intent(in):: kchar !< control output
-  integer(ki4), intent(in) :: kout   !< output channel for binary tree data
+  integer, intent(in) :: kout   !< output channel for binary tree data
 
   !! local
   character(*), parameter :: s_name='btree_writev' !< subroutine name
@@ -543,20 +543,20 @@ subroutine btree_writev(self,numerics,kchar,kout)
      write(kout,'("11")')
   end do
 
-!AB   !!format statements for vtk file
-!AB   write(kout,'(''CELL_DATA '', i8)') inode!number of leaves (from 'case(hds lowest)')
-!AB   write(kout,'(''SCALARS '', '' Number '',''int'')')
-!AB   write(kout,'(''LOOKUP_TABLE'','' default'')')
-!AB   
-!AB   do j=1,self%nt !!loop over all tree entries 
-!AB   
-!AB     !!if entry is a leaf then print number of points in leaf
-!AB     !otherwise 'cycle' 
-!AB     if (self%pter(3,j)>0) cycle
-!AB     write(kout,'(i4)') self%objectls%list(self%pter(2,j),2)
-!AB     
-!AB   end do
-!AB   
+  !AB   !!format statements for vtk file
+  !AB   write(kout,'(''CELL_DATA '', i8)') inode!number of leaves (from 'case(hds lowest)')
+  !AB   write(kout,'(''SCALARS '', '' Number '',''int'')')
+  !AB   write(kout,'(''LOOKUP_TABLE'','' default'')')
+  !AB
+  !AB   do j=1,self%nt !!loop over all tree entries
+  !AB
+  !AB     !!if entry is a leaf then print number of points in leaf
+  !AB     !otherwise 'cycle'
+  !AB     if (self%pter(3,j)>0) cycle
+  !AB     write(kout,'(i4)') self%objectls%list(self%pter(2,j),2)
+  !AB
+  !AB   end do
+  !AB
 
   close(kout)
 
@@ -1093,10 +1093,10 @@ subroutine btree_dia(self)
   write(ilog,*) ' size of extents array or numerics%nsizee ', &
  &self%nexten,' used out of ',size(self%exten,2), ' (btree_sizee)'
   iexmin=minval( self%exten(1:3,1) )
-!dbg  write(*,*) ' 1 ', self%exten(1:3,1)  !dbg
+  !dbg  write(*,*) ' 1 ', self%exten(1:3,1)  !dbg
   do jl=2,self%nexten
      iexmin=min( iexmin, minval( self%exten(1:3,jl) ) )
-!dbg     write(*,*) jl, self%exten(1:3,jl)  !dbg
+     !dbg     write(*,*) jl, self%exten(1:3,jl)  !dbg
   end do
   idescent=self%ndepth-iexmin
   write(ilog,*) ' descent of tree ', &
@@ -1121,14 +1121,14 @@ subroutine btree_dia(self)
      write(ilog,*) 'list type  li'
      !write(ilog,*) ' number of entries in hoc array ', &
      !&self%objectli%nhoc,' used out of ',self%n%nsizeh
-!     write(ilog,*) ' number of entries in conten array ', &
-! &   self%objectli%nconten,' used out of ',self%n%nsizel,  ' (max_size_list_array)'
+     !     write(ilog,*) ' number of entries in conten array ', &
+     ! &   self%objectli%nconten,' used out of ',self%n%nsizel,  ' (max_size_list_array)'
   case(2)
      write(ilog,*) 'list type  ld'
      !write(ilog,*) ' number of entries in hoc array ', &
      !&self%objectld%nhoc,' used out of ',self%n%nsizeh
-!     write(ilog,*) ' number of entries in conten array ', &
-! &   self%objectld%nconten,' used out of ',self%n%nsizel, ' (max_size_list_array)'
+     !     write(ilog,*) ' number of entries in conten array ', &
+     ! &   self%objectld%nconten,' used out of ',self%n%nsizel, ' (max_size_list_array)'
   end select list_type
 
   !dbg  do jl=1,1000 ! dbg
@@ -1320,7 +1320,7 @@ subroutine btree_readnolab(self,numerics,kin)
   !! arguments
   type(btree_t), intent(out) :: self   !< binary tree data
   type(numerics_t), intent(inout) :: numerics !< local variable
-  integer(ki4), intent(in) :: kin   !< input channel for binary tree data
+  integer, intent(in) :: kin   !< input channel for binary tree data
 
 
   !! local
@@ -1364,7 +1364,7 @@ subroutine btree_readnolab(self,numerics,kin)
 end subroutine btree_readnolab
 !---------------------------------------------------------------------
 
-pure type(posvecl_t) function btree_floatvec(kvec)
+  pure type(posvecl_t) function btree_floatvec(kvec)
   integer(ki2), dimension(3), intent(in) :: kvec  !< local variable
   type(posvecl_t) :: zvec !< local variable
   zvec%posvec(1)=float(kvec(1))
@@ -1392,9 +1392,9 @@ subroutine btree_delete(self)
   case(0)
      call ls_delete(self%objectls)
   case(1)
-  !  call li_delete(self%objectli)
+     !  call li_delete(self%objectli)
   case(2)
-  !  call ld_delete(self%objectld)
+     !  call ld_delete(self%objectld)
   end select list_type
 
 end subroutine btree_delete

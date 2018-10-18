@@ -32,6 +32,7 @@ module const_kind_m
   character(len=12), parameter, public :: cfmtbs1 = '('//cfmtr//',1X)'
   character(len=13), parameter, public :: cfmtb1v = '(3(1X,'//cfmtr//'))'
   character(len=13), parameter, public :: cfmtbv1 = '(3('//cfmtr//',1X))'
+  character(len=13), parameter, public :: cfmtbv2 = '(6('//cfmtr//',1X))'
   character(len=12), parameter, public :: cfmt1v = '3(1X,'//cfmtr//'))'
   character(len=12), parameter, public :: cfmtv1 = '3('//cfmtr//',1X))'
   character(len=12), parameter, public :: cfmt2v = '4(2X,'//cfmtr//'))'

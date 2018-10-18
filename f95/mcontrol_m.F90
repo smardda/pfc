@@ -2,6 +2,7 @@ module mcontrol_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use position_h
   use mcontrol_h
   use position_m
@@ -17,9 +18,9 @@ module mcontrol_m
 
 ! private variables
   character(*), parameter :: m_name='mcontrol_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4),save  :: nin      !< control file unit number
-  integer(ki4)  :: ilog      !< for namelist dump after error
+  integer  :: status   !< error status
+  integer,save  :: nin      !< control file unit number
+  integer  :: ilog      !< for namelist dump after error
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -36,23 +37,17 @@ subroutine mcontrol_init(fileroot)
   character(*), intent(in) :: fileroot !< file root
   !! local
   character(*), parameter :: s_name='mcontrol_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: controlfile !< control file name
 
 
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   controlfile=trim(fileroot)//".ctl"
   root=fileroot
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file

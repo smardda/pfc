@@ -2,6 +2,7 @@ module scontrol_m
 
   use const_kind_m
   use log_m
+  use misc_m
   use scontrol_h
 
   implicit none
@@ -21,8 +22,8 @@ module scontrol_m
 
 ! private variables
   character(*), parameter :: m_name='scontrol_m' !< module name
-  integer(ki4)  :: status   !< error status
-  integer(ki4), save  :: nin      !< control file unit number
+  integer  :: status   !< error status
+  integer, save  :: nin      !< control file unit number
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -41,23 +42,16 @@ subroutine scontrol_init(fileroot)
   character(*), intent(in) :: fileroot !< file root
   !! local
   character(*), parameter :: s_name='scontrol_init' !< subroutine name
-  logical :: unitused !< flag to test unit is available
+  !! logical :: unitused !< flag to test unit is available
   character(len=80) :: controlfile !< control file name
 
-
-  !! get file unit
-  do i=99,1,-1
-     inquire(i,opened=unitused)
-     if(.not.unitused)then
-        nin=i
-        exit
-     end if
-  end do
+  !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then nin=i exit end if end do
 
   !! open file
   controlfile=trim(fileroot)//".ctl"
   root=fileroot
   call log_value("Control data file",trim(controlfile))
+  call misc_getfileunit(nin)
   open(unit=nin,file=controlfile,status='OLD',iostat=status)
   if(status/=0)then
      !! error opening file
@@ -65,7 +59,6 @@ subroutine scontrol_init(fileroot)
      call log_error(m_name,s_name,1,error_fatal,'Cannot open control data file')
      stop
   end if
-
 
 end  subroutine scontrol_init
 !---------------------------------------------------------------------
@@ -272,13 +265,17 @@ subroutine scontrol_readcon(self,channel)
 
   !! arguments
   type(snumerics_t), intent(inout) :: self !< object control data structure
-  integer(ki4), intent(in), optional :: channel   !< input channel for object data structure
+  integer, intent(in), optional :: channel   !< input channel for object data structure
 
   !! local
   character(*), parameter :: s_name='scontrol_readcon' !< subroutine name
   character(len=80) :: analysis_mode !< only one mode available
   character(len=80) :: sort_key !< key to be used to sort scalar field
   character(len=80) :: analyse_scalar !< identifier of scalar field to analyse
+  logical :: set_r_central !< user sets nominal central \f$ R \f$ for poloidal angle analysis
+  logical :: set_z_central !< user sets nominal central \f$ Z \f$ for poloidal angle analysis
+  real(kr8) :: nominal_r_central !< user defined value of central \f$ R \f$
+  real(kr8) :: nominal_z_central !< user defined value of central \f$ Z \f$
   integer(ki4) :: number_of_clusters !< sets cluster size by dividing range
   character(len=80) :: new_key !<  new key for sorting (only angle allowed)
   logical :: rekey !<  only rekey, i.e. use new key, if .true.
@@ -293,6 +290,8 @@ subroutine scontrol_readcon(self,channel)
   namelist /smanalparameters/ &
  &analysis_mode, sort_key, &
  &analyse_scalar, number_of_clusters, &
+ &set_r_central, set_z_central, &
+ &nominal_r_central,nominal_z_central, &
  &new_key, &
  &rekey, &
  &required_statistics
@@ -301,6 +300,10 @@ subroutine scontrol_readcon(self,channel)
   analysis_mode='regular'
   sort_key='Body'
   analyse_scalar='Q'
+  set_r_central=.false.
+  set_z_central=.false.
+  nominal_r_central=5000.
+  nominal_z_central=0.
   number_of_clusters = 18
   new_key = 'null'
   rekey = .false.
@@ -321,23 +324,23 @@ subroutine scontrol_readcon(self,channel)
      call log_error(m_name,s_name,1,error_fatal,'Error reading smanal parameters')
   end if
 
-! positive integer parameter
+  ! positive integer parameter
   if(number_of_clusters<=0) then
      call log_error(m_name,s_name,2,error_fatal,'(number_of_clusters  must be positive')
   end if
-! Check new key
-     call lowor(new_key,1,len_trim(icstat))
-     ierr=1
-     do j=1,RECOGNISED_KEYS
-        if (new_key(1:6)==reckey(j)) then
-           ierr=0
-           exit
-        end if
-     end do
-     if (ierr==1) then
-        call log_value("new key ",new_key)
-        call log_error(m_name,s_name,3,error_fatal,'Unrecognised new key')
+  ! Check new key
+  call lowor(new_key,1,len_trim(icstat))
+  ierr=1
+  do j=1,RECOGNISED_KEYS
+     if (new_key(1:6)==reckey(j)) then
+        ierr=0
+        exit
      end if
+  end do
+  if (ierr==1) then
+     call log_value("new key ",new_key)
+     call log_error(m_name,s_name,3,error_fatal,'Unrecognised new key')
+  end if
 
   ! work out how many statistics required
   do i=1,MAX_NUMBER_OF_PARAMETERS
@@ -366,6 +369,10 @@ subroutine scontrol_readcon(self,channel)
   !! store values
   self%namekey=sort_key
   self%namescal=analyse_scalar
+  self%lurcen=set_r_central
+  self%luzcen=set_z_central
+  if (set_r_central) self%urcen=nominal_r_central
+  if (set_z_central) self%uzcen=nominal_z_central
   self%nbin=number_of_clusters
   self%newkey=new_key
   self%rekey=rekey
