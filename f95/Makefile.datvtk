@@ -1,0 +1,81 @@
+# basic Makefile
+
+# config file.
+include ../config/config.inc
+ 
+# Path and libraries
+include ../config/path.inc
+
+SOURCES = \
+datvtk.F90
+ 
+PROG = datvtk
+ 
+
+VPATH=$(SMAPATH)
+
+MODULES=$(SOURCES:.F90=.mod)
+
+OBJECTS=$(SOURCES:.F90=.o)
+
+$(PROG) : $(OBJECTS)
+	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
+
+$(OBJECTS):$(MODULES)
+	@touch .TOUCHFILE
+
+$(MODULES): %.mod : %.F90
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
+
+clean:
+	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
+
+distclean: clean
+	rm -f $(PROG)
+
+txt:
+	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
+
+.PHONY : clean distclean
+
+
+datvtk.F90 : const_kind_m.mod
+datvtk.F90 : const_numphys_h.mod
+datvtk.F90 : date_time_m.mod
+datvtk.F90 : control_h.mod
+datvtk.F90 : dcontrol_h.mod
+datvtk.F90 : log_m.mod
+datvtk.F90 : misc_m.mod
+datvtk.F90 : clock_m.mod
+datvtk.F90 : spl2d_m.mod
+datvtk.F90 : spl3d_m.mod
+datvtk.F90 : position_h.mod
+datvtk.F90 : fmesh_h.mod
+datvtk.F90 : beq_h.mod
+datvtk.F90 : posang_h.mod
+datvtk.F90 : posang_m.mod
+datvtk.F90 : pcle_h.mod
+datvtk.F90 : pcle_m.mod
+datvtk.F90 : geobjlist_h.mod
+datvtk.F90 : position_m.mod
+datvtk.F90 : li_m.mod
+datvtk.F90 : ld_m.mod
+datvtk.F90 : ls_m.mod
+datvtk.F90 : dbtree_h.mod
+datvtk.F90 : dbtree_m.mod
+datvtk.F90 : btree_m.mod
+datvtk.F90 : geobj_m.mod
+datvtk.F90 : query_m.mod
+datvtk.F90 : geobjlist_m.mod
+datvtk.F90 : indict_m.mod
+datvtk.F90 : dcontrol_m.mod
+datvtk.F90 : vcontrol_h.mod
+datvtk.F90 : vfile_m.mod
+datvtk.F90 : gfile_m.mod
+datvtk.F90 : datline_h.mod
+datvtk.F90 : datline_m.mod
+datvtk.F90 : dfile_m.mod
+datvtk.F90 : bods_h.mod
+datvtk.F90 : bods_m.mod
+datvtk.F90 : stlfile_m.mod
+datvtk.F90 : stack_m.mod

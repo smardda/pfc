@@ -3,59 +3,45 @@
 # config file.
 include ../config/config.inc
  
-# Libraries
-LIBS = ./LIB/lib$(DBG).a
+# Path and libraries
+include ../config/path.inc
 
 SOURCES = \
-const_kind_m.F90 \
-const_numphys_h.F90 \
-date_time_m.F90 \
-mcontrol_h.F90 \
-dcontrol_h.F90 \
 apb_h.F90 \
-log_m.F90 \
-misc_m.F90 \
-clock_m.F90 \
-position_h.F90 \
-fmesh_h.F90 \
-beq_h.F90 \
-posang_h.F90 \
-posang_m.F90 \
 apb_m.F90 \
-gfile_m.F90 \
-spl3d_m.F90 \
-spl2d_m.F90 \
-position_m.F90 \
 mcontrol_m.F90 \
 moutfile_m.F90 \
 magtfm.F90
  
 PROG = magtfm
+ 
+
+VPATH=$(SMAPATH)
 
 MODULES=$(SOURCES:.F90=.mod)
 
 OBJECTS=$(SOURCES:.F90=.o)
 
-
-$(PROG): $(OBJECTS) 
-	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS)  $(LIBS)
+$(PROG) : $(OBJECTS)
+	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
 
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
 $(MODULES): %.mod : %.F90
-	$(F90) $(F90FLAGS) -c $<
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
 	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
-	rm -f $(PROG) 
+	rm -f $(PROG)
 
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
 .PHONY : clean distclean
+
 
 magtfm.F90 : const_kind_m.mod
 magtfm.F90 : const_numphys_h.mod
@@ -78,36 +64,7 @@ magtfm.F90 : spl2d_m.mod
 magtfm.F90 : position_m.mod
 magtfm.F90 : mcontrol_m.mod
 magtfm.F90 : moutfile_m.mod
-const_numphys_h.F90 : const_kind_m.mod
-mcontrol_h.F90 : const_kind_m.mod
-mcontrol_h.F90 : position_h.mod
-dcontrol_h.F90 : const_kind_m.mod
 apb_h.F90 : const_kind_m.mod
-log_m.F90 : const_kind_m.mod
-log_m.F90 : date_time_m.mod
-misc_m.F90 : const_kind_m.mod
-misc_m.F90 : const_numphys_h.mod
-misc_m.F90 : log_m.mod
-clock_m.F90 : const_kind_m.mod
-clock_m.F90 : date_time_m.mod
-clock_m.F90 : log_m.mod
-position_h.F90 : const_kind_m.mod
-fmesh_h.F90 : const_kind_m.mod
-fmesh_h.F90 : position_h.mod
-beq_h.F90 : const_kind_m.mod
-beq_h.F90 : fmesh_h.mod
-beq_h.F90 : spl2d_m.mod
-beq_h.F90 : spl3d_m.mod
-posang_h.F90 : const_kind_m.mod
-posang_m.F90 : const_kind_m.mod
-posang_m.F90 : const_numphys_h.mod
-posang_m.F90 : position_m.mod
-posang_m.F90 : posang_h.mod
-posang_m.F90 : log_m.mod
-posang_m.F90 : position_h.mod
-posang_m.F90 : fmesh_h.mod
-posang_m.F90 : beq_h.mod
-posang_m.F90 : spl2d_m.mod
 apb_m.F90 : const_kind_m.mod
 apb_m.F90 : log_m.mod
 apb_m.F90 : misc_m.mod
@@ -115,26 +72,6 @@ apb_m.F90 : mcontrol_h.mod
 apb_m.F90 : mcontrol_m.mod
 apb_m.F90 : date_time_m.mod
 apb_m.F90 : apb_h.mod
-gfile_m.F90 : const_kind_m.mod
-gfile_m.F90 : log_m.mod
-gfile_m.F90 : misc_m.mod
-spl3d_m.F90 : const_kind_m.mod
-spl3d_m.F90 : const_numphys_h.mod
-spl3d_m.F90 : log_m.mod
-spl3d_m.F90 : misc_m.mod
-spl3d_m.F90 : position_h.mod
-spl3d_m.F90 : position_m.mod
-spl3d_m.F90 : spl2d_m.mod
-spl2d_m.F90 : const_kind_m.mod
-spl2d_m.F90 : const_numphys_h.mod
-spl2d_m.F90 : log_m.mod
-spl2d_m.F90 : misc_m.mod
-spl2d_m.F90 : position_h.mod
-spl2d_m.F90 : position_m.mod
-position_m.F90 : const_kind_m.mod
-position_m.F90 : log_m.mod
-position_m.F90 : misc_m.mod
-position_m.F90 : position_h.mod
 mcontrol_m.F90 : const_kind_m.mod
 mcontrol_m.F90 : log_m.mod
 mcontrol_m.F90 : misc_m.mod

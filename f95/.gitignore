@@ -160,3 +160,13 @@
 !li_m.f90
 !li_m.doc
 !bods_h.f90
+!geoq_h.F90
+!goutfile_m.F90
+!moutfile_m.F90
+!skyl_h.F90
+!skyl_m.F90
+!parse.F90
+!hdsgen.F90
+!ctlgen.F90
+!datvtk.F90
+!vtktfm.F90

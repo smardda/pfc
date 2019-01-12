@@ -1,0 +1,42 @@
+# basic Makefile
+
+# config file.
+include ../config/config.inc
+ 
+# Path and libraries
+include ../config/path.inc
+
+SOURCES = \
+parse.F90
+ 
+PROG = parse
+ 
+
+VPATH=$(SMAPATH)
+
+MODULES=$(SOURCES:.F90=.mod)
+
+OBJECTS=$(SOURCES:.F90=.o)
+
+$(PROG) : $(OBJECTS)
+	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
+
+$(OBJECTS):$(MODULES)
+	@touch .TOUCHFILE
+
+$(MODULES): %.mod : %.F90
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
+
+clean:
+	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
+
+distclean: clean
+	rm -f $(PROG)
+
+txt:
+	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
+
+.PHONY : clean distclean
+
+
+.mod

@@ -317,15 +317,17 @@ subroutine geoq_objaddcon(self)
         end do
      case(GEOBJ_SKYLIT)
         do jpla=1,self%beq%n%objadd(igcode)
-           call dcontrol_readnum(self%skyl%dn,iin,filedata)
+           call dcontrol_readnum(numerics,iin,filedata)
            if (filedata) then
               call dcontrol_readprogfiles(file,iin)
               call dcontrol_readatfile(file,numerics)
               call dcontrol_lines2d(numerics)
            end if
-           self%skyl%dn%stang=zetamin
-           self%skyl%dn%finang=zetamax
-           call geoq_skyladd(self,jpla)
+           numerics%stang=zetamin
+           numerics%finang=zetamax
+           self%skyl%dn=numerics
+           call geoq_skyladd(self,jpla,GEOBJ_SKYLIT)
+           call dcontrol_delete(numerics)
         end do
      end select desc_type
   end do
@@ -386,10 +388,11 @@ subroutine geoq_objadd(self,numerics,kgcode)
 end subroutine geoq_objadd
 !---------------------------------------------------------------------
 !> skylight(s) into geobjlist for faster tracing
-subroutine geoq_skyladd(self,kpla)
+subroutine geoq_skyladd(self,kpla,kgcode)
   !! arguments
   type(geoq_t), intent(inout) :: self !< geometrical objects and equilibrium data
   integer(ki4), intent(in) :: kpla !<  number of skylight plane to add to geobjlist
+  integer(ki2par), intent(in) :: kgcode !<  object description
 
   !! local
   character(*), parameter :: s_name='geoq_skyladd' !< subroutine name
@@ -397,7 +400,7 @@ subroutine geoq_skyladd(self,kpla)
   integer :: iunit      !< local debug file unit number
   integer(ki4) :: iopt=0 !< option for cumulate (no weights)
 
-  call geobjlist_create3d(skylobj,self%skyl%dn,GEOBJ_SKYLIT)
+  call geobjlist_create3d(skylobj,self%skyl%dn,kgcode)
   if (self%beq%n%skyldbg>0) then
      iunit=8+kpla
      call geobjlist_writev(skylobj,'geometry',self%skyl%ndskyl(iunit))
@@ -534,9 +537,9 @@ subroutine geoq_skylcen(self)
      idoub=idoub+1
      call beq_ctrackpt(self%beq,self%beq%ctrackrz,self%beq%nctrack,&
  &   zrz,self%beq%psibdry,ityps)
-     call skyl_dnumerics(self%skyl,self%beq%ctrackrz,self%beq%nctrack,&
- &   zrz(2),ityps,idoub)
-     call geoq_skyladd(self,0)
+     call dcontrol_ctrack(self%skyl%dn,self%beq%ctrackrz,self%beq%nctrack,&
+ &   zrz(2),self%skyl%n%div,ityps,idoub)
+     call geoq_skyladd(self,0,self%beq%n%ctrackcode)
   end do
 
 end subroutine geoq_skylcen
@@ -756,6 +759,7 @@ subroutine geoq_skylpsi1(self,ctrackrz,nctrack,kndbox,plt,pdelta,ktyps,kcall)
 
   call skyl_fixup1(self%skyl,ktyps,kcall,self%skyl%n%control)
   call skyl_fixup2(self%skyl,ktyps,kcall,self%skyl%n%control)
+  call skyl_provis(self%skyl,kcall)
 
   if (self%beq%n%skyldbg>0) then
      call gfile_rwrite(self%skyl%inboxr(1,kcall),self%skyl%inboxz(1,kcall),kndbox(1),&
@@ -815,6 +819,7 @@ subroutine geoq_skylpsi2(self,ctrackrz,nctrack,kndbox,plt,pdelta,ktyps,kcall)
   irid=-(2*ktyps-3)
 
   ! complete initialisation
+  ! note that r value remains at infinity to flag whether z value changed
   self%skyl%inboxz(:,kcall)=(2-ktyps)*self%skyl%n%zextmin+(ktyps-1)*self%skyl%n%zextmax
   self%skyl%ouboxz(:,kcall)=(2-ktyps)*self%skyl%n%zextmin+(ktyps-1)*self%skyl%n%zextmax
 
@@ -861,6 +866,7 @@ subroutine geoq_skylpsi2(self,ctrackrz,nctrack,kndbox,plt,pdelta,ktyps,kcall)
 
   call skyl_fixup1(self%skyl,ktyps,kcall,self%skyl%n%control)
   call skyl_fixup2(self%skyl,ktyps,kcall,self%skyl%n%control)
+  call skyl_provis(self%skyl,kcall)
 
   if (self%beq%n%skyldbg>0) then
      call gfile_rwrite(self%skyl%inboxr(1,kcall),self%skyl%inboxz(1,kcall),kndbox(1),&
