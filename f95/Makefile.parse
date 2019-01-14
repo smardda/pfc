@@ -18,7 +18,7 @@ MODULES=$(SOURCES:.F90=.mod)
 
 OBJECTS=$(SOURCES:.F90=.o)
 
-$(PROG) : $(OBJECTS)
+$(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
 
 $(OBJECTS):$(MODULES)
@@ -32,9 +32,14 @@ clean:
 
 distclean: clean
 	rm -f $(PROG)
+lib :
+	cd $(SMAPATH)/LIB && $(MAKE) 
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
 
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
-.PHONY : clean distclean
+.PHONY : clean distclean $(LIBF90) $(LIBS) lib
 
+
+.mod
