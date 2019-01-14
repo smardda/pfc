@@ -1,0 +1,18 @@
+!>
+!!
+!! Control data for magtfm.
+!!
+!! \Bold{Type}
+!!
+!! Control data input and checking; Data module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}, \Tt{magtfm}, \Tt{powcal}.
+!!
+!! \Bold{Function}
+!!
+!! Control data for magtfm.
+!!
+!!
+!<
