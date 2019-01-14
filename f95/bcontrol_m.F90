@@ -55,6 +55,7 @@ module bcontrol_m
      character(len=80)  :: geoqfldxyz   !< \f$ \bf{B} \f$ in Cartesians on Cartesian grid
      character(len=80)  :: eqbdry   !< file containing boundary points from eqdsk
      character(len=80)  :: eqltr   !< file containing limiter points from eqdsk
+     character(len=80)  :: skylprovis   !< provisional skylight
      character(len=80)  :: fmesh   !< define special mesh on input file name
   end type bfiles_t
 
@@ -85,6 +86,7 @@ module bcontrol_m
      logical  :: geofldxyz   !< geometry and field in Cartesians
      logical  :: geoqvolxyz   !< geometry and field in Cartesians on Cartesian grid
      logical  :: eqbdry   !< produce files containing boundary and limiter points from eqdsk
+     logical, dimension(2)  :: skylprovis   !<  provisional skylight plot selector
   end type bplots_t
 
 
@@ -203,6 +205,8 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
   logical :: plot_gnusil !< gnusil plot selector
   logical :: plot_gnusilm !< gnusilm plot selector
   logical :: plot_eqdsk_boundary !< eqbdry plot selector
+  logical :: plot_skylprovis_lower !< provisional lower skylight plot selector
+  logical :: plot_skylprovis_upper !< provisional upper skylight plot selector
   logical :: plot_geoqfldxyz !< save field in special format
 
   !! file names
@@ -240,6 +244,8 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
  &plot_gnusil, &
  &plot_gnusilm, &
  &plot_eqdsk_boundary, &
+ &plot_skylprovis_lower, &
+ &plot_skylprovis_upper, &
  &plot_geoqfldxyz
 
   !! read input file names
@@ -358,6 +364,7 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
   file%gnusilm     =trim(root)//"_gnusilm"
   file%eqbdry     =file%equil(1:indot-1)//"_eqbdry"
   file%eqltr     =file%equil(1:indot-1)//"_eqltr"
+  file%skylprovis     =trim(root)//"_skyl"
   !! special field file format
   file%geoqfldxyz     =trim(root)//"_geoqfldxyz"
   file%geoqfldxyz     =trim(root)//"_fieldi"
@@ -404,6 +411,8 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
   plot_gnusil = .false.
   plot_gnusilm = .false.
   plot_eqdsk_boundary = .false.
+  plot_skylprovis_lower = .false.
+  plot_skylprovis_upper = .false.
   plot_geoqfldxyz = .false.
 
   !!read plot selections
@@ -437,6 +446,8 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
   plot%gnusil     = plot_gnusil
   plot%gnusilm     = plot_gnusilm
   plot%eqbdry     = plot_eqdsk_boundary
+  plot%skylprovis(1)   = plot_skylprovis_lower
+  plot%skylprovis(2)   = plot_skylprovis_upper
   if (plot_frzxi) then
      plot%geoqm = plot_frzxi
      file%geoqm = file%frzxi
@@ -463,7 +474,8 @@ subroutine bcontrol_read(file,numerics,sknumerics,plot)
   iltest=numerics%skyl
   if (iltest) then
      call skyl_readcon(sknumerics,nin)
-     numerics%skyl=(sknumerics%skyltyp>0)
+     call skyl_fixupn(sknumerics,plot%skylprovis)
+     numerics%skyl=(sknumerics%skyltyp>0.OR.numerics%skyldbg>0)
   end if
 
 end  subroutine bcontrol_read

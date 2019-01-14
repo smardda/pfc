@@ -1,6 +1,6 @@
 program geoq_p
 #ifdef WITH_MPI
-  use mpi
+  use mpi 
 #endif
 
   use const_kind_m
@@ -70,6 +70,7 @@ program geoq_p
   character(len=80) :: fileroot !< reference name for all files output by run
   character(len=80) :: fileq !< equil file name
   character(len=256) :: vtkdesc !< descriptor line for vtk files
+  character(len=256) :: datdesc !< descriptor line for gnu dat files
   character(len=80) :: mapfld !< field output in geoqm file
 
   integer:: nplot !< unit for vtk files
@@ -196,6 +197,11 @@ program geoq_p
      call clock_start(5,'gfile_gnu time')
      call skyl_init(geoq%skyl,geoq%beq,geoq%objl,fileroot)
      call clock_stop(5)
+  else
+! deactivate flux skylight, enables skylparameters namelist to be present,
+! but no skylights defined
+     geoq%beq%n%skylpsi=.FALSE.
+     geoq%beq%n%skyldbg=0
   end if
 !--------------------------------------------------------------------------
 !! do the main work
@@ -266,6 +272,23 @@ program geoq_p
   end if
 !--------------------------------------------------------------------------
 !!plots
+!!provisional skylights
+  if(any(plot%skylprovis)) then
+     call clock_start(9,'gfile_gnum time')
+     if(plot%skylprovis(1)) then
+        call dcontrol_makehedline(geoq%skyl%dn,'#dnumerics',datdesc)
+        call dfile_initdatfile(trim(file%skylprovis)//'_lower',datdesc,nprint)
+        call skyl_writeg(geoq%skyl,'lower',nprint)
+        call dfile_close
+     end if
+     if(plot%skylprovis(2)) then
+        call dcontrol_makehedline(geoq%skyl%dn,'#dnumerics',datdesc)
+        call dfile_initdatfile(trim(file%skylprovis)//'_upper',datdesc,nprint)
+        call skyl_writeg(geoq%skyl,'upper',nprint)
+        call dfile_close
+     end if
+     call clock_stop(9)
+  end if
 !!plot cartesian B
   if(plot%geoqx) then
      call clock_start(10,'vfile_geoqx time')
@@ -393,7 +416,7 @@ program geoq_p
 !! field format for beams calculation
   if(plot%geoqfldxyz) then
      call clock_start(28,'vfile_geoqfldxyz time')
-     call dfile_init(file%geoqfldxyz,nplot,1)
+     call dfile_initdatfile(file%geoqfldxyz,'null',nplot)
      ibuf=geoq%beq%n%vacfile
      call beq_writen(geoq%beq,'regular',nplot)
      geoq%beq%n%vacfile=ibuf
@@ -424,7 +447,6 @@ program geoq_p
   call log_close
   call clock_delete
 !--------------------------------------------------------------------------
-
 #ifdef WITH_MPI
   end if
   call MPI_Finalize ( error )

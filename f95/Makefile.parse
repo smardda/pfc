@@ -38,5 +38,3 @@ txt:
 
 .PHONY : clean distclean
 
-
-.mod

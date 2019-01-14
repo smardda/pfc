@@ -38,6 +38,9 @@ txt:
 
 .PHONY : clean distclean
 
+$(LIBF90) $(LIBS) :
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
+
 
 ctlgen.F90 : const_kind_m.mod
 ctlgen.F90 : date_time_m.mod

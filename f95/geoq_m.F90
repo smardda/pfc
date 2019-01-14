@@ -613,6 +613,7 @@ subroutine geoq_skylext(self,ctrackrz,nctrack,plts,pdeltas,ktyps)
         ilnwin= ( (zr-self%beq%rmin)*(zr-self%beq%rmax)<0 .AND. &
  &      (zz-self%beq%zmin)*(zz-self%beq%zmax)<0 )
         if (.NOT.ilnwin) cycle
+        ! decide on side of central track
         zrz=(/zr,zz/)
         call beq_ctrackcq(self%beq,ctrackrz,nctrack,zrz,distrack)
         iz=1+idir*(zz-self%beq%n%zcen)/zdz
@@ -633,11 +634,13 @@ subroutine geoq_skylext(self,ctrackrz,nctrack,plts,pdeltas,ktyps)
      end do
   end if
 
+  ! no guarantee that inwall and ouwall are fully populated here
   if (self%beq%n%skyldbg>0) then
      call gfile_rwrite(inwallr,inwallz,izlti,'Estimate of inner wall silhouette',self%skyl%ndskyl(2))
      call gfile_rwrite(ouwallr,ouwallz,izlto,'Estimate of outer wall silhouette',self%skyl%ndskyl(3))
   end if
 
+  ! use inwall to set psi limits on HFS
   if (self%skyl%n%extsopt(2+idir)==1) then
      plts(1,2+idir)=self%beq%psixpt-zsign*abs(self%skyl%n%psiexts(2+idir)/2)
      plts(2,2+idir)=self%beq%psixpt+zsign*abs(self%skyl%n%psiexts(2+idir)/2)
@@ -658,6 +661,7 @@ subroutine geoq_skylext(self,ctrackrz,nctrack,plts,pdeltas,ktyps)
      plts(2,2+idir)=psioutr
   end if
 
+  ! use ouwall to set psi limits on LFS
   if (self%skyl%n%extsopt(3+idir)==1) then
      plts(1,3+idir)=self%beq%psixpt-zsign*abs(self%skyl%n%psiexts(3+idir)/2)
      plts(2,3+idir)=self%beq%psixpt+zsign*abs(self%skyl%n%psiexts(3+idir)/2)

@@ -2810,6 +2810,7 @@ subroutine beq_readcon(selfn,kin)
   logical :: beq_duct !< flag whether working in duct coordinates
   logical :: skylight_flux_limits !< flag whether any skylight(s) defined by flux limits
   logical :: skylight_centre_line !< flag whether any skylight(s) defined by centre_line
+  logical :: centre_line_cutout !< flag whether centre line is to be a cutout
   integer(ki4) :: absorber_objects !< number of absorbers defined geometrically
   integer(ki4) :: invisible_objects !< number of invisible objects defined geometrically
   integer(ki4) :: skylight_objects !< number of skylights defined geometrically
@@ -2858,6 +2859,7 @@ subroutine beq_readcon(selfn,kin)
  &cutout_objects,&
  &skylight_flux_limits,&
  &skylight_centre_line,&
+ &centre_line_cutout,&
  &skylight_debug,&
  &beq_psiref,&
  &beq_zetamin, beq_zetamax, beq_nzetap,&
@@ -2907,6 +2909,7 @@ subroutine beq_readcon(selfn,kin)
   cutout_objects=0
   skylight_flux_limits=.FALSE.
   skylight_centre_line=.FALSE.
+  centre_line_cutout=.FALSE.
   skylight_debug=0
   beq_arip=0.
   beq_psiref=1
@@ -3071,7 +3074,6 @@ subroutine beq_readcon(selfn,kin)
   selfn%objadd(GEOBJ_ERRLOS)=beancan_objects
   selfn%objadd(GEOBJ_CUTOUT)=cutout_objects
   selfn%skylpsi=skylight_flux_limits
-  selfn%skylcen=skylight_centre_line
   selfn%skyldbg=skylight_debug
   selfn%arip=beq_arip
 
@@ -3145,7 +3147,14 @@ subroutine beq_readcon(selfn,kin)
   selfn%lkzend=search_z_end
   selfn%vacfile=beq_vacuum_field_file
 
-  selfn%skyl=(selfn%objadd(GEOBJ_SKYLIT)>0).OR.selfn%skylpsi
+  selfn%skylcen=skylight_centre_line.OR.centre_line_cutout
+  selfn%ctrackcode=GEOBJ_SKYLIT
+  if (centre_line_cutout) then
+     selfn%ctrackcode=GEOBJ_CUTOUT
+  end if
+
+  selfn%skyl=(selfn%objadd(GEOBJ_SKYLIT)>0)&
+ &.OR.selfn%skylpsi.OR.(selfn%skyldbg>0)
 
 end subroutine beq_readcon
 !---------------------------------------------------------------------

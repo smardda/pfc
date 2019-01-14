@@ -8,10 +8,13 @@ include ../config/path.inc
 
 SOURCES = \
 bcontrol_m.F90 \
+beqan_h.F90 \
+beqan_m.F90 \
 beq_m.F90 \
 geoq_h.F90 \
 geoq_m.F90 \
 goutfile_m.F90 \
+mcontrol_h.F90 \
 mcontrol_m.F90 \
 moutfile_m.F90 \
 skyl_h.F90 \
@@ -108,6 +111,12 @@ bcontrol_m.F90 : skyl_m.mod
 bcontrol_m.F90 : fmesh_h.mod
 bcontrol_m.F90 : beq_h.mod
 bcontrol_m.F90 : beq_m.mod
+beqan_h.F90 : const_kind_m.mod
+beqan_h.F90 : const_numphys_h.mod
+beqan_m.F90 : beqan_h.mod
+beqan_m.F90 : log_m.mod
+beqan_m.F90 : misc_m.mod
+beqan_m.F90 : const_kind_m.mod
 beq_m.F90 : const_kind_m.mod
 beq_m.F90 : const_numphys_h.mod
 beq_m.F90 : position_h.mod
@@ -180,6 +189,8 @@ goutfile_m.F90 : beq_m.mod
 goutfile_m.F90 : vfile_m.mod
 goutfile_m.F90 : dcontrol_m.mod
 goutfile_m.F90 : skyl_m.mod
+mcontrol_h.F90 : const_kind_m.mod
+mcontrol_h.F90 : position_h.mod
 mcontrol_m.F90 : const_kind_m.mod
 mcontrol_m.F90 : log_m.mod
 mcontrol_m.F90 : misc_m.mod

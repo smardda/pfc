@@ -170,3 +170,6 @@
 !ctlgen.F90
 !datvtk.F90
 !vtktfm.F90
+!beqan_h.F90
+!beqan_m.F90
+!mcontrol_h.F90

@@ -9,6 +9,7 @@ include ../config/path.inc
 SOURCES = \
 apb_h.F90 \
 apb_m.F90 \
+mcontrol_h.F90 \
 mcontrol_m.F90 \
 moutfile_m.F90 \
 magtfm.F90
@@ -72,6 +73,8 @@ apb_m.F90 : mcontrol_h.mod
 apb_m.F90 : mcontrol_m.mod
 apb_m.F90 : date_time_m.mod
 apb_m.F90 : apb_h.mod
+mcontrol_h.F90 : const_kind_m.mod
+mcontrol_h.F90 : position_h.mod
 mcontrol_m.F90 : const_kind_m.mod
 mcontrol_m.F90 : log_m.mod
 mcontrol_m.F90 : misc_m.mod

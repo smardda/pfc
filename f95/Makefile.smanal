@@ -11,8 +11,9 @@ smanal_h.F90 \
 smanal_m.F90 \
 soutfile_m.F90 \
 smanal.F90
-
+ 
 PROG = smanal
+ 
 
 VPATH=$(SMAPATH)
 
@@ -20,21 +21,20 @@ MODULES=$(SOURCES:.F90=.mod)
 
 OBJECTS=$(SOURCES:.F90=.o)
 
-
-$(PROG): $(OBJECTS) 
+$(PROG) : $(OBJECTS)
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
 
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
 $(MODULES): %.mod : %.F90
-	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<  
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
 	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
-	rm -f $(PROG) 
+	rm -f $(PROG)
 
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
