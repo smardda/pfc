@@ -7,12 +7,7 @@ include ../config/config.inc
 include ../config/path.inc
 
 SOURCES = \
-beqan_h.F90 \
-beqan_m.F90 \
-beq_m.F90 \
-mcontrol_h.F90 \
 mcontrol_m.F90 \
-moutfile_m.F90 \
 pcontrol_m.F90 \
 poutfile_m.F90 \
 powcal_h.F90 \
@@ -47,6 +42,7 @@ clean:
 
 distclean: clean
 	rm -f $(PROG)
+
 lib :
 	cd $(SMAPATH)/LIB && $(MAKE) 
 	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
@@ -54,7 +50,7 @@ lib :
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
-.PHONY : clean distclean $(LIBF90) $(LIBS) lib
+.PHONY : clean distclean lib
 
 
 powcal.F90 : const_kind_m.mod
@@ -118,42 +114,12 @@ powcal.F90 : odes_h.mod
 powcal.F90 : odes_m.mod
 powcal.F90 : stack_m.mod
 powcal.F90 : skyl_m.mod
-beqan_h.F90 : const_kind_m.mod
-beqan_h.F90 : const_numphys_h.mod
-beqan_m.F90 : beqan_h.mod
-beqan_m.F90 : log_m.mod
-beqan_m.F90 : misc_m.mod
-beqan_m.F90 : const_kind_m.mod
-beq_m.F90 : const_kind_m.mod
-beq_m.F90 : const_numphys_h.mod
-beq_m.F90 : position_h.mod
-beq_m.F90 : fmesh_h.mod
-beq_m.F90 : beq_h.mod
-beq_m.F90 : beqan_h.mod
-beq_m.F90 : posang_h.mod
-beq_m.F90 : position_m.mod
-beq_m.F90 : log_m.mod
-beq_m.F90 : misc_m.mod
-beq_m.F90 : geobj_m.mod
-beq_m.F90 : spl2d_m.mod
-beq_m.F90 : spl3d_m.mod
-beq_m.F90 : fmesh_m.mod
-beq_m.F90 : posang_m.mod
-beq_m.F90 : beqan_m.mod
-beq_m.F90 : gfile_m.mod
-mcontrol_h.F90 : const_kind_m.mod
-mcontrol_h.F90 : position_h.mod
 mcontrol_m.F90 : const_kind_m.mod
 mcontrol_m.F90 : log_m.mod
 mcontrol_m.F90 : misc_m.mod
 mcontrol_m.F90 : position_h.mod
 mcontrol_m.F90 : mcontrol_h.mod
 mcontrol_m.F90 : position_m.mod
-moutfile_m.F90 : const_kind_m.mod
-moutfile_m.F90 : log_m.mod
-moutfile_m.F90 : misc_m.mod
-moutfile_m.F90 : mcontrol_h.mod
-moutfile_m.F90 : date_time_m.mod
 pcontrol_m.F90 : const_kind_m.mod
 pcontrol_m.F90 : const_numphys_h.mod
 pcontrol_m.F90 : log_m.mod

@@ -32,6 +32,7 @@ clean:
 
 distclean: clean
 	rm -f $(PROG)
+
 lib :
 	cd $(SMAPATH)/LIB && $(MAKE) 
 	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
@@ -39,7 +40,7 @@ lib :
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
-.PHONY : clean distclean $(LIBF90) $(LIBS) lib
+.PHONY : clean distclean lib
 
 
 vtktfm.F90 : const_kind_m.mod
