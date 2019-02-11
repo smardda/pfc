@@ -285,7 +285,6 @@ end if
 !      end if
 
   call clock_stop(1)
-  call clock_summary
 
   if (rank .eq. 0) call clock_summary
   call log_close

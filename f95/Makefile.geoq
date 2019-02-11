@@ -25,7 +25,7 @@ MODULES=$(SOURCES:.F90=.mod)
 
 OBJECTS=$(SOURCES:.F90=.o)
 
-$(PROG) : $(OBJECTS) lib
+$(PROG) : lib $(OBJECTS)
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
 
 $(OBJECTS):$(MODULES)
@@ -44,10 +44,18 @@ lib :
 	cd $(SMAPATH)/LIB && $(MAKE) 
 	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
 
+deepclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) clean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib clean
+
+deeplibclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) libclean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib libclean
+
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
-.PHONY : clean distclean lib
+.PHONY : clean distclean lib deepclean deeplibclean
 
 
 geoq.F90 : const_kind_m.mod
