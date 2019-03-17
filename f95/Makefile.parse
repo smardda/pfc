@@ -7,16 +7,16 @@ include ../config/config.inc
 include ../config/path.inc
 
 SOURCES = \
-parse.F90
+parse.f90
  
 PROG = parse
  
 
 VPATH=$(SMAPATH)
 
-MODULES=$(SOURCES:.F90=.mod)
+MODULES=$(SOURCES:.f90=.mod)
 
-OBJECTS=$(SOURCES:.F90=.o)
+OBJECTS=$(SOURCES:.f90=.o)
 
 $(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
@@ -24,7 +24,7 @@ $(PROG) : $(OBJECTS) lib
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
-$(MODULES): %.mod : %.F90
+$(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
@@ -42,5 +42,3 @@ txt:
 
 .PHONY : clean distclean lib
 
-
-.mod

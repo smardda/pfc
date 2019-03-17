@@ -1,0 +1,12 @@
+*
+!const_kind_m.f90
+!const_numphys_h.f90
+!date_time_m.f90
+!doxyfile
+!DoxygenLayout.xml
+!namelist_d.f90
+!namelist.f90
+!.gitignore
+!images
+!text.f90
+!mpidoc

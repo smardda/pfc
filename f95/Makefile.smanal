@@ -7,19 +7,19 @@ include ../config/config.inc
 include ../config/path.inc
 
 SOURCES = \
-smanal_h.F90 \
-smanal_m.F90 \
-soutfile_m.F90 \
-smanal.F90
+smanal_h.f90 \
+smanal_m.f90 \
+soutfile_m.f90 \
+smanal.f90
  
 PROG = smanal
  
 
 VPATH=$(SMAPATH)
 
-MODULES=$(SOURCES:.F90=.mod)
+MODULES=$(SOURCES:.f90=.mod)
 
-OBJECTS=$(SOURCES:.F90=.o)
+OBJECTS=$(SOURCES:.f90=.o)
 
 $(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
@@ -27,7 +27,7 @@ $(PROG) : $(OBJECTS) lib
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
-$(MODULES): %.mod : %.F90
+$(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
@@ -46,70 +46,70 @@ txt:
 .PHONY : clean distclean lib
 
 
-smanal.F90 : const_kind_m.mod
-smanal.F90 : const_numphys_h.mod
-smanal.F90 : scontrol_h.mod
-smanal.F90 : scontrol_m.mod
-smanal.F90 : date_time_m.mod
-smanal.F90 : log_m.mod
-smanal.F90 : misc_m.mod
-smanal.F90 : clock_m.mod
-smanal.F90 : position_m.mod
-smanal.F90 : geobj_m.mod
-smanal.F90 : posang_h.mod
-smanal.F90 : bods_h.mod
-smanal.F90 : geobjlist_h.mod
-smanal.F90 : control_h.mod
-smanal.F90 : li_m.mod
-smanal.F90 : ld_m.mod
-smanal.F90 : ls_m.mod
-smanal.F90 : dbtree_h.mod
-smanal.F90 : dbtree_m.mod
-smanal.F90 : btree_m.mod
-smanal.F90 : stack_m.mod
-smanal.F90 : query_m.mod
-smanal.F90 : spl2d_m.mod
-smanal.F90 : spl3d_m.mod
-smanal.F90 : geobjlist_m.mod
-smanal.F90 : dcontrol_h.mod
-smanal.F90 : vcontrol_h.mod
-smanal.F90 : vfile_m.mod
-smanal.F90 : gfile_m.mod
-smanal.F90 : outfile_m.mod
-smanal.F90 : position_h.mod
-smanal.F90 : fmesh_h.mod
-smanal.F90 : beq_h.mod
-smanal.F90 : posang_m.mod
-smanal.F90 : datline_h.mod
-smanal.F90 : datline_m.mod
-smanal.F90 : smanal_h.mod
-smanal.F90 : smanal_m.mod
-smanal.F90 : soutfile_m.mod
-smanal.F90 : indict_m.mod
-smanal_h.F90 : const_kind_m.mod
-smanal_h.F90 : geobjlist_h.mod
-smanal_h.F90 : position_h.mod
-smanal_h.F90 : geobj_m.mod
-smanal_h.F90 : scontrol_h.mod
-smanal_m.F90 : log_m.mod
-smanal_m.F90 : misc_m.mod
-smanal_m.F90 : const_numphys_h.mod
-smanal_m.F90 : const_kind_m.mod
-smanal_m.F90 : smanal_h.mod
-smanal_m.F90 : scontrol_h.mod
-smanal_m.F90 : geobj_m.mod
-smanal_m.F90 : geobjlist_h.mod
-smanal_m.F90 : geobjlist_m.mod
-smanal_m.F90 : vfile_m.mod
-smanal_m.F90 : indict_m.mod
-soutfile_m.F90 : const_kind_m.mod
-soutfile_m.F90 : const_numphys_h.mod
-soutfile_m.F90 : log_m.mod
-soutfile_m.F90 : misc_m.mod
-soutfile_m.F90 : scontrol_h.mod
-soutfile_m.F90 : date_time_m.mod
-soutfile_m.F90 : geobj_m.mod
-soutfile_m.F90 : geobjlist_h.mod
-soutfile_m.F90 : geobjlist_m.mod
-soutfile_m.F90 : smanal_h.mod
-soutfile_m.F90 : smanal_m.mod
+smanal.f90 : const_kind_m.mod
+smanal.f90 : const_numphys_h.mod
+smanal.f90 : scontrol_h.mod
+smanal.f90 : scontrol_m.mod
+smanal.f90 : date_time_m.mod
+smanal.f90 : log_m.mod
+smanal.f90 : misc_m.mod
+smanal.f90 : clock_m.mod
+smanal.f90 : position_m.mod
+smanal.f90 : geobj_m.mod
+smanal.f90 : posang_h.mod
+smanal.f90 : bods_h.mod
+smanal.f90 : geobjlist_h.mod
+smanal.f90 : control_h.mod
+smanal.f90 : li_m.mod
+smanal.f90 : ld_m.mod
+smanal.f90 : ls_m.mod
+smanal.f90 : dbtree_h.mod
+smanal.f90 : dbtree_m.mod
+smanal.f90 : btree_m.mod
+smanal.f90 : stack_m.mod
+smanal.f90 : query_m.mod
+smanal.f90 : spl2d_m.mod
+smanal.f90 : spl3d_m.mod
+smanal.f90 : geobjlist_m.mod
+smanal.f90 : dcontrol_h.mod
+smanal.f90 : vcontrol_h.mod
+smanal.f90 : vfile_m.mod
+smanal.f90 : gfile_m.mod
+smanal.f90 : outfile_m.mod
+smanal.f90 : position_h.mod
+smanal.f90 : fmesh_h.mod
+smanal.f90 : beq_h.mod
+smanal.f90 : posang_m.mod
+smanal.f90 : datline_h.mod
+smanal.f90 : datline_m.mod
+smanal.f90 : smanal_h.mod
+smanal.f90 : smanal_m.mod
+smanal.f90 : soutfile_m.mod
+smanal.f90 : indict_m.mod
+smanal_h.f90 : const_kind_m.mod
+smanal_h.f90 : geobjlist_h.mod
+smanal_h.f90 : position_h.mod
+smanal_h.f90 : geobj_m.mod
+smanal_h.f90 : scontrol_h.mod
+smanal_m.f90 : log_m.mod
+smanal_m.f90 : misc_m.mod
+smanal_m.f90 : const_numphys_h.mod
+smanal_m.f90 : const_kind_m.mod
+smanal_m.f90 : smanal_h.mod
+smanal_m.f90 : scontrol_h.mod
+smanal_m.f90 : geobj_m.mod
+smanal_m.f90 : geobjlist_h.mod
+smanal_m.f90 : geobjlist_m.mod
+smanal_m.f90 : vfile_m.mod
+smanal_m.f90 : indict_m.mod
+soutfile_m.f90 : const_kind_m.mod
+soutfile_m.f90 : const_numphys_h.mod
+soutfile_m.f90 : log_m.mod
+soutfile_m.f90 : misc_m.mod
+soutfile_m.f90 : scontrol_h.mod
+soutfile_m.f90 : date_time_m.mod
+soutfile_m.f90 : geobj_m.mod
+soutfile_m.f90 : geobjlist_h.mod
+soutfile_m.f90 : geobjlist_m.mod
+soutfile_m.f90 : smanal_h.mod
+soutfile_m.f90 : smanal_m.mod

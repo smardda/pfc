@@ -1,0 +1,19 @@
+cd $SMITER_DIR
+cd Extras
+chmod a+x addlenvtk geoqgnu ngeoqgnu obj2stl setup stl2vtk obj2vtk vtkpng vtkpngcl
+chmod a+x trtognu
+chmod a+x *.sgo
+#chmod a+x *.bash
+cd ../int
+chmod a+x *.bash
+chmod a+x cmdwrap
+cd ../exec
+chmod a+x *
+if [ -d ../../nucode/f95 ] ; then
+cd ../../nucode/f95
+fi
+if [ -d ../develop ] ; then
+cd ../develop
+chmod a+x *.bash
+chmod a+x inden95 makemake rsync-sm striptb build mginfo mcommit mpush
+fi

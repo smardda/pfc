@@ -1,0 +1,17 @@
+#! /bin/bash
+# convert track files to .gnu files
+if [ $# -eq 0 ] || [ $# -gt 1 ] ; then
+  echo "Usage: $0 [<track* file name>]"
+  exit
+fi
+HS=$SMITER_DIR
+for i in $*;do
+   if [ -e $i ] ; then
+      ir=${i%%.vtk}
+      rm -f $ir.gnu
+      cp $i $ir.gnu
+      ex $ir.gnu < $HS/Extras/trtognu.ed
+   else
+      echo "file $i does not exist"
+   fi
+done

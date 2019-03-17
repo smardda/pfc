@@ -1,0 +1,222 @@
+#! /bin/bash --norc
+## script for SMITER processing
+### Test cases
+## 1,3 from AFWS project
+## 2 from MAST-U project
+#
+## Steps
+## 0. Produce vacuum field file in spl3d format (.sp3) if required
+## 1. Convert EQDSK file ($eqfile) to readable format no longer needed
+## as geoq can now handle many more eqdsk variants
+## 2. Convert shadowing ($gshad) and results ($gres) geometry to vtk format
+## No CADfix licence so vtk provided to avoid CAD import
+## 3. Run geoq code to generate geometry and equilibrium data
+## 3a. option to calculate psi of boundary from silhouette
+## 3b. process shadow geometry
+## 3c. process launch aka results geometry
+## 4. Run hdsgen code to generate HDS to accelerate line following
+## 5. Run powcal code to produce power deposition profiles.
+#
+## Directories
+## HS set to smiter top directory
+if [[ -z "$HS" ]] ; then
+  if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+fi
+if [ ! -d $HS ] ; then
+  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smiter exists - installation corrupt ?"
+  echo "Script quitting"; exit 2
+fi
+export HS
+## Must have auxilliary file directory for geometry and equilibria
+if [[ -z "$HSAUX" ]] ; then export HSAUX=$HOME/smiteraux ; fi
+if [ ! -d $HSAUX ] ; then
+  echo "Auxilliary directory $HSAUX does not exist - redefine environment variable \$HSAUX ?"
+  echo "Script quitting"; exit 2
+fi
+## directory for interactive scripts
+INT=$HS/int
+## scratch directory for script
+tempdir=$HSAUX/ismtemp$$
+## This directory is part of the smiter installation
+extra=$HS/Extras
+datgeom=$HSAUX/Data/Geometry
+geom=$HSAUX/Data/VTK
+equil=$HSAUX/Data/Equilibrium
+## Top level controls
+### 1+0 = set up mag files for first time only
+### 0+1 = continue execution
+### 2+2 = force overwrite of mag and all execution outputs
+sw=2+2
+## set beq_fldspec (see namelist beqparameters documentation)
+flds=3
+## g for global, l for local calculation
+cal=g
+## Inputs, defaults
+## A. delivered EQDSK file and identifier/name for processed version
+eqfile=EQX40.eqdsk
+eqid=EQX40
+## default no vacuum field file
+vfld=null
+## B. geometry files
+gres=resf14r
+gshad=shado14r
+gwall=wall
+## C. control parameters
+## boundary options: in, out or x
+bdry=x
+## parameters
+decl=0.011
+pow=16.64 # NB $pow is power in MW, whereas $powe in W
+## set variables from list key=arg
+for i in $*; do 
+## echo "i="$i
+key=${i%%=*}
+arg=${i##*=}
+case "$key" in
+  sw) sw=${arg//+/ };;
+  flds) flds=${arg//+/ };;
+  cal) arg1=${arg//+/ };cal=${arg1:0:1};;
+  eqfile) eqfile=${arg//+/ };;
+  eqid) eqid=${arg//+/ };;
+  gres) gres=${arg//+/ };;
+  gshad) gshad=${arg//+/ };;
+  gwall) gwall=${arg//+/ };;
+  bdry) bdry=${arg//+/ };;
+  vfld) vfld=${arg//+/ };;
+  decl) decl=${arg};;
+  pow) pow=${arg};;
+  ?) echo "unknown key";exit;;
+esac 
+done
+## derived parameters
+no=$flds
+eqsuff=${eqfile##*.}
+vacf=${vfld%%=.}
+runid="$eqid"-"$gshad"-$gres
+rundir=$HSAUX/Test-$runid
+swa=(${sw//+/ })
+## Logging
+echo "Start script" $(date)
+echo "rundir = " $rundir
+echo "tempdir = " $tempdir
+echo "flds = " $no
+echo "cal = " $cal
+echo "eqfile = " $eqfile
+echo "eqid = " $eqid
+echo "vacf = " $vacf
+echo "gres = " $gres
+echo "gshad = " $gshad
+echo "gwall = " $gwall
+echo "bdry = " $bdry
+echo "decl = " $decl
+echo "pow = " $pow
+echo "run identifier = " $runid
+## Input OK and logged, start by creating $tempdir
+if [ ! -d $tempdir ] ; then rm -f $tempdir; mkdir $tempdir;fi
+#
+if [ ${swa[0]} != 0 ] ; then
+  ## Step 0. Ripple field file processing
+  if [ ! "$vacf" == "null" ] ; then
+  ##first make sure run directory exists
+if [ ! -d $rundir ] ; then rm -f $rundir;mkdir $rundir;fi;cd $rundir
+if [ ! -d M ] ; then rm -f M;mkdir M;fi;cd M
+    if [ ${swa[0]} == 2 ] || [ ! -e "$vacf".sp3  ] ; then
+      ln -sf $equil/$vacf.txt
+      sed -e "s/MLF/$vacf/" < $extra/MAG.ctl > $vacf.ctl
+      $INT/cmdwrap $tempdir magtfm $vacf
+      if [ $? -ne 0 ] ; then exit 1 ;fi
+    fi
+  fi
+fi
+if [ ${swa[1]} == 0 ] ; then
+  echo "Magnetic field file created in directory $rundir/M"
+  echo "Reset \$sw=0+2 to proceed further "
+  exit 2
+fi
+## Step 1. EQDSK file processing
+## Not required
+## Step 2.  Geometry from CADfix to vtk format
+## Not required
+## Step 3. geoq processing
+##first make sure run directory exists
+if [ ! -d $rundir ] ; then rm -f $rundir;mkdir $rundir;fi;cd $rundir
+## Step 3a.
+##create subdirectory for Steps 3-5 if needed
+if [ ! -d S ] ; then rm -f S;mkdir S;fi;cd S
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_geoq.out  ] ; then
+  ln -sf $equil/$eqfile $eqid.$eqsuff
+  if [ ! "$vacf" == "null" ] ; then
+    ln -sf ../M/$vacf.sp3
+  fi
+  if [ $bdry = in -o $bdry = out ] ; then
+  #Not X-point, do run with $gwall as input and brdyopt=3 to
+  #calculate psiltr needed for power dep calculation
+  #Extract SMITER-GEOQ psiltr value from log file
+  #insert into geoq run file with bdryopt=1 (outboard) or 5 (inboard)
+  #so Bpm, Rm calculated correctly
+    sed -e "s/EQDSK.eqdsk/$eqid.$eqsuff/" -e "s/WALL/$gwall/" < $extra/WALL$no$bdry.ctl > $gwall.ctl
+    ln -sf $extra/$gwall.vtk
+    $INT/cmdwrap $tempdir geoq $gwall
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+    psiref=$(grep "SMITER-GEOQ psiltr" $gwall.log | sed -e "s/Log  : SMITER-GEOQ psiltr  =//" )
+    sed -e "s/EQDSK.eqdsk/$eqid.$eqsuff/" -e "s/SHAD/$gshad/" -e "s/PSIREF/$psiref/" -e "s/MLF/$vacf/" < $extra/SHAD$no$bdry.ctl > $gshad.ctl
+    sed -e "s/EQDSK.eqdsk/$eqid.$eqsuff/" -e "s/RES/$gres/" -e "s/PSIREF/$psiref/" -e "s/MLF/$vacf/" < $extra/RES$no$bdry.ctl > $gres.ctl
+    geoqgnu $gwall &> /dev/null
+  else
+    #If X-point, psi for Bpm, Rm calculation is set correctly
+    sed -e "s/EQDSK.eqdsk/$eqid.$eqsuff/" -e "s/SHAD/$gshad/"  < $extra/SHAD$no$bdry.ctl -e "s/MLF/$vacf/" > $gshad.ctl
+    sed -e "s/EQDSK.eqdsk/$eqid.$eqsuff/" -e "s/RES/$gres/"  < $extra/RES$no$bdry.ctl -e "s/MLF/$vacf/" > $gres.ctl
+  fi
+##
+## Step 3b.  Shadow geometry
+  ln -sf $geom/$gshad.vtk 
+  $INT/cmdwrap $tempdir geoq $gshad
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+  #field diagnostics in X-point case
+  if [ $bdry = in -o $bdry = out ] ; then
+    :
+  else
+    geoqgnu $gshad &> /dev/null
+  fi
+  #
+  #field diagnostics
+  ln -sf $extra/$gwall.txt
+  geoqgnu $gshad &> /dev/null
+fi
+## Step 3c. Results geometry
+cd $rundir
+if [ ! -d G ] ; then rm -f G;mkdir G;fi;cd G
+if [ ${swa[1]} == 2 ] || [ ! -e "$gres"_geoq.out  ] ; then
+  ln -sf $equil/$eqfile $eqid.$eqsuff
+  if [ ! "$vacf" == "null" ] ; then
+    ln -sf ../M/$vacf.sp3
+  fi
+  ln -sf $geom/$gres.vtk 
+  ln -sf ../S/$gres.ctl 
+  $INT/cmdwrap $tempdir geoq $gres
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+  #optional diagnostics,
+  #Dgeoqgnu $gres
+fi
+#
+## Step 4. HDS generation
+cd $rundir
+if [ ! -d H ] ; then rm -f H;mkdir H;fi;cd H
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_hds_hdsgen.out  ] ; then
+  sed -e "s/SHAD/$gshad/" < $extra/HDS$no.ctl > $gshad.ctl
+  $INT/cmdwrap $tempdir hdsgen $gshad
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+fi
+#
+## Step 5. Power deposition results
+cd $rundir
+if [ ! -d P ] ; then rm -f P;mkdir P;fi;cd P
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_pow_powcal.out  ] ; then
+  if [ ! "$vacf" == "null" ] ; then
+    ln -sf ../M/$vacf.sp3
+  fi
+  sed -e "s/SHAD/$gshad/" -e "s/RES/$gres/" -e "s/DECL/$decl/" -e "s/POW/$pow/" < $extra/POW$no$cal.ctl > $gres.ctl
+  $INT/cmdwrap $tempdir powcal $gres
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+fi
+echo "End script" $(date)

@@ -7,16 +7,20 @@ include ../config/config.inc
 include ../config/path.inc
 
 SOURCES = \
-hdsgen.F90
+skyl_h.f90 \
+powcal_h.f90 \
+powres_h.f90 \
+smitermpi_m.f90 \
+hdsgen.f90
  
 PROG = hdsgen
  
 
 VPATH=$(SMAPATH)
 
-MODULES=$(SOURCES:.F90=.mod)
+MODULES=$(SOURCES:.f90=.mod)
 
-OBJECTS=$(SOURCES:.F90=.o)
+OBJECTS=$(SOURCES:.f90=.o)
 
 $(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
@@ -24,7 +28,7 @@ $(PROG) : $(OBJECTS) lib
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
-$(MODULES): %.mod : %.F90
+$(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
@@ -43,42 +47,81 @@ txt:
 .PHONY : clean distclean lib
 
 
-hdsgen.F90 : const_kind_m.mod
-hdsgen.F90 : const_numphys_h.mod
-hdsgen.F90 : control_h.mod
-hdsgen.F90 : dcontrol_h.mod
-hdsgen.F90 : vcontrol_h.mod
-hdsgen.F90 : date_time_m.mod
-hdsgen.F90 : control_m.mod
-hdsgen.F90 : log_m.mod
-hdsgen.F90 : misc_m.mod
-hdsgen.F90 : clock_m.mod
-hdsgen.F90 : position_m.mod
-hdsgen.F90 : geobj_m.mod
-hdsgen.F90 : posang_h.mod
-hdsgen.F90 : ls_m.mod
-hdsgen.F90 : btree_m.mod
-hdsgen.F90 : li_m.mod
-hdsgen.F90 : ld_m.mod
-hdsgen.F90 : dbtree_h.mod
-hdsgen.F90 : dbtree_m.mod
-hdsgen.F90 : termplane_h.mod
-hdsgen.F90 : pcle_h.mod
-hdsgen.F90 : pcle_m.mod
-hdsgen.F90 : bods_h.mod
-hdsgen.F90 : geobjlist_h.mod
-hdsgen.F90 : geobjlist_m.mod
-hdsgen.F90 : indict_m.mod
-hdsgen.F90 : vfile_m.mod
-hdsgen.F90 : outfile_m.mod
-hdsgen.F90 : hdsfile_m.mod
-hdsgen.F90 : query_m.mod
-hdsgen.F90 : position_h.mod
-hdsgen.F90 : fmesh_h.mod
-hdsgen.F90 : beq_h.mod
-hdsgen.F90 : posang_m.mod
-hdsgen.F90 : datline_h.mod
-hdsgen.F90 : datline_m.mod
-hdsgen.F90 : stack_m.mod
-hdsgen.F90 : spl2d_m.mod
-hdsgen.F90 : spl3d_m.mod
+hdsgen.f90 : const_kind_m.mod
+hdsgen.f90 : const_numphys_h.mod
+hdsgen.f90 : control_h.mod
+hdsgen.f90 : dcontrol_h.mod
+hdsgen.f90 : vcontrol_h.mod
+hdsgen.f90 : date_time_m.mod
+hdsgen.f90 : control_m.mod
+hdsgen.f90 : log_m.mod
+hdsgen.f90 : misc_m.mod
+hdsgen.f90 : clock_m.mod
+hdsgen.f90 : position_m.mod
+hdsgen.f90 : geobj_m.mod
+hdsgen.f90 : posang_h.mod
+hdsgen.f90 : ls_m.mod
+hdsgen.f90 : btree_m.mod
+hdsgen.f90 : li_m.mod
+hdsgen.f90 : ld_m.mod
+hdsgen.f90 : dbtree_h.mod
+hdsgen.f90 : dbtree_m.mod
+hdsgen.f90 : termplane_h.mod
+hdsgen.f90 : pcle_h.mod
+hdsgen.f90 : pcle_m.mod
+hdsgen.f90 : bods_h.mod
+hdsgen.f90 : geobjlist_h.mod
+hdsgen.f90 : geobjlist_m.mod
+hdsgen.f90 : indict_m.mod
+hdsgen.f90 : vfile_m.mod
+hdsgen.f90 : outfile_m.mod
+hdsgen.f90 : hdsfile_m.mod
+hdsgen.f90 : query_m.mod
+hdsgen.f90 : position_h.mod
+hdsgen.f90 : fmesh_h.mod
+hdsgen.f90 : beq_h.mod
+hdsgen.f90 : posang_m.mod
+hdsgen.f90 : datline_h.mod
+hdsgen.f90 : datline_m.mod
+hdsgen.f90 : stack_m.mod
+hdsgen.f90 : spl2d_m.mod
+hdsgen.f90 : spl3d_m.mod
+hdsgen.f90 : smitermpi_m.mod
+powcal_h.f90 : const_kind_m.mod
+powcal_h.f90 : geobjlist_h.mod
+powcal_h.f90 : geobj_m.mod
+powcal_h.f90 : position_h.mod
+powcal_h.f90 : fmesh_h.mod
+powcal_h.f90 : beq_h.mod
+powcal_h.f90 : odes_h.mod
+powcal_h.f90 : powres_h.mod
+powcal_h.f90 : edgprof_h.mod
+powcal_h.f90 : edgprof_m.mod
+powcal_h.f90 : spl2d_m.mod
+powcal_h.f90 : spl3d_m.mod
+powcal_h.f90 : pcontrol_h.mod
+powcal_h.f90 : termplane_h.mod
+powres_h.f90 : const_kind_m.mod
+powres_h.f90 : geobjlist_h.mod
+powres_h.f90 : geobj_m.mod
+powres_h.f90 : position_h.mod
+powres_h.f90 : fmesh_h.mod
+powres_h.f90 : beq_h.mod
+powres_h.f90 : odes_h.mod
+powres_h.f90 : skyl_h.mod
+skyl_h.f90 : const_kind_m.mod
+skyl_h.f90 : dcontrol_h.mod
+smitermpi_m.f90 : smitermpi_h.mod
+smitermpi_m.f90 : log_m.mod
+smitermpi_m.f90 : powcal_h.mod
+smitermpi_m.f90 : powres_h.mod
+smitermpi_m.f90 : pcontrol_h.mod
+smitermpi_m.f90 : control_h.mod
+smitermpi_m.f90 : edgprof_h.mod
+smitermpi_m.f90 : odes_h.mod
+smitermpi_m.f90 : termplane_h.mod
+smitermpi_m.f90 : beq_h.mod
+smitermpi_m.f90 : spl2d_m.mod
+smitermpi_m.f90 : geobjlist_m.mod
+smitermpi_m.f90 : btree_m.mod
+smitermpi_m.f90 : ls_m.mod

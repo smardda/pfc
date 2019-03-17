@@ -1,0 +1,17 @@
+#! /bin/bash --norc
+swd=$PWD
+if [[ ! -z "$SMITER_DIR" ]] ; then
+        cd $SMITER_DIR
+else
+	cd $HOME/smardda-pfc
+fi
+if [[ -z "$SMALIB_DIR" ]] ; then
+   export SMALIB_DIR=${PWD%/*}/smardda-lib
+fi
+#(cd fortd;make)
+cd f95
+ln -sf ../fortd LIB
+make -f Makefile.geoq
+for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse; do make -f Makefile.$i ;done
+for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
+cd $swd

@@ -1,0 +1,9 @@
+#! /bin/bash
+if [[ -z "$SMITER_DIR" ]] ; then SMITER_DIR=$HOME/smiter; fi
+extra=$SMITER_DIR/Extras
+for i in $*; do
+   rm -f vtkpngcl.py
+   istr=${i%%.vtk}
+   sed -e "s/PART/$istr/" < $extra/vtkpngcl_skel.py > vtkpngcl.py
+   pvpython < vtkpngcl.py
+done

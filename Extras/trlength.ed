@@ -1,0 +1,9 @@
+%s/objhit= */ZZ
+1
+g/ZZ/m$
+%s/.*lenpath=  *//
+1s/^/SCALARS L float 1LOOKUP_TABLE default/
+/ZZ/s/^/SCALARS Objhit float 1LOOKUP_TABLE default/
+%s/ZZ//
+w! length.vtk
+q!

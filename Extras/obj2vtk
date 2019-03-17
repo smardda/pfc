@@ -1,0 +1,7 @@
+#! /bin/bash
+if [[ -z "$SMITER_DIR" ]] ; then SMITER_DIR=$HOME/smiter; fi
+extra=$SMITER_DIR/Extras
+rm -f obj2vtk.py
+echo $* > obj2vtk.py
+vim obj2vtk.py -S $extra/obj2vtk.ed
+pvpython < obj2vtk.py

@@ -1,0 +1,57 @@
+#! /bin/bash
+#smiter specific setups
+if [[ -z "$SMITER_DIR" ]] ; then
+    export SMITER_DIR=$PWD
+fi
+if [[ -z "$SMALIB_DIR" ]] ; then
+   export SMALIB_DIR=${SMITER_DIR%/*}/smardda-lib
+fi
+export SMITER_DOC=$SMITER_DIR/doc/srcdoc/html
+export PATH=$SMITER_DIR/exec:$PATH
+alias dd_doc="xdg-open $SMITER_DOC/index.html" # doesn't always work
+alias dd_doc="firefox $SMITER_DOC/index.html"
+export dd_doc
+# Module handling
+mcfound=n
+uname -n | grep -q iter
+# ITER hpc
+if [ $? -eq 0 ] ; then
+mcfound=y
+module use /work/imas/etc/modulefiles
+module load intel/17.0.4
+export MPDIR=/shared/libraries/mpi/mvapich2/2.3b-intel2017
+export PATH=${MPDIR}/bin:${PATH}
+export CPATH=${MPDIR}/include:${CPATH}
+export MANPATH=${MPDIR}/share/man:${MANPATH}
+export LD_LIBRARY_PATH=${MPDIR}/lib:${LD_LIBRARY_PATH}
+export PKG_CONFIG_PATH=${MPDIR}/lib/pkgconfig:${PKG_CONFIG_PATH}
+# export MV2_ENABLE_AFFINITY=0 # 
+export F90=${F90:-mpif90} # uncomment for MPI build
+module use /work/imas/opt/EasyBuild/modules/all
+#module load Perl/5.20.3-goolf-1.5.16 # for latexmk to work
+module load texlive/2015
+# module load Java/1.8.0_162 # For MDSplus compilation
+fi
+uname -n | grep -q fuslw
+if [ $? -eq 0 ] ; then
+mcfound=y
+#CCFE Scientific Linux
+module load doxygen/1.8.9
+module remove ifort
+module load ifort/12.0.1.107
+module load gnuplot/4.6.1
+fi
+uname -n | grep -q Latitude
+if [ $? -eq 0 ] ; then
+#nothing needed on laptop
+mcfound=y
+fi
+uname -n | grep -q f8395
+if [ $? -eq 0 ] ; then
+#desktop linux
+module load ifort/12.0
+mcfound=y
+fi
+if [ $mcfound == n ] ; then
+  echo "No additional modules loaded - if needed, edit $SMITER_DIR/Extras/setup"
+fi

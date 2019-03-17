@@ -1,0 +1,77 @@
+SMARDDA-PFC software from UKAEA
+-------------------------------
+SMARDDA-PFC is the fieldline tracing kernel of SMITER = SMARDDA for ITER ;
+for a description of the SMARDDA ray-tracing algorithm applied to fieldlines
+see http://dx.doi.org/10.1109/TPS.2014.2320904 (also http://arxiv.org/abs/1403.7142 ).
+SMARDDA-PFC uses SMARDDA-LIB which contains the SMARDDA ray-tracing kernel
+see  http://dx.doi.org/10.1109/TPS.2015.2458897 (also http://arxiv.org/abs/1403.6750 ).
+The SMARDDA modules have been tested on CentOS 7.0, Ubuntu 18.04 and Red Hat 4.4 (Scientific Linux).
+Try to use the latest stable fortran compiler version available.
+
+*NOTE* you must first install the ray-tracing kernel SMARDDA-lIB
+
+To proceed to build from here (and only from here), type
+export SMITER_DIR=$PWD
+source ./exec/build intel
+The argument to build which is optional, will cause the script to try to use the Intel fortran compiler, 
+which is advisable on ITER hpc machines as a Fortran compiler release post-2011 is needed.
+Note that this script
+(1) recommends you source the file ./Extras/setup so that the main
+SMARDDA-PFC executables are placed on your path.
+(2) sets the shell variables SMITER_DIR and SMALIB_DIR; you may find it a good idea to ensure
+that SMITER_DIR and SMALIB_DIR are always set by modifying your .bashrc file, by adding the lines,
+for example
+export SMITER_DIR=~/smardda/smardda-pfc
+export SMALIB_DIR=~/smardda/smardda-lib
+
+bash shell release 3.2 or later (i.e. from 2005 or later) is needed.
+ParaView may be downloaded separately from www.paraview.org if not already installed.
+
+To produce the html documentation in $SMITER_DIR/doc, note
+particularly that doxygen 1.8.6+ is needed.
+(For creation of user manual as a pdf the texlive/2015 module is needed:
+module load texlive/2015
+cd ./doc/srcdoc/latex/; pdflatex refman )
+
+To run the test deck, to be found in separate directory smiter-aux,
+https://git.iter.org/projects/BND/repos/smiter-aux/browse
+orchestrated by file tests.bash, it is important to ensure the following
+shell variable is set, for example
+export HSAUX=~/smiter-aux
+Linux modules dated post-2011 are generally required.
+The following module versions are indicative:
+module load qt/4.8.7
+module load paraview/4.4.0
+module load GCC/4.8.3
+module load dialog/1.2
+module load flex
+module load doxygen/1.8.8
+module load gnuplot
+module load convert
+(others may be needed, and not all machines will have exactly these versions).
+The test deck should be run before any problems are reported.
+
+The script ismiter guides the user interactively through the setting up of a basic test
+case, starting with the sub-class of MSC Nastran-TM .dat files output by CATIA-TM.
+ismiter has a significant inbuilt help capability
+For efficient ismiter interaction with ParaView, the following settings are needed:
+Settings->General, Click on gearwheel, untick Show Splash Screen, tick AutoApply (near top)
+(Also useful is parallel projection:
+[vtk file loaded] -> Properties tab, Click gearwheel, tick Camera Parallel projection (near bottom)
+See SMARDDA-PFC user manual webpages for further details of (i)smiter use.
+file://$SMITER_DIR/doc/srcdoc/html/index.html
+(assuming that doxygen doxyfile has been executed correctly in  $SMITER_DIR/doc).
+Note that the CADfix-TM interface between CATIA-TM and SMARDDA/SMARDDA-PFC is not supported by ITER.
+
+The script tes.sgo in $SMITER_DIR/Extras show how SMARDDA-PFC works in detail, given the
+necessary geometry in legacy vtk format. Detailed descriptions of the namelists in the .ctl
+files (which control execution) may be found by pointing a browser at
+file://$SMITER_DIR/doc/srcdoc/html/classes.html
+(assuming that doxygen doxyfile has been executed correctly in  $SMITER_DIR/doc).
+
+Developers should notice that the SMARDDA modules were developed according to the principles and
+conventions set out in http://www.ccfe.ac.uk/assets/Documents/CCFE-R%20(15)34.pdf
+Production of support files and scripts for developers has been initiated.
+Users with CCFE account may access these from 
+git@git.ccfe.ac.uk:smardda/develop.git
+

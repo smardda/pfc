@@ -7,16 +7,16 @@ include ../config/config.inc
 include ../config/path.inc
 
 SOURCES = \
-vtktfm.F90
+vtktfm.f90
  
 PROG = vtktfm
  
 
 VPATH=$(SMAPATH)
 
-MODULES=$(SOURCES:.F90=.mod)
+MODULES=$(SOURCES:.f90=.mod)
 
-OBJECTS=$(SOURCES:.F90=.o)
+OBJECTS=$(SOURCES:.f90=.o)
 
 $(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
@@ -24,7 +24,7 @@ $(PROG) : $(OBJECTS) lib
 $(OBJECTS):$(MODULES)
 	@touch .TOUCHFILE
 
-$(MODULES): %.mod : %.F90
+$(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
@@ -43,43 +43,43 @@ txt:
 .PHONY : clean distclean lib
 
 
-vtktfm.F90 : const_kind_m.mod
-vtktfm.F90 : const_numphys_h.mod
-vtktfm.F90 : date_time_m.mod
-vtktfm.F90 : control_h.mod
-vtktfm.F90 : vcontrol_h.mod
-vtktfm.F90 : dcontrol_h.mod
-vtktfm.F90 : log_m.mod
-vtktfm.F90 : misc_m.mod
-vtktfm.F90 : clock_m.mod
-vtktfm.F90 : position_h.mod
-vtktfm.F90 : fmesh_h.mod
-vtktfm.F90 : beq_h.mod
-vtktfm.F90 : posang_h.mod
-vtktfm.F90 : posang_m.mod
-vtktfm.F90 : spl2d_m.mod
-vtktfm.F90 : spl3d_m.mod
-vtktfm.F90 : pcle_h.mod
-vtktfm.F90 : pcle_m.mod
-vtktfm.F90 : geobjlist_h.mod
-vtktfm.F90 : position_m.mod
-vtktfm.F90 : ls_m.mod
-vtktfm.F90 : li_m.mod
-vtktfm.F90 : ld_m.mod
-vtktfm.F90 : dbtree_h.mod
-vtktfm.F90 : dbtree_m.mod
-vtktfm.F90 : btree_m.mod
-vtktfm.F90 : geobj_m.mod
-vtktfm.F90 : query_m.mod
-vtktfm.F90 : geobjlist_m.mod
-vtktfm.F90 : indict_m.mod
-vtktfm.F90 : vcontrol_m.mod
-vtktfm.F90 : vfile_m.mod
-vtktfm.F90 : gfile_m.mod
-vtktfm.F90 : datline_h.mod
-vtktfm.F90 : datline_m.mod
-vtktfm.F90 : stack_m.mod
-vtktfm.F90 : bods_h.mod
-vtktfm.F90 : bods_m.mod
-vtktfm.F90 : scontrol_h.mod
-vtktfm.F90 : scontrol_m.mod
+vtktfm.f90 : const_kind_m.mod
+vtktfm.f90 : const_numphys_h.mod
+vtktfm.f90 : date_time_m.mod
+vtktfm.f90 : control_h.mod
+vtktfm.f90 : vcontrol_h.mod
+vtktfm.f90 : dcontrol_h.mod
+vtktfm.f90 : log_m.mod
+vtktfm.f90 : misc_m.mod
+vtktfm.f90 : clock_m.mod
+vtktfm.f90 : position_h.mod
+vtktfm.f90 : fmesh_h.mod
+vtktfm.f90 : beq_h.mod
+vtktfm.f90 : posang_h.mod
+vtktfm.f90 : posang_m.mod
+vtktfm.f90 : spl2d_m.mod
+vtktfm.f90 : spl3d_m.mod
+vtktfm.f90 : pcle_h.mod
+vtktfm.f90 : pcle_m.mod
+vtktfm.f90 : geobjlist_h.mod
+vtktfm.f90 : position_m.mod
+vtktfm.f90 : ls_m.mod
+vtktfm.f90 : li_m.mod
+vtktfm.f90 : ld_m.mod
+vtktfm.f90 : dbtree_h.mod
+vtktfm.f90 : dbtree_m.mod
+vtktfm.f90 : btree_m.mod
+vtktfm.f90 : geobj_m.mod
+vtktfm.f90 : query_m.mod
+vtktfm.f90 : geobjlist_m.mod
+vtktfm.f90 : indict_m.mod
+vtktfm.f90 : vcontrol_m.mod
+vtktfm.f90 : vfile_m.mod
+vtktfm.f90 : gfile_m.mod
+vtktfm.f90 : datline_h.mod
+vtktfm.f90 : datline_m.mod
+vtktfm.f90 : stack_m.mod
+vtktfm.f90 : bods_h.mod
+vtktfm.f90 : bods_m.mod
+vtktfm.f90 : scontrol_h.mod
+vtktfm.f90 : scontrol_m.mod

@@ -1,0 +1,70 @@
+#! /bin/bash --norc
+#produce executables once git repository cloned
+#options compiler=intel, gfortran (default)
+
+if [[ -z "$SMITER_DIR" ]] ; then
+    export SMITER_DIR=$PWD
+fi
+if [[ ! -d "$SMITER_DIR" ]] ; then
+   echo "SMARDDA-PFC modules must lie under directory \$SMITER_DIR = "$SMITER_DIR
+   echo "Which does not exist, please reconcile and try again"
+   return
+fi
+if [[ -z "$SMALIB_DIR" ]] ; then
+   export SMALIB_DIR=${SMITER_DIR%/*}/smardda-lib
+fi
+if [[ ! -d "$SMALIB_DIR" ]] ; then
+   echo "SMARDDA-LIB modules must lie under directory \$SMALIB_DIR = "$SMALIB_DIR
+   echo "Which does not exist, please reconcile and try again"
+   return
+fi
+compiler1=intel
+compiler2=intel_dbg
+compiler3=gfortran
+compiler4=gfortran_dbg
+compiler5=gfortranmpi
+if [ "$1" == "$compiler1" ] ; then
+    compiler=$compiler1
+elif [ "$1" == "$compiler2" ] ; then
+    compiler=$compiler2
+elif [ "$1" == "$compiler3" ] ; then
+    compiler=$compiler3
+elif [ "$1" == "$compiler5" ] ; then
+    compiler=$compiler5
+else
+    compiler=$compiler4
+fi
+
+echo "Building smiter with" $compiler
+
+if [ -f $SMITER_DIR/Extras/setup ] ; then
+	source $SMITER_DIR/Extras/setup
+ 	echo "you may want to add 'source "$SMITER_DIR"/Extras/setup' to your .bashrc file"
+else
+	echo "Something is wrong - smardda-pfc repository not cloned?"
+fi
+if [ -f $SMITER_DIR/../gwit/setup ] ; then
+#give user access to gwit interface to git
+	source $SMITER_DIR/../gwit/setup
+	echo "you may want to add 'source "$SMITER_DIR"/../gwit/setup' to your .bashrc file"
+fi
+
+#ln -sf $SMITER_DIR/config/config_"$compiler"_dbg.inc $SMITER_DIR/config/config.inc
+ln -sf $SMITER_DIR/config/config_"$compiler".inc $SMITER_DIR/config/config.inc
+
+#make sure executables are
+chmod a+x $SMITER_DIR/Extras/chmodx
+$SMITER_DIR/Extras/chmodx
+
+#produce the fortran executables 
+$SMITER_DIR/exec/compile
+
+cd $SMITER_DIR/doc
+echo "Warning - Documentation production requires doxygen at 1.8 or later"
+doxygen doxyfile
+if [  $? == 0 ] ; then 
+  echo "to access documentation type firefox  or xdg-open $SMITER_DIR/doc/srcdoc/html/index.html"
+else
+  echo "Looks like you didn't"
+fi
+cd $SMITER_DIR

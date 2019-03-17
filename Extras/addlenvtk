@@ -1,0 +1,32 @@
+#! /bin/bash --norc
+# take header lines from trackx, combine and add to end of _powx.vtk -> _powlenx.vtk
+if [ $# -gt 1 ] || [ $# -eq 0 ] ; then        # 1 argument must be present.
+   echo "Usage: $0 [<powcal run name>]" ; exit
+elif [ $# -eq 1 ] ; then        #  check 1 argument 
+   if [ ! -e $1_powx.vtk ] ; then echo "Cannot find powcal output file  $1_powx.vtk, quitting"; exit 1; fi
+fi
+if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+extra=$HS/Extras # defined by ismiter also
+if [ ! -d $extra ] ; then
+  echo "Directory $extra not found, quitting"
+  echo "Check environment variable SMITER_DIR is set correctly"
+  exit
+fi
+trlpart=length.vtk # fixed name in ed file
+tempdir=./ismtemp
+if [ ! -d $tempdir ] ; then rm -f $tempdir;mkdir $tempdir;fi #preserve existing directory
+trhead=$tempdir/headr.lis
+trleng=$tempdir/$trlpart
+trextract=$tempdir/headx.lis; trexpart=${trextract##*/}
+rm -f $trhead $trleng $trextract
+## replacing
+#grep "objhit=" trackx*.vtk >> $trextract 2> /dev/null
+#if [ $? -eq 2 ] ; then echo "No trackx files found, quitting";exit 1;fi 
+# have to split in this way because of shell var overflow around 2^18 approx 256000
+for j in 0 1 2 3 4 5 6 7 8 9; do
+for i in trackx"$j"*.vtk;do awk 'FNR==2' $i;done >> $trextract 2> /dev/null
+done
+(cd $tempdir; vim $trexpart -S $extra/trlength.ed)
+rm -f $1_powlenx.vtk
+cat $1_powx.vtk $trleng > $1_powlenx.vtk
+if [ $? == 0 ] ; then echo "Successfully created $1_powlenx.vtk"; fi

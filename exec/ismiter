@@ -1,0 +1,10 @@
+#! /bin/bash --norc
+# Wrapper for ismiter.bash, pass any arguments transparently
+if [[ -n "$SMITER_DIR" ]] ; then
+    HS=$SMITER_DIR
+else
+    HS=$HOME/smiter
+fi
+INT=$HS/int
+#INT=~/dial #fix for testing
+$INT/ismiter.bash $*

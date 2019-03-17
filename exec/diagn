@@ -1,0 +1,10 @@
+#! /bin/bash --norc
+# analyse log file output
+if [ $# -ne 1 ] ; then
+     echo "$0  <run names>"
+     exit
+fi
+echo "Argument: $1 " | fold -s -w 75
+echo "In directory: $PWD " | fold -s -w 75
+grep "Serious *:" $1.log | fold -s -w 75
+grep "Fatal *:" $1.log | fold -s -w 75

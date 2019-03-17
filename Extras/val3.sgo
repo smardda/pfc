@@ -1,0 +1,214 @@
+#! /bin/bash --norc
+## script for SMITER data processing
+#
+## Steps
+## (In other workflows Step 1 would consist of simplifying and
+## meshing the geometry using a CAD package. In this workflow, this step
+## is regarded as performed by a Drawing Office to give a set of CATIA .dat files.)
+## 1. Convert elemental file meshes from .dat to .vtk format
+## 2. Combine the elemental vtk files to produce shadow and results geometry
+## 3. Run geoq code to generate geometry-and-equilibrium data
+## 3a. the option to calculate boundary psi from silhouette is not used
+## 3b. process shadow geometry
+## 3c. process launch aka results geometry
+## 4. Run hdsgen code to generate HDS to accelerate line following
+## 5. Run powcal code to produce power deposition profiles.
+#
+## Directories
+## HS set to smiter top directory
+if [[ -z "$HS" ]] ; then
+  if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+fi
+if [ ! -d $HS ] ; then
+  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smiter exists - installation corrupt ?"
+  echo "Script quitting"; exit
+fi
+export HS
+## Must have auxilliary file directory for geometry and equilibria
+if [[ -z "$HSAUX" ]] ; then export HSAUX=$HOME/smiteraux ; fi
+if [ ! -d $HSAUX ] ; then
+  echo "Auxilliary directory $HSAUX does not exist - redefine environment variable \$HSAUX ?"
+  echo "Script quitting"; exit
+fi
+## directory for interactive scripts
+INT=$HS/int
+## scratch directory for script
+tempdir=$HSAUX/ismtemp$$
+## This directory is part of the smiter installation
+extra=$HS/Extras
+datgeom=$HSAUX/Data/Geometry
+geom=$HSAUX/Data/VTK
+equil=$HSAUX/Data/Equilibrium
+## Top level controls
+### 1+0 = set up vtk files for first time only
+### 0+1 = continue execution
+### 2+2 = force overwrite of vtk and all execution outputs
+sw=2+2
+## set beq_fldspec (see namelist beqparameters documentation)
+flds=3
+## g for global, l for local calculation
+cal=g
+## Inputs, defaults
+## A. delivered EQDSK file and identifier/name for processed version
+eqfile=VDE_DW_li0.6_715ms.eqdsk
+eqid=vde
+## B. geometry files
+gdatctl="dome_outrefl_skeleton_july2012 fw18 beancan"
+gdatres=wdpdd06_mesh10mm_onlyfront
+gdatshad="wdpdd06_mesh30mm" ## NB file "$gdatshad"_tfm1.ctl must exist in $datgeom directory
+gres=baf ## NB file $gres.ctl must exist in $geom directory
+gshad=bot ## NB file $gshad.ctl must exist in $geom directory
+gwall=wall
+nzetp=18
+## C. control parameters
+## boundary options: in, out or x
+bdry=out
+## power deposition parameters
+decl=.03
+pow=159. # NB $pow is power in MW, whereas $powe in W
+## set variables from list key=arg
+for i in $*; do 
+## echo "i="$i
+key=${i%%=*}
+arg=${i##*=}
+case "$key" in
+  sw) sw=${arg//+/ };;
+  flds) flds=${arg//+/ };;
+  cal) arg1=${arg//+/ };cal=${arg1:0:1};;
+  eqfile) eqfile=${arg//+/ };;
+  eqid) eqid=${arg//+/ };;
+  gdatctl) gdatctl=${arg//+/ };;
+  gdatres) gdatres=${arg//+/ };;
+  gdatshad) gdatshad=${arg//+/ };;
+  gres) gres=${arg//+/ };;
+  gshad) gshad=${arg//+/ };;
+  gwall) gwall=${arg//+/ };;
+  nzetp) nzetp=${arg};;
+  bdry) bdry=${arg//+/ };;
+  decl) decl=${arg};;
+  pow) pow=${arg};;
+  ?) echo "unknown key";exit;;
+esac 
+done
+## derived parameters
+no=$flds
+runid="$eqid"-"$gshad"-$gres
+rundir=$HSAUX/Val-$runid
+swa=(${sw/+/ })
+## Logging
+echo "Start script" $(date)
+echo "rundir = " $rundir
+echo "tempdir = " $tempdir
+echo "flds = " $no
+echo "cal = " $cal
+echo "eqfile = " $eqfile
+echo "eqid = " $eqid
+echo "gdatctl = " $gdatctl
+echo "gdatres = " $gdatres
+echo "gdatshad = " $gdatshad
+echo "gres = " $gres
+echo "gshad = " $gshad
+echo "gwall = " $gwall
+echo "nzetp = " $nzetp
+echo "bdry = " $bdry
+echo "decl = " $decl
+echo "pow = " $pow
+echo "run identifier = " $runid
+## Input OK and logged, start by creating $tempdir
+if [ ! -d $tempdir ] ; then rm -f $tempdir; mkdir $tempdir;fi
+#
+if [ ${swa[0]} != 0 ] ; then
+## Hidden file protects vtk files unless first switch is 2
+  ## Step 1.  Geometry from dat to vtk format **
+  cd $datgeom
+  if [ ${swa[0]} == 2 ] || [ ! -e ".STOP-"$runid ] ; then
+    for i in $gdatctl ; do
+      $INT/cmdwrap $tempdir datvtk -c $i
+      if [ $? -ne 0 ] ; then exit 1 ;fi
+      mv -f  "$i".vtk $geom/$i.vtk
+    done
+    for i in $gdatshad $gdatres; do
+      $INT/cmdwrap $tempdir datvtk -xxm $i 
+      if [ $? -ne 0 ] ; then exit 1 ;fi
+      mv -f  "$i".vtk $geom/$i.vtk
+    done
+    touch ".STOP-"$runid
+  fi
+  ## Step 2. Combine files ** 
+  cd $geom
+  if [ ${swa[0]} == 2 ] || [ ! -e ".STOP-"$runid ] ; then
+    # First transform
+    $INT/cmdwrap $tempdir vtktfm "$gdatshad"_tfm1
+    if [ $? -ne 0 ] ; then exit 1 ;fi
+    $INT/cmdwrap $tempdir vtktfm "$gshad"
+    if [ $? -ne 0 ] ; then exit 1 ;fi
+    $INT/cmdwrap $tempdir vtktfm $gres
+    if [ $? -ne 0 ] ; then exit 1 ;fi
+    touch ".STOP-"$runid
+  fi
+fi
+if [ ${swa[1]} == 0 ] ; then
+  echo "Inspect vtk files in directories $datgeom and $geom"
+  echo "Reset \$sw=0+2 to proceed further "
+  exit 2
+fi
+## Step 3. geoq processing
+##first make sure run directory exists
+if [ ! -d $rundir ] ; then rm -f $rundir;mkdir $rundir;fi;cd $rundir
+## Step 3b.  Shadow geometry
+##create subdirectory for Steps 3-5 if needed
+if [ ! -d S ] ; then rm -f S;mkdir S;fi;cd S
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_geoq.out  ] ; then
+  ln -sf $equil/$eqfile $eqid.eqdsk
+  if [ $bdry = in -o $bdry = out ] ; then
+    #Inboard or outboard limiter, work in psi, theta coordinates, where
+    #psi and theta limits are set by shadow geometry
+    #Extract SMITER-GEOQ psiltr value from log file
+    #pass to Results calculation so Bpm, Rm calculated correctly
+    sed -e "s/EQDSK/$eqid/" -e "s/SHAD/$gshad/" -e "s/NZETA/$nzetp/" < $extra/SHADV$no$bdry.ctl > $gshad.ctl
+    ln -sf $geom/$gshad.vtk 
+    $INT/cmdwrap $tempdir geoq $gshad
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+    #optional diagnostics,
+    psiref=$(grep "SMITER-GEOQ psiltr" $gshad.log | sed -e "s/Log  : SMITER-GEOQ psiltr  =//" )
+    sed -e "s/EQDSK/$eqid/" -e "s/RES/$gres/" -e "s/PSIREF/$psiref/" -e "s/NZETA/$nzetp/" < $extra/RESV$no$bdry.ctl > $gres.ctl
+  else
+    echo "X-point option not implemented yet"
+    exit
+  fi
+  #
+  #field diagnostics
+  ln -sf $extra/$gwall.txt
+  $extra/geoqgnu $gshad &> /dev/null
+fi
+## Step 3c. Results geometry
+cd $rundir
+if [ ! -d G ] ; then rm -f G;mkdir G;fi;cd G
+if [ ${swa[1]} == 2 ] || [ ! -e "$gres"_geoq.out  ] ; then
+  ln -sf $equil/$eqfile $eqid.eqdsk
+  ln -sf $geom/$gres.vtk 
+  ln -sf ../S/$gres.ctl 
+  $INT/cmdwrap $tempdir geoq $gres
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+  #optional diagnostics,
+  #D$extra/geoqgnu $gres &> /dev/null
+fi
+#
+## Step 4. HDS generation
+cd $rundir
+if [ ! -d H ] ; then rm -f H;mkdir H;fi;cd H
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_hds_hdsgen.out  ] ; then
+  sed -e "s/SHAD/$gshad/" < $extra/HDSV.ctl > $gshad.ctl
+  $INT/cmdwrap $tempdir hdsgen $gshad
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+fi
+#
+## Step 5. Power deposition results
+cd $rundir
+if [ ! -d P ] ; then rm -f P;mkdir P;fi;cd P
+if [ ${swa[1]} == 2 ] || [ ! -e "$gshad"_pow_powcal.out  ] ; then
+  sed -e "s/SHAD/$gshad/" -e "s/RES/$gres/" -e "s/DECL/$decl/" -e "s/POW/$pow/" < $extra/POWV$no$cal.ctl > $gres.ctl
+  $INT/cmdwrap $tempdir powcal $gres
+  if [ $? -ne 0 ] ; then exit 1 ;fi
+fi
+echo "End script" $(date)

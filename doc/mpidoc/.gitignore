@@ -1,0 +1,6 @@
+*
+!.gitignore
+!images
+!smiterMPI_dev_manual.pdf
+!smiterMPI_dev_manual.tex
+!smiterMPI_input.tex

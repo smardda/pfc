@@ -1,0 +1,54 @@
+SMARDDA-PFC on bash (on Ubuntu) on Windows 8-10
+-----------------------------------------------
+Installation of the bash shell is well explained in the Windows documentation,
+google "bash on Ubuntu on Windows" or try
+https://msdn.microsoft.com/en-gb/commandline/wsl/about
+
+The following packages have to be installed using sudo apt get -
+------------
+firefox
+paraview
+gfortran
+make
+doxygen
+dialog
+gnuplot5-x11
+gv
+
+For any bash X-windows-based GUI to work, the Windows 8-10 machine requires XMing to be
+installed upon it, installation well explained in the Windows documentation.
+The XMing icon must be clicked to activate whenever the PC is switched on, and
+the bash session commands must commence with -
+export DISPLAY=:0
+when ismiter should work adequately if not perfectly. Given the number of warnings
+using firefox on bash on Windows causes to be generated, it might be preferable to
+use the Windows browser. (N.B. These comments apply to a Dell 5000 13" laptop,
+other machines may have different bash GUI issues.)
+
+git commands to fetch files
+---------------------------
+mkdir ~/smardda
+mkdir ~/smardda/smardda-pfc
+cd ~/smardda/smardda-pfc
+git init
+git remote add ccfe git@git.ccfe.ac.uk:smardda/smardda-pfc.git
+git pull ccfe master
+mkdir ~/smardda/nucode
+cd ~/smardda/nucode
+git init
+git remote add ccfe git@git.ccfe.ac.uk:smardda/nucode.git
+git pull ccfe master
+# repeat for qprog, develop and README as required, then
+mkdir ~/smiteraux
+cd ~/smiteraux
+git init
+git remote add ccfe git@git.ccfe.ac.uk:warter/smiteraux.git
+git pull ccfe master
+*If you access to smardda/develop then the command
+mopen.bash will do all the fetching above
+
+Installation of smardda-pfc executables as in README/README
+The following line can usefully be added to the .bashrc file
+
+pushd ~/smardda/smardda-pfc/;source Extras/setup;popd
+

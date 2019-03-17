@@ -1,0 +1,22 @@
+&miscparameters
+ new_controls=.TRUE.
+ max_number_of_panels=80,
+ max_number_of_transforms=20,
+/
+&vtktfmparameters
+ make_same=.FALSE.
+ paneltfm=.FALSE.
+ extract=.TRUE.
+ extract_key='toroidal'
+ angle_units='degree'
+ split_file=.TRUE.
+ minimum_angle=-22.5
+ maximum_angle=22.5
+/
+&vtkfiles
+ vtk_input_file='GEOM.vtk',
+/
+&panelarrayparameters
+/
+&positionparameters
+/

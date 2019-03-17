@@ -1,0 +1,7 @@
+*
+!.gitignore
+!doc
+!exec
+!Extras
+!README
+!README_windows_bash

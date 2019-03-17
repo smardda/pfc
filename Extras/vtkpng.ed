@@ -1,0 +1,9 @@
+%s:.*:ZZ&QQ = STLReader(FileNames='&')SaveData('&.vtk', proxy=ZZ&QQ, Writealltimestepsasfileseries=1,FileType='Ascii'):
+%s/\.stlQQ/stlQQ/
+%s/\.stl.vtk/.vtk/
+%s/ZZ.*QQ/ZZ\L&\UQQ/
+%s/ZZzz//
+%s/qqQQ//
+1s/^/from paraview.simple import */
+$s/$/quit()/
+wq
