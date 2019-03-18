@@ -1,0 +1,50 @@
+# basic Makefile
+
+# config file.
+include ../config/config.inc
+ 
+# Path and libraries
+include ../config/path.inc
+
+SOURCES = \
+ctlgen.f90
+ 
+PROG = ctlgen
+ 
+
+VPATH=$(SMAPATH)
+
+MODULES=$(SOURCES:.f90=.mod)
+
+OBJECTS=$(SOURCES:.f90=.o)
+
+$(PROG) : $(OBJECTS) lib
+	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
+
+$(OBJECTS):$(MODULES)
+	@touch .TOUCHFILE
+
+$(MODULES): %.mod : %.f90
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
+
+clean:
+	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
+
+distclean: clean
+	rm -f $(PROG)
+
+lib :
+	cd $(SMAPATH)/LIB && $(MAKE) 
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
+
+txt:
+	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
+
+.PHONY : clean distclean lib
+
+
+ctlgen.f90 : const_kind_m.mod
+ctlgen.f90 : date_time_m.mod
+ctlgen.f90 : log_m.mod
+ctlgen.f90 : misc_m.mod
+ctlgen.f90 : ccontrol_m.mod

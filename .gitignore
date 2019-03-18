@@ -2,6 +2,8 @@
 !.gitignore
 !doc
 !exec
+!f95
+!fortd
 !Extras
 !README
 !README_windows_bash

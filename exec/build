@@ -23,6 +23,9 @@ compiler2=intel_dbg
 compiler3=gfortran
 compiler4=gfortran_dbg
 compiler5=gfortranmpi
+compiler6=gfortranmpi_dbg
+compiler7=intelmpi
+compiler8=intelmpi_dbg
 if [ "$1" == "$compiler1" ] ; then
     compiler=$compiler1
 elif [ "$1" == "$compiler2" ] ; then
@@ -31,6 +34,12 @@ elif [ "$1" == "$compiler3" ] ; then
     compiler=$compiler3
 elif [ "$1" == "$compiler5" ] ; then
     compiler=$compiler5
+elif [ "$1" == "$compiler6" ] ; then
+    compiler=$compiler6
+elif [ "$1" == "$compiler7" ] ; then
+    compiler=$compiler7
+elif [ "$1" == "$compiler8" ] ; then
+    compiler=$compiler8
 else
     compiler=$compiler4
 fi
@@ -50,7 +59,9 @@ if [ -f $SMITER_DIR/../gwit/setup ] ; then
 fi
 
 #ln -sf $SMITER_DIR/config/config_"$compiler"_dbg.inc $SMITER_DIR/config/config.inc
-ln -sf $SMITER_DIR/config/config_"$compiler".inc $SMITER_DIR/config/config.inc
+#ln -sf $SMITER_DIR/config/config_"$compiler".inc $SMITER_DIR/config/config.inc
+#should add a consistency test for compiler configs (TO DO)
+ln -sf $SMALIB_DIR/config $SMITER_DIR/config
 
 #make sure executables are
 chmod a+x $SMITER_DIR/Extras/chmodx
