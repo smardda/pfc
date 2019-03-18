@@ -1,0 +1,9 @@
+--item-help --checklist "Control file checklist : The computation will " 0 0 9
+0c "Use cylindrical coordinates" on "Flux coordinates (EXPERT only) otherwise"
+1c "Limiter discharge" on "Use psi at X-point in Q formula otherwise"
+2c "Use periodic geometry" off "Shadowing geometry specified only as say n=18 toroidal sector"
+3c "Examine only local shadowing" on "Fieldlines have only to escape past shadowing geometry"
+4c "Trust eqdsk values for plasma LCFS" on "Be sure you have a reliable supplier"
+5c "Use simple exponential form for power calculation" on "To help get you started"
+6c "Use outboard/LFS field values in power calculation" on "Only matters if X-point present"
+7c "Use analytic definition of ripple" off "Toroidal-B from eqdsk"

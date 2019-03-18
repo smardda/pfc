@@ -1,0 +1,9 @@
+--item-help --menu "Choose transformation type :" 0 51 9 
+"0" "none" "identity" 
+"1" "scale" "cartesian scale" 
+"2" "offsca" "scale+offset" 
+"6" "poltil" "poloidal tilt (toroidal axis rotation)" 
+"7" "tortil" "toroidal tilt (vertical axis rotation)" 
+"12" "torrot" "toroidal rotate" 
+"22" "polrot" "poloidal rotate " 
+"42" "radial" "minor radius displ to (R,Z)" 

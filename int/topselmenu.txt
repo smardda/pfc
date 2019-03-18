@@ -1,0 +1,8 @@
+--title "Top level selections:"
+--checklist "Checklist : mark actions " 0 0 6
+1t "Assemble geometry"  off
+2t "Select geometry and equil files" off
+3t "Set run type" off
+4t "Change default parameters"  off
+5t "Run SMITER" off
+6t "Analyse output" off

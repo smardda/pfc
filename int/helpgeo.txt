@@ -1,0 +1,7 @@
+To produce geometry for study by SMITER
+for the first time, work through the menu items in order.
+(The default parameter options should be OK for this.)
+
+If this is your first use of this menu, you probably need more
+information regarding how it works and the different file formats it uses.
+

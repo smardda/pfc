@@ -1,0 +1,8 @@
+If there are questions about the reliability of
+the eqdsk file, for example after checking the graphics
+in files dR.ps dZ.ps for plots of the magnetic
+field components, then the geoq command prints in its log a
+variety of outputs for psi on limiter, psi of X-point etc.
+which might help.
+See the web-based documentation for beqparameters as to how to
+produce these outputs.

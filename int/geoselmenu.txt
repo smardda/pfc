@@ -1,0 +1,10 @@
+--title "Assemble geometry:"
+--checklist "Checklist : mark actions " 0 0 8
+vg "Visualise geometry" off
+dg "Change default parameters"  off
+0g "Surfaces from dat files"  off
+1g "Use dat file meshes" off
+2g "Select geometry file(s)"  off
+3g "Define transform" off
+4g "Apply transform" off
+5g "Combine geometry" off

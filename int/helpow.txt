@@ -1,0 +1,5 @@
+To set more complex power deposition profiles,
+inputs to the powcal program can be changed.
+See the web-based documentation under namelist
+edgprofparameters for a list of capabilities and
+parameters to change.

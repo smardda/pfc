@@ -1,0 +1,47 @@
+#! /bin/bash --norc
+# Wrapper for command=2st argument , arg(s)=later arguments , 1st arg=log-dir
+# if argument to command is string "null" then ignore
+if [ $# -le 1 ] ; then echo "Command log-dir argument expected"; exit
+elif [ $# -eq 2 ] ; then echo "Arguments to command expected"; exit;fi
+#smiter special
+if [[ -z "$HS" ]] ; then HSS=;else HSS=$HS/exec/;fi
+exe=$HSS$2
+if [ -z $(type -p $exe) ] ; then echo "Command $exe not found";exit;fi
+tempdir=$1;shift
+logf=$tempdir/cmdwrap.log
+errf=$tempdir/cmdwrap_$1.err
+rm -f $errf
+if [ ! -e $logf ] ; then echo "#" $(date) > $logf; fi
+cmd=$1;shift
+opt=
+for i in $*; do test=$i; #echo $test
+if [ $test == null ] ; then
+  echo "Ignoring argument null" >> $logf
+elif [ "${test#-}" == $test ] ; then
+  echo "Executing $exe $opt $i"
+  $exe $opt $i
+  retvali=$?
+  if [ $retvali -ne 0 ] ; then
+    echo "Error in $cmd calculation" | fold -s -w 75
+    echo "#" "!*" >> $logf
+    echo "$retvali" > $errf
+    "$HSS"diagn $i | fold -s -w 75
+    echo "Examine file $PWD/$i.log and/or seek expert assistance" | fold -s -w 75
+    exit $retvali
+  fi
+  echo "$exe $opt $i" >> $logf
+  rm -f $tempdir/$i.*ctl* ; cp -f $i.*ctl* $tempdir 2>/dev/null
+else
+  opt=$opt" "$test
+  #echo "Ignoring argument $test"
+fi
+done
+#command specific postscript
+if [ $cmd == datvtk ] ; then
+  for i in $*; do test=$i
+  if [ "${test#-}" == $test ] ; then
+    rm -f $i.vtk; mv -f $i"_out".vtk $i.vtk
+    echo  mv -f "$i"_out.vtk $i.vtk  >> $logf
+  fi
+  done
+fi

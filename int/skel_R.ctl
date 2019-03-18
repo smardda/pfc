@@ -1,0 +1,17 @@
+&progfiles 
+ r_input_file='DATR'
+ z_input_file='DATZ'
+ rz_input_file='DATRZ'
+/
+&datvtkparameters 
+ length_units='LENU'
+ angle_units='ANGU'
+ transform_type='TFMTYP'
+ start_angle=ANGS
+ finish_angle=ANGF
+ start_position=TFMSTA
+ finish_position=TFMFIN
+ number_of_divisions=NDIV
+/
+&plotselections 
+/

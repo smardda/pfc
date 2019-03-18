@@ -1,0 +1,5 @@
+--checklist "Input file checklist : I want this calculation to use " 0 0 5
+1 "vtk format file describing geometry" on 
+2 "different vtk format file describing shadowing geometry" on 
+3 "eqdsk file containing equilibrium" on 
+4 "sp3 file describing ripple" off 

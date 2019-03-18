@@ -1,0 +1,15 @@
+SMITER expects geometry defined in terms of mesh file formats
+MSC-NASTRAN dat or kitware legacy vtk. It will convert dat
+files into vtk for further processing, since the basic unit of geometry
+is a vtk file corresponding typically to one panel or tile.
+Use the transform menu to define solid-body transformations of files
+into new files, and the combine menu to join them one or more at a time
+to produce ultimately just two files for input to SMITER.
+One file will contain the geometry on which power is deposited, the
+other geometry (normally adjacent) that shadows the first "results" geometry.
+
+By convention, geometry that has been transformed has a file-name extended
+by the name of the transform, thus say panel1.vtk might become
+panel1_tfm1.vtk and if a second transform is applied, panel1_tfm1_tfm2.vtk.
+Beware that panel1.dat will be converted to panel1.vtk, overwriting
+any pre-existing file.

@@ -1,0 +1,22 @@
+ismiter uses Linux dialog commands to provide a simple portable GUI
+based around working through a sequence of boxed dialogues, normally
+moving on by clicking on an option presented below each box.
+Generally both in the box and below it, selections will be made
+by mouse-click, but do not click in this window before you have
+finished reading it - USE THE ARROW KEYS TO SCROLL TEXT in a
+box such as this one.
+
+Options may also be selected by using the arrow keys
+and hitting the space-bar to select/de-select highlighted options.
+"^" and "$" will transfer from left to right selection boxes,
+tab key will transfer between option buttons "< OK >" etc.
+Hitting return will normally terminate any interaction immediately
+with whatever options are highlighted, hitting cancel will TRY
+to return to a sensible menu level with a helpful hint.
+
+ismiter manipulates only files in the current working directory.
+File selections (and most other actions) are dynamic, so the user
+may move new data-files into the directory at any time.
+There is no key-stroke logging as such, but cautious users may
+find that they are able to recreate the outputs of a session from
+the file cmdwrap.log and other files in  subdirectory ismtemp.
