@@ -1,4 +1,4 @@
-To produce geometry for study by SMITER
+To produce geometry for study by SMARDDA-PFC
 for the first time, work through the menu items in order.
 (The default parameter options should be OK for this.)
 

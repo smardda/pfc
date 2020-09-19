@@ -21,7 +21,7 @@ module powcal_p
   use beqart_h
   use beqart_m
   use posang_m
-  
+
   use bods_h
   use geobjlist_h
   use position_m
@@ -43,7 +43,7 @@ module powcal_p
   use indict_m
   use pcle_h
   use pcle_m
-  
+
   use spl2d_m
   use spl3d_m
   use poutfile_m
@@ -51,7 +51,7 @@ module powcal_p
   use vfile_m
   use gfile_m
   use hdsfile_m
-  
+
   use nrsolve_m
   use powelt_m
   use skyl_h
@@ -67,12 +67,12 @@ module powcal_p
   use odes_m
   use stack_m
   use skyl_m
-  
+
   use smitermpi_m
   use smitermpi_h
-  
+
   implicit none
-  
+
 contains
 
   subroutine powcal_sub(arg,combined,decomp)
@@ -113,13 +113,14 @@ contains
     !--------------------------------------------------------------------------
 
     powcal%decomp=decomp
+    powcal%powres%geobjl%ngtype=0
 
     !! initialise timing
     if(powcal%decomp%myrankpowcal == 0) then
        call date_time_init(timestamp)
        call clock_start(1,'powcal run time')
     endif
-    
+
     !--------------------------------------------------------------------------
     !! print header
     if(powcal%decomp%myrankpowcal .eq. 0) then
@@ -142,29 +143,31 @@ contains
        !!get fileroot
        call get_command_argument(arg,value=fileroot)
     end if
-
     !! start log
-    call log_init(fileroot,timestamp)
+    call log_init(fileroot,timestamp,decomp)
     !--------------------------------------------------------------------------
     !! read control file
-    if(powcal%decomp%myrankpowcal == 0) then
+    if(powcal%decomp%readpowcalcontrol) then
        call clock_start(2,'pcontrol_init time')
        call pcontrol_init(fileroot)
+       ! Initialise fint to 1.0. It is used in userdefined formula
+       powcal%edgprof%fint = 1.0
        call pcontrol_read(file,numerics,onumerics,powcal%edgprof,plot,combined)
        call clock_stop(2)
     endif
-    if(powcal%decomp%nprocpowcal > 1) then
+    if(powcal%decomp%bcastpowcalcontrol) then
        if(powcal%decomp%myrankpowcal == 0) call clock_start(29,'pcontrol broadcast')
        call bcast_pcontrol(file,numerics,onumerics,powcal%edgprof,&
             plot,powcal%decomp%myrankpowcal,powcal%decomp%commpowcal)
        if(powcal%decomp%myrankpowcal == 0) call clock_stop(29)
     endif
-
     !--------------------------------------------------------------------------
     !! beq part data output by geoq
     if(powcal%decomp%myrankpowcal == 0) call clock_start(3,'geoq_init time')
-
-    if(powcal%decomp%myrankpowcal == 0 .and. .not. decomp%bcastpowcal) then
+    ! Initialize values that are not read in beq_readpart
+    powcal%powres%beq%nctrack = 0
+    powcal%powres%beq%n%skyl = .false.
+    if(powcal%decomp%readpowcaldata) then
        ! get fldspec from file
        call beq_readcheck(powcal%powres%beq,file%geoq,iextra)
        ifldspec=powcal%powres%beq%n%fldspec
@@ -177,8 +180,7 @@ contains
        if (iextra==2) call skyl_read(powcal%powres%skyl,file%geoq)
     endif
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(3)
-
-    if(powcal%decomp%nproc > 1) then
+    if(powcal%decomp%bcastpowcaldata) then
        if(powcal%decomp%myrankpowcal == 0) call clock_start(31,'beq broadcast')
        call bcast_beq(powcal%powres%beq,powcal%decomp%myrankgeoqshad,powcal%decomp%commgeoqshad)
        if(powcal%powres%beq%n%skyl) then
@@ -188,7 +190,6 @@ contains
     endif
 
     ifldspec=powcal%powres%beq%n%fldspec
-
     call pcontrol_fix(numerics,onumerics,ifldspec)
 
     !--------------------------------------------------------------------------
@@ -201,7 +202,7 @@ contains
        call spl3d_read(powcal%powres%beq%vacfld,powcal%powres%beq%n%vacfile,nin)
        zfac=zivac/powcal%powres%beq%ivac
        call log_value("ripple field i to equilibrium field i ",zfac)
-       if (abs(abs(zfac)-1.)>0.01) then
+       if (abs(abs(zfac)-1.)>0.02) then
           !print *, 'Fatal error: field I and BR values inconsistent.'
           call log_error(m_name,m_name,1,error_fatal,'eqm. currents inconsistent')
        else
@@ -223,7 +224,6 @@ contains
        call beqart_sptfm(powcal%powres%beq%beqart,spl3d_rpower)
     end select vac_type
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(9)
-
     if (numerics%nanalau==1) then
        !--------------------------------------------------------------------------
        !! special  launch description
@@ -237,12 +237,17 @@ contains
        !--------------------------------------------------------------------------
     else
        !! read  geobjl data (shadowing geometry data)
-       if(powcal%decomp%myrankpowcal .eq. 0 .and. .not. decomp%bcastpowcal) then       
+       gshadl%ngtype=0 !LKUV
+       gshadl%ngunassigned=0
+       gshadl%coordbb = 0
+       ! gshadl%nsampl = 0
+       gshadl%binbb = 0
+       if(powcal%decomp%readpowcaldata) then
           call clock_start(5,'shadow geobjlist time')
           call geobjlist_read(gshadl,file%vtkdata)
           call clock_stop(5)
        endif
-       if(powcal%decomp%nproc > 1) then
+       if(powcal%decomp%bcastpowcaldata) then
           if(powcal%decomp%myrankpowcal == 0) call clock_start(33,'shadow geobjlist broadcast time')
           call bcast_geobjlist(gshadl,powcal%decomp%myrankgeoqshad,powcal%decomp%commgeoqshad)
           ! Need to broadcast the converted positions
@@ -250,14 +255,14 @@ contains
                powcal%decomp%myrankgeoqshad,powcal%decomp%commgeoqshad)
           if(powcal%decomp%myrankpowcal == 0) call clock_stop(33)
        endif
-       if(powcal%decomp%myrankpowcal .eq. 0 .and. .not. decomp%bcastpowcal) then
+       if(powcal%decomp%readpowcaldata) then
           !! launch from `results' geometry
           !! read  geobjl data (`results' geometry data)
           call clock_start(4,'results geobjlist time')
           call powcal_readv(powcal,file%vtkres)
           call clock_stop(4)
        end if
-       if(powcal%decomp%nproc > 1) then
+       if(powcal%decomp%bcastpowcaldata) then
           if(powcal%decomp%myrankpowcal == 0) call clock_start(32,'results geobjlist broadcast')
           call bcast_powcal(powcal%powres%geobjl,powcal%powres%vecx,powcal%powres%vecb,&
                powcal%decomp%myrankgeoqres,powcal%decomp%commgeoqres)
@@ -266,45 +271,45 @@ contains
           if(powcal%decomp%myrankpowcal == 0) call clock_stop(32)
        endif
     end if
-
     !--------------------------------------------------------------------------
     !! read  HDS  data
     if(powcal%decomp%myrankpowcal == 0) call clock_start(6,'hds_init time')
     !     line below needed for debugging version to run
 !    write(*,*) 'debugging output',file%vtkdata
-    if(powcal%decomp%myrankpowcal .eq. 0.and.  .not. decomp%bcastpowcal) then            
+    if(powcal%decomp%readpowcaldata) then
        call hdsfile_dinit(file%hdsdata,timeold)
        call hdsfile_read(gshadl,gnumerics,btree)
     endif
 
-    if(powcal%decomp%nproc > 1) then
+    if(powcal%decomp%bcastpowcaldata) then
        if(decomp%myrankpowcal == 0) call clock_start(34,"hds broadcast time")
        call bcast_hds(gshadl,gnumerics,btree,powcal%decomp%myrankhdsgen,powcal%decomp%commhdsgen)
        if(decomp%myrankpowcal == 0) call clock_stop(34)
     endif
-        
+
     ! rotate and quantise shadowing geometry
     call position_tfmlis(gshadl%posl,gshadl%tfmdata)
     call position_qtfmlis(gshadl%posl,gshadl%quantfm)
     call btree_limits(btree,powcal%powres%beq%n%xbb)
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(6)
+
     !--------------------------------------------------------------------------
     !! initialise powcal and odes
     if(powcal%decomp%myrankpowcal == 0) call clock_start(7,'initialise powcal time')
     call odes_init(powcal%odes,onumerics)
     call powcal_init(powcal,numerics,plot,gnumerics)
+
     if (powcal%powres%flinends .and. powcal%decomp%myrankpowcal .eq. 0) then
-       call gfile_init(trim(file%flinends),'ends',powcal%powres%nflends)
+         call gfile_init(trim(file%flinends),'ends',powcal%powres%nflends)
     end if
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(7)
 
     !--------------------------------------------------------------------------
     !! do the main work
-
     if(powcal%decomp%myrankpowcal == 0) call clock_start(8,'powcal evaluation time')
     call powcal_refine(powcal,gshadl,btree)
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(8)
-    
+
     !--------------------------------------------------------------------------
     !--------------------------------------------------------------------------
     !! collect all the evaluated paths
@@ -375,7 +380,7 @@ contains
     if(powcal%decomp%myrankpowcal == 0) then
        call clock_stop(1)
        call clock_summary
-       call clock_delete    
+       call clock_delete
     endif
 
     call log_close
@@ -388,11 +393,9 @@ end module powcal_p
 program powcal
 
   use powcal_p
-  use smitermpi_h
-  use smitermpi_m
-  
+
   type(decomp_t) :: decomp
-  
+
   !! Initialise MPI
   call powcalmpi_init(decomp)
 
@@ -404,6 +407,6 @@ program powcal
   !! Finalize MPI
   call powcalmpi_finish(decomp)
   !--------------------------------------------------------------------------
-  
+
 end program powcal
 #endif

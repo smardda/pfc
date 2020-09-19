@@ -75,7 +75,7 @@ module namelist
    !! plasma centre) at the point where \f$ \psi=\psi_m \f$, either
    !! inboard/HFS (options 4,5) or outboard/LFS (options 8,9).
    !! rsig is important since rsig>0(<0)  implies the plasma centre is at a minimum(maximum) of \f$ \psi \f$
-   !! and the resulting handedness of the field-line "helices" matters to SMITER, although
+   !! and the resulting handedness of the field-line "helices" matters to SMARDDA-PFC, although
    !! field direction does not. Below, \f$ \psi_X \f$ is the value of flux at the X-point which
    !! geoq has found to be nearest in physical space to the plasma centre.
    !! 1. User input of \f$ \psi_m=\psi_{ref} \f$
@@ -230,8 +230,7 @@ module namelist
    !! e.g. to stop fieldlines going "round the back" of surfaces.
    !! Following beqparameters in the file, there must be
    !! cutout_objects x (namelists datvtkparameters + optional progfiles)
-  integer(ki4) :: cutout_objects !< .
-     integer(ki4) :: skylight_debug !< level of output to help understand skylight production
+     integer(ki4) :: cutout_objects !< .
    !> Level of output to help understand skylight production
    !! Default 0, no output.
      integer(ki4) :: skylight_debug !< .
@@ -662,6 +661,11 @@ module namelist
    !! - 0. No shadowing (default)
    !! - 1. Shadowing by shadow geometry
      integer(ki4) :: shadow_control !< local variable
+   !> Default .FALSE. implies use of value psista (sic) for \f$ \psi \f$ on termination plane
+   !! to evaluate \f$ Q \f$ in global calculation.  If .TRUE., use instead value of \f$ \psi \f$ on
+   !! PFC to evaluate \f$ Q \f$. (Integration errors may lead to discrepancies in psista even in
+   !! the case of exisymmetric field.)
+     logical :: use_pfc_flux   !< .
    !> termination planes present, always set .TRUE. to use more
    !! sophisticated termination criteria in termplaneparameters namelist,
    !! default .FALSE.
@@ -761,7 +765,7 @@ module namelist
      logical :: plot_cartv !<  magtfm only, vtk plot selector, default .FALSE.
      logical :: plot_allcartv !<  magtfm only, vtk plot selector, default .FALSE.
      logical :: plot_testtfm !<  magtfm only, do test of FFT analysis, default .FALSE.
-     logical :: plot_bcartx !<  magtfm only, output scaled B in fmesh format, default .FALSE.
+     logical :: plot_bcartx !<  magtfm only, output scaled B in fmesh format in txt file, default .FALSE.
      logical :: plot_gnuv !<  magtfm only, gnu 2-D plot selector, default .FALSE.
      logical :: plot_modes !<  magtfm only, gnu 2-D plot selector, default .FALSE.
      logical :: plot_gnu !<  magtfm only, gnu 1-D plot selector, default .FALSE.
@@ -855,7 +859,7 @@ module namelist
 !!
   type, public :: panelarrayparameters
    !> bodies defining the geometry,
-   !! default 0 gives error so must be changed
+   !! if no bodies are listed, then all are considered
      integer(ki4), dimension(2*maximum_number_of_panels) :: panel_bodies !< .
    !> number of transform to apply,
    !! default -1 gives error so must be changed
@@ -942,6 +946,10 @@ module namelist
      character(len=80) :: mag_input_file  !< .
    !> sp3 format magnetic field data output file,
    !! for input to powcal (internal to SMARDDA-PFC)
+   !! setting to 'null' suppresses calculation as well as output
+   !! of sp3 file, in which case it would be normal to have
+   !! set plot_bcartx=T to produce txt format file
+   !! for input to powcal
      character(len=80) :: mag_output_file  !< .
   end type magfiles
 
@@ -1142,6 +1150,9 @@ module namelist
    !> Number of repeats of magnetic field in toroidal direction for mapping to cylindricals
    !! \f$ N_{\zeta p} \f$, default 0
      integer(ki4) :: nzetap !< .
+   !> Toroidal angle \f$ zeta \f$ of first point in samples (degrees) \f$ \zeta_{0} \f$,
+   !! defaukt 370 (so ignored)
+     real(kr8) :: zeta_start  !< .
    !> magtfm only,  minimum wavenumber vector for evaluation,
    !! default  \f$ (1,1,0) \f$, filters out constant contributions
    !! to vacuum field \f$ R \f$ and \f$ Z \f$ components
@@ -1168,7 +1179,8 @@ module namelist
    !!  - 2. ITER periodic spec
    !!  - 3. Muddled periodic spec
    !!  - 10. MAST-U full 360deg spec (TO DO)
-   !!  - 12. ITER full 360deg spec (TO DO)
+   !!  - 12. ITER full 360deg spec
+   !!  - 14. ITER full 360deg spec staggered in toroidal angle
    !!  - 23. muddled and duplicated 360deg ITER case
    !!  - 33. Incorrectly stacked datasets in zeta ordering
    !!  - 34. The ITER 360deg case (stacked datasets in phi ordering)
@@ -1228,10 +1240,16 @@ module namelist
      integer(ki4) :: number_of_clusters !< sets cluster size by dividing range of key, default  18
    !> New key for sorting, always an angle,
    !! inert unless rekey is .TRUE.
-   !! Only values 'angle', 'poloidal', 'toroidal' are allowed, default  'null',
-   !! and 'angle' implies poloidal angle
+   !! Only values 'angle', 'poloidal', 'toroidal', 'userdefined'  are allowed, default  'null',
+   !! and 'angle' implies poloidal angle (only the first 6 characters signify)
      character(len=80) :: new_key !<.
      logical :: rekey !<  Only use new key if .TRUE., default  .FALSE.
+   !> user defined dictionary
+   !! Zero entry terminates. For example to group bodies 1,2,3 and 4, set first four entries
+   !! to 1, then say bodies 5 and 6 are grouped by setting entries 5 and 6 each to 2 etc.
+   !! If there are more bodies than entries in the dictionary, then they are all grouped
+   !! together with key equal to number of entries plus one.
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS)  :: dictionary !< .
    !> Statistics to be calculated
    !! Allowed values are 'intg  ', 'intgsq', 'max   ', 'min   ', 'maxabs', and 'minabs'.
    !! intg performs the integral as sum of scalar x (triangle area) and
@@ -1339,7 +1357,7 @@ module namelist
 !! If there is more than one input file,
 !! then by default each file is treated as a single object with a body with
 !! number greater than 100. The numbering convention should be obvious
-!! from inspection of the examples in the smiteraux test deck,
+!! from inspection of the examples in the smiter-aux test deck,
 !! the first file is numbered 101, the second 201, the third 301, etc.
 !! The number of copies may be specified for each file, default 1
 !! (i.e. a single occurrence of the geometry). Other copies of

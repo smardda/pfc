@@ -1,0 +1,18 @@
+!>
+!!
+!! This module manipulates data defining termination planes.
+!!
+!! \Bold{Type}
+!!
+!! Geometrical processing; Object-oriented module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{powcal}.
+!!
+!! \Bold{Function}
+!!
+!! This module manipulates data defining termination planes.
+!!
+!!
+!<

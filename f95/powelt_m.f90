@@ -250,19 +250,21 @@ subroutine powelt_dep(self,powcal,gshadl)
   inpow=powelt_addr(self,powcal%powres%npowe)
 
   iflag=powcal%powres%pow(inpow)+0.5
+  powcal%powres%pow(inpow)=0
   if (iflag==2) then
      ! fieldline was not followed to termination
+     ! for mid-plane launch, assumed no power deposited  and exit
      calcn_type0: select case (powcal%n%caltype)
      case('afws','local','msus','global')
         ! assume unshadowed
      case('msum','middle')
-        ! for mid-lane launch, assumed no power deposited  and exit
-        powcal%powres%pow(inpow)=0
+        ! for mid-plane launch, assumed no power deposited  and exit
         return
      end select calcn_type0
   end if
 
   if (iflag/=0) then
+     !DBG write(*,*) powcal%n%caltype, powcal%powres%beq%n%fldspec, powcal%n%usepsista, iflag !DBG
      ! element is not shadowed
      call powelt_pos(self,powcal,zpos)
      zpos1%posvec=zpos
@@ -320,24 +322,22 @@ subroutine powelt_dep(self,powcal,gshadl)
            call spl2d_eval(powcal%powres%beq%psi,zr,zz,zpsi)
         end select field_type2
      case('msus','global')
+        if (iflag==1.AND.powcal%n%usepsista) then
         ! make saved psi available
-        if (iflag==1) then
            zpsi=powcal%powres%geobjl%obj(inpow)%weight
-        end if
+        else
         field_type3: select case (powcal%powres%beq%n%fldspec)
-        case(1,2)
-           if (iflag/=1) then
-              zpsi=powcal%powres%geobjl%obj(inpow)%weight
-              ! psi is the position (unquantised)
-              zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-              zpsi=zpos2%posvec(1)
-           end if
+        case(1)
+        ! use elemental psi
+           ! psi is the position (unquantised)
+           zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+           zpsi=zpos2%posvec(1)
         case default
-           ! use elemental psi
            zr=zpos1%posvec(1)
            zz=zpos1%posvec(2)
            call spl2d_eval(powcal%powres%beq%psi,zr,zz,zpsi)
         end select field_type3
+        end if
         powcal%powres%geobjl%obj(inpow)%weight=iflag
      end select calcn_type2
 
@@ -395,6 +395,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
   type(posvecl_t) :: zpos1   !< one position data
   type(posvecl_t) :: zpos2   !< one position data
   type(posveclis_t) :: rposl   !< list of position data
+  real(kr4) :: phylenpath !< physical length of path
   real(kr8), dimension(2) :: zk !< sector number
   type(posnode_t) :: xm !< local variable
   real(kr8) :: zzeta !< value of \f$ \zeta \f$
@@ -449,7 +450,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
   powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=zposd
   ! evaluate I aka f at psi
   call spleval(powcal%powres%beq%f,powcal%powres%beq%mr,powcal%powres%beq%psiaxis,&
-  powcal%powres%beq%psiqbdry,zpsi,zf,1)
+  powcal%powres%beq%psiqbdry,zpsi,zf,2)
   ! set initial time step and guess first new point of track
   call odes_rjstep1(powcal%odes,ierr,powcal%powres%qfac*zf,powcal%powres%beq%rjac)
   xpath=powcal%odes%vecp%pos(powcal%odes%ndt+1)%posvec-zposd
@@ -499,6 +500,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
 100   continue
   ! time step loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   lcoll=.FALSE.
   !     powcal%odes%near=0
@@ -558,6 +560,23 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  !! calculate phylenpath
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     zposang%pos=zpos2%posvec
+     zposang%opt=2 ; zposang%units=0
+     call posang_invpsitfm(zposang,powcal%powres%beq)
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
+
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! open file to record Cartesian track
      write(ibuff,'(''elt= '',I6,'' sub= '',I2,'' trackx'')') self%ie,self%je
@@ -583,6 +602,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      deallocate(wposl%pos)
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -609,7 +629,7 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do
@@ -786,6 +806,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
   ! initialise loop for path
   firstcall=1
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   ! time step loop for path
   loop_path: do
@@ -863,7 +884,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
         !xi               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
         !xi               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
         !xi! record psi at boundary if hit termplane boundary
-        !xi               if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+        !xi!psim               if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
         !xi               exit
         !xi            end if
         !xi            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -886,7 +907,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xo,inpow,gshadl)
            !! record psi at boundary if hit termplane boundary
-           !           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !psim           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -956,6 +977,26 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  ! first convert track
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+    &         /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
+
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
      ! first convert track
@@ -998,6 +1039,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -1024,7 +1066,7 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do
@@ -1292,6 +1334,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
 100   continue
   ! initialise loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   firstcall=1
   ierr=0
   !     powcal%odes%near=0
@@ -1364,7 +1407,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -1388,7 +1431,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -1441,6 +1484,25 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  ! first convert track
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+  &         /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
      ! first convert track
@@ -1483,6 +1545,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -1574,6 +1637,7 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
   type(posvecl_t) :: zpos1   !< one position data
   type(posvecl_t) :: zpos2   !< one position data
   type(posveclis_t) :: rposl   !< list of position data
+  real(kr4) :: phylenpath !< physical length of path
   logical :: lcoll   !< collision on path
 
   inpow=powelt_addr(self,powcal%powres%npowe)
@@ -1664,6 +1728,7 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
 100   continue
   ! time step loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   !     powcal%odes%near=0
   loop_path: do
@@ -1778,6 +1843,24 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
      ! close file
      close(nplot)
   end if
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+   &      /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
 
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! open file to record Cartesian track
@@ -1807,6 +1890,7 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
      deallocate(wposl%pos)
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (ibacktr<ipback) then
      ibacktr=ipback
@@ -1971,6 +2055,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
 100   continue
   ! time step loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   !     powcal%odes%near=0
   loop_path: do
@@ -2064,7 +2149,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
               xm%node=0
               nobjhit=-2
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
-              zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               xn=xm
               exit
            end if
@@ -2118,6 +2203,26 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  ! first convert track
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+ &      /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
+
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
      ! first convert track
@@ -2160,6 +2265,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -2186,7 +2292,7 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do
@@ -2259,6 +2365,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
   real(kr8), dimension(2) :: zk !< sector number
 
   inpow=powelt_addr(self,powcal%powres%npowe)
+  powcal%powres%pow(inpow)=0
   ! check whether looking at small number of tracks
   if (powcal%n%ntrack>0) then
      ! is this element track in the test set
@@ -2357,6 +2464,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
 100   continue
   ! initialise loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   ! ignore midplane if termination planes present
   if (powcal%n%ltermplane) then
@@ -2371,7 +2479,9 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      lcoll=.FALSE.
      nobjhit=0
      zpsim=0
-     !     write(*,*) 'step=', powcal%odes%ndt
+    !dbgstep     if (powcal%odes%ndt>=1006) then !dbgstep
+    !dbgstep         write(*,*) 'step=', powcal%odes%ndt !dbgstep
+    !dbgstep     end if !dbgstep
 
      ztime=powcal%odes%t
 
@@ -2429,7 +2539,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -2452,7 +2562,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -2468,7 +2578,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
               xm%node=0
               nobjhit=-2
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
-              zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               xn=xm
               exit
            end if
@@ -2488,10 +2598,16 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      !DP     write(*,*) lenpath,zpos2%posvec(1),zpos2%posvec(2),zpsi !DP
      ! check for termination due to overlong trajectory (number of steps)
      indt=powcal%odes%ndt
-     if (indt>=powcal%odes%n%stepmax) exit
+     if (indt>=powcal%odes%n%stepmax) then
+        call log_error(m_name,s_name,5,error_warning,'Path exceeded step limit given by max_numsteps')
+        exit
+     end if
      ! or length of path in t
      ! (often covered when test exit from domain)
-     if (abs(lenpath)>abs(powcal%odes%n%tmax-zt0)) exit
+     if (abs(lenpath)>abs(powcal%odes%n%tmax-zt0)) then
+        call log_error(m_name,s_name,6,error_warning,'Path exceeded length limit given by max_zeta')
+        exit
+     end if
   end do loop_path
 
 
@@ -2522,6 +2638,25 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  ! first convert track
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+ &      /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
      ! first convert track
@@ -2564,6 +2699,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -2590,7 +2726,7 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do
@@ -2663,6 +2799,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
   real(kr8), dimension(2) :: zk !< sector number
 
   inpow=powelt_addr(self,powcal%powres%npowe)
+  powcal%powres%pow(inpow)=0
   ! check whether looking at small number of tracks
   if (powcal%n%ntrack>0) then
      ! is this element track in the test set
@@ -2731,7 +2868,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
   zpdotn=dot_product(xpath,znormald)
   if (zpdotn*zpdotnm<0) then
      call log_error(m_name,s_name,3,error_warning,'Starting direction uncertain')
-     write(*,*) inpow, zpdotn, zpdotnm
+     ! write(*,*) inpow, zpdotn, zpdotnm
      ! default to shadowed
      powcal%powres%pow(inpow)=0
   end if
@@ -2761,6 +2898,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
 100   continue
   ! initialise loop for path
   lenpath=0
+  powcal%powres%lenpath(inpow)=0
   ierr=0
   ! ignore midplane if termination planes present
   if (powcal%n%ltermplane) then
@@ -2833,7 +2971,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -2856,7 +2994,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -2872,7 +3010,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
               xm%node=0
               nobjhit=-2
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
-              zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               xn=xm
               exit
            end if
@@ -2892,10 +3030,16 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
      !DP     write(*,*) lenpath,zpos2%posvec(1),zpos2%posvec(2),zpsi !DP
      ! check for termination due to overlong trajectory (number of steps)
      indt=powcal%odes%ndt
-     if (indt>=powcal%odes%n%stepmax) exit
+     if (indt>=powcal%odes%n%stepmax) then
+        call log_error(m_name,s_name,5,error_warning,'Path exceeded step limit given by max_numsteps')
+        exit
+     end if
      ! or length of path in t
      ! (often covered when test exit from domain)
-     if (abs(lenpath)>abs(powcal%odes%n%tmax-zt0)) exit
+     if (abs(lenpath)>abs(powcal%odes%n%tmax-zt0)) then
+        call log_error(m_name,s_name,6,error_warning,'Path exceeded length limit given by max_zeta')
+        exit
+     end if
   end do loop_path
 
 
@@ -2926,6 +3070,25 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
      close(nplot)
   end if
 
+  ! first convert track
+  allocate(wposl%pos(ip), stat=status)
+  call log_alloc_check(m_name,s_name,10,status)
+  do l=1,ip
+     ! dequantise
+     zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
+     zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
+     ! convert xi to zeta
+     zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
+ &      /powcal%powres%beq%nzets
+     zpos2%posvec(3)=zzeta
+     zposang%pos=zpos2%posvec
+     zposang%opt=1 ; zposang%units=0
+     call posang_tfm(zposang,-3)
+     wposl%pos(l)%posvec=zposang%pos
+  end do
+  wposl%np=ip
+  call position_lenlis(wposl,phylenpath)
+  powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
      ! first convert track
@@ -2968,6 +3131,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
+  deallocate(wposl%pos)
 
   if (nobjhit<=GEOBJ_OFFSET.AND.ibacktr==ipback.AND.powcal%powres%flinends) then
      ! write first and last points in Cartesian coordinates
@@ -2994,7 +3158,7 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do
@@ -3249,7 +3413,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
               powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xm%posvec
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
               ! record psi at boundary if hit termplane boundary
-              if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               exit
            end if
            powcal%odes%posk(powcal%odes%ndt)=powcal%odes%posk(powcal%odes%ndt)+1
@@ -3272,7 +3436,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
            powcal%odes%vecp%pos(powcal%odes%ndt)%posvec=xn%posvec
            call powelt_setpow(self,powcal,nobjhit,xn,inpow,gshadl)
            ! record psi at boundary if hit termplane boundary
-           if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight
+           !psim if (nobjhit<=GEOBJ_OFFSET) zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
            !D           write(*,*) 'Final posn',xn%posvec! writediagn
            exit
         end if
@@ -3288,7 +3452,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
               xm%node=0
               nobjhit=-2
               call powelt_setpow(self,powcal,nobjhit,xm,inpow,gshadl)
-              zpsim=powcal%powres%geobjl%obj(inpow)%weight
+              !psim zpsim=powcal%powres%geobjl%obj(inpow)%weight !psim
               xn=xm
               exit
            end if
@@ -3410,7 +3574,7 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
      ! open file to record Cartesian track and write
      wposl%pos(3)%posvec(1)=self%ie
      wposl%pos(3)%posvec(2)=self%je
-     wposl%pos(3)%posvec(3)=zpsim
+     !psim wposl%pos(3)%posvec(3)=zpsim !psim
      do l=1,3
         call position_writev(wposl%pos(l),powcal%powres%nflends)
      end do

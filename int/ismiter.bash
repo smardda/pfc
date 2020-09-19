@@ -1,9 +1,9 @@
 #! /bin/bash --norc
-#script to guide user to, through and beyond SMITER execution
+#script to guide user to, through and beyond SMARDDA-PFC execution
 ##check sanity of installation
-if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smardda-pfc; fi
 if [ ! -d $HS ] ; then
-  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smiter exists - installation corrupt ?"
+  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smardda-pfc exists - installation corrupt ?"
   echo "Script quitting"; exit
 fi
 #set defaults
@@ -60,13 +60,13 @@ winheight=${vara[1]//,/}
 winwidth=${vara[2]//[^[0-9]]/}
 #echo window size $winheight $winwidth
 if [ $winheight -lt 30 ] || [ $winwidth -lt 80 ]  ; then
-echo "terminal window is too small for ismiter"
+echo "terminal window is too small for smpfcint"
 echo "window must be at least" ; echo "80 characters wide" ; echo "30 characters high" ;
 echo "please resize and/or" ; echo "adjust font size"
 echo "(Edit->Pref..->App..) and" ; echo "start again"
 exit
 fi
-##smiter parameters
+##smardda-pfc parameters
 sp3f=in_eqdsk
 gwall=wall
 bdry=out
@@ -99,7 +99,7 @@ declare -a afiles
 chkinput=0
 while true ; do #main
   ##Checklist at top level
-  dialog --backtitle "SMITER in $PWD" \
+  dialog --backtitle "SMARDDA-PFC in $PWD" \
   --ok-label "Proceed" --extra-button --extra-label "Help" --cancel-label "Quit" \
   --file $INT/topselmenu.txt 2> $doutop
   retval=$?
@@ -154,7 +154,7 @@ while true ; do #main
       ##Assemble geometry 
       1t) while true; do #ag
       ##Checklist for assemble geometry
-      dialog --backtitle "SMITER in directory $PWD" \
+      dialog --backtitle "SMARDDA-PFC in directory $PWD" \
       --ok-label "Proceed" --extra-button --extra-label "Help" --cancel-label "Back to top" \
       --file $INT/geoselmenu.txt 2> $doutg
       retval=$?
@@ -646,7 +646,7 @@ while true ; do #main
           dialog --msgbox  "Geometry must defined either using dat (MSC Nastran ex CATIA) \
           \nor Legacy vtk format files (ANSYS APDL script) for surfaces \
           \nEFIT++ and many other codes generate eqdsk files \
-          \nSMITER/magtfm can help generate vacuum field file with ripple \
+          \nSMARDDA-PFC/magtfm can help generate vacuum field file with ripple \
           \nYou must copy at least one dat or vtk file to this directory" 8 80;break
         fi
         vtk1=on; vtk2=off; eqdsk=off; sp3=off
@@ -789,7 +789,7 @@ while true ; do #main
       gwall=wall
       ;;
       ##Change default parameters 
-      4t) ##Form for rsmiter control parameters
+      4t) ##Form for rsmardda-pfc control parameters
       ##see whether have already selected form parameters
       if [ ! -e $iform ] && [ -e ismform.sav ] ; then cp ismform.sav $iform; fi
       if [ -e $iform ] ; then
@@ -891,8 +891,8 @@ while true ; do #main
         \nnbin=$nbin" > $iform
         cp $iform ismform.sav
       fi ;;
-      ##Run SMITER
-      5t) ##Checklist for rsmiter
+      ##Run SMARDDA-PFC
+      5t) ##Checklist for rsmardda-pfc
       if [ $chkinput == 0 ] ; then dialog --msgbox "Checklist was not successfully completed \
       \nSelect (at least) item t4 on Main Menu" 6 50;break ;fi
       #code for bopt setting consistent with parameters set above
@@ -906,9 +906,9 @@ while true ; do #main
       eqfile=$eqdskf; gres=${vtk1f%%.vtk}; gshad=${vtk2f%%.vtk} 
       smdone=9 
       until [ $smdone == 0 ] ; do
-        dialog --item-help --checklist "SMITER execution : The computation will " 0 0 6 \
-        1 "Generate ctl files" on "option to edit ctl (outside SMITER) before running " \
-        2 "Run SMITER" on "executes all SMITER codes to calculate power" \
+        dialog --item-help --checklist "SMARDDA-PFC execution : The computation will " 0 0 6 \
+        1 "Generate ctl files" on "option to edit ctl (outside SMARDDA-PFC) before running " \
+        2 "Run SMARDDA-PFC" on "executes all SMARDDA-PFC codes to calculate power" \
         3 "Ignore previous" on "performs operation(s) 1/2 overwriting files" \
         2> $ifile
         retvalsm=$?
@@ -933,8 +933,8 @@ while true ; do #main
         flds=$flds bopt=$bopt cal=$cal eqfile=$eqfile eqid=$eqid  \
         gres=$gres  gshad=$gshad bdryl=$bdryl powe=$powe decl=$decl \
         vfld=$vfld arip=$arip mrip=$mrip nzetp=$nzetp nbin=$nbin \
-        2>&1 | dialog --programbox "rsmiter execution - do not close box until see \
-        \n***rsmiter completed successfully***" 30 80
+        2>&1 | dialog --programbox "rsmardda-pfc execution - do not close box until see \
+        \n***rsmardda-pfc completed successfully***" 30 80
         smdone=$?
         if [ ${sw:2:3} == 0 ] ;then
           respow="$gres"_pow; shadhds="$gshad"_hds

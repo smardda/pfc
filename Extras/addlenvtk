@@ -5,8 +5,8 @@ if [ $# -gt 1 ] || [ $# -eq 0 ] ; then        # 1 argument must be present.
 elif [ $# -eq 1 ] ; then        #  check 1 argument 
    if [ ! -e $1_powx.vtk ] ; then echo "Cannot find powcal output file  $1_powx.vtk, quitting"; exit 1; fi
 fi
-if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
-extra=$HS/Extras # defined by ismiter also
+if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smardda/smardda-pfc; fi
+extra=$HS/Extras # defined by smpfcint also
 if [ ! -d $extra ] ; then
   echo "Directory $extra not found, quitting"
   echo "Check environment variable SMITER_DIR is set correctly"

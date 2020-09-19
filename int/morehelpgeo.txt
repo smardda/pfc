@@ -1,10 +1,10 @@
-SMITER expects geometry defined in terms of mesh file formats
+SMARDDA-PFC expects geometry defined in terms of mesh file formats
 MSC-NASTRAN dat or kitware legacy vtk. It will convert dat
 files into vtk for further processing, since the basic unit of geometry
 is a vtk file corresponding typically to one panel or tile.
 Use the transform menu to define solid-body transformations of files
 into new files, and the combine menu to join them one or more at a time
-to produce ultimately just two files for input to SMITER.
+to produce ultimately just two files for input to SMARDDA-PFC.
 One file will contain the geometry on which power is deposited, the
 other geometry (normally adjacent) that shadows the first "results" geometry.
 

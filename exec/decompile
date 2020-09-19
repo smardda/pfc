@@ -9,6 +9,6 @@ fi
 #(cd fortd;make clean;make "DBG=" libclean; make "DBG=g" libclean)
 cd f95
 make -f Makefile.geoq deeplibclean
-for i in powcal smanal magtfm vtktfm datvtk hdsgen ctlgen; do make -f Makefile.$i clean;done
-for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen; do rm -f $SMITER_DIR/exec/$i ;done
+for i in powcal smanal magtfm vtktfm datvtk hdsgen ctlgen smiter; do make -f Makefile.$i clean;done
+for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen smiter; do rm -f $SMITER_DIR/exec/$i ;done
 cd $swd

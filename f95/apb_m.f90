@@ -19,6 +19,7 @@ module apb_m
  &apb_copy, & !< copy data structure
  &apb_scale, & !< scale data structure
  &apb_qartwrite, & !< data structure to beqart compatible format and write
+ &apb_eval, & !< evaluate field at a point
  &apb_convert !< Fourier transform in \f$ \zeta \f$
 
 ! public types
@@ -35,6 +36,7 @@ module apb_m
   integer(ki4) :: k !< loop counter
   integer(ki4) :: l !< loop counter
   integer(ki4) :: ij !< loop counter
+  integer(ki4) :: jk !< loop counter
   integer(ki4) :: idum !< dummy integer
   real(kr8) :: zdum !< dummy real
   integer :: status   !< status variable
@@ -42,8 +44,8 @@ module apb_m
   integer(ki4), parameter :: ip1diag=64 !< diagnostic in 1 coordinate
   integer(ki4), parameter :: ip2diag=64 !< diagnostic in 2 coordinate
   integer(ki4), parameter :: ip3diag=32 !< diagnostic in 3 coordinate
-  integer(ki4), parameter :: ip1=6 ! =80 !< 1-coordinate (R) index  !dbg20
-  integer(ki4), parameter :: ip2=77 ! =6 !< 2-coordinate (Z) index  !dbg20
+  !dbg20 integer(ki4), parameter :: ip1=8  !6 ! =80 !< 1-coordinate (R) index  !dbg20
+  !dbg20 integer(ki4), parameter :: ip2=78  !77 ! =6 !< 2-coordinate (Z) index  !dbg20
   integer(ki4), parameter :: ipcpt=1 !< diagnostic in component
   integer(ki4), parameter :: ipcpt2=2 !< diagnostic 2 in component
   integer(ki4), parameter :: ipcpt3=3 !< diagnostic 3 in component
@@ -74,6 +76,7 @@ subroutine apb_readmlab(self,numerics,infile)
   real(kr8) :: zbx !< field components
   real(kr8) :: zby !< field components
   real(kr8) :: zbz !< field components
+  real(kr8) :: zoff !< offset fraction of starting toroidal angle
   integer(ki4) :: in3 !< compressed number of points in 3 direction
   integer(ki4) :: inp !< number of points per period
   integer(ki4) :: inj !< angular period selector
@@ -81,6 +84,7 @@ subroutine apb_readmlab(self,numerics,infile)
   integer(ki4) :: jj !< local variable
   integer(ki4) :: jseg !< segment loop variable
   integer(ki4) :: iseg !< segment offset
+  integer(ki4) :: im !< j-1
 
   !! get file unit do i=99,1,-1 inquire(i,opened=unitused) if(.not.unitused)then iin=i exit end if end do
 
@@ -163,22 +167,46 @@ subroutine apb_readmlab(self,numerics,infile)
   inp=self%n3/numerics%nzetap-1
   ! number of spaces between points
   in3=self%n3-1
+  zoff=-numerics%zetsta/360.
   ioff=0
   layout_type: select case (numerics%layout)
   case(1)
      call log_error(m_name,s_name,numerics%layout,log_info,'Assuming Geoffs periodic data format')
      zalph=self%pos3(self%n3)
-  case(2,3,12)
-     call log_error(m_name,s_name,numerics%layout,log_info,'Assuming ITER periodic data format')
+  case(2,3)
+     call log_error(m_name,s_name,numerics%layout,log_info,'Assuming old ITER periodic data format')
      zalph=abs(self%pos3(self%n3)-self%pos3(1))
+  case(12,14)
+     call log_error(m_name,s_name,numerics%layout,log_info,'Assuming ITER periodic data format')
+     zalph=0
+     if (abs(zoff)>1.) then
+        ioff=inp/2
+     else
+        ioff=zoff*in3
+     end if
   case(23,33,34,42)
      call log_error(m_name,s_name,numerics%layout,log_info,'Assuming ITER special global data format')
      zalph=0
-     ioff=inp/2
+     if (zoff>1.) then
+        ioff=inp/2
+     else
+        ioff=zoff*in3
+     end if
+     in3=numerics%nzetap*inp
+  case(35)
+     call log_error(m_name,s_name,numerics%layout,log_info,'Assuming ITER special global data format')
+     zalph=0
+     if (zoff>1.) then
+        ioff=0
+     else
+        ioff=zoff*in3
+     end if
      in3=numerics%nzetap*inp
   case default
      zalph=0
   end select layout_type
+  call log_value("Data toroidal layout ",numerics%layout)
+  call log_value("Toroidal offset entry ",ioff)
   zcosa=cos(zalph)
   zsina=sin(zalph)
 
@@ -191,7 +219,7 @@ subroutine apb_readmlab(self,numerics,infile)
 
   ij=0
   if (numerics%layout==33) then
-  ! stacked segments
+     ! stacked segments
      iseg=inp+2
      loopseg: do jseg=1,numerics%nzetap
         do l=1,self%n2
@@ -226,8 +254,8 @@ subroutine apb_readmlab(self,numerics,infile)
      self%field(in3+1,:,:,:)=self%field(1,:,:,:)
      deallocate(workv2)
 
-  else if (numerics%layout==34) then
-  ! stacked segments
+  else if (numerics%layout==34.OR.numerics%layout==35) then
+     ! stacked segments
      iseg=0
      loopseg4: do jseg=1,numerics%nzetap
         do l=1,self%n2
@@ -311,9 +339,20 @@ subroutine apb_readmlab(self,numerics,infile)
               ij=ij+self%ncpt
            end do
            !dbgper  write(*,*) 'per. test',self%field(1,3,k,l),self%field(self%n3,3,k,l)! dbgper
+  !dbg20 if (k==ip1.AND.l==ip2) then !dbg20
+  !dbg20 if (ipcpt3==3) then !dbg20
+  !dbg20 write(203,*) '#', 'ipcpt3,ip1,ip2=',ipcpt3,ip1,ip2 !dbg20
+  !dbg20 write(203,'(3(1x,1pg15.7))') ((workv2(j,jk),jk=1,self%ncpt),j=1,self%n3) !dbg20
+  !dbg20 write(203,*) '#---------------#' !dbg20
+  !dbg20 else !dbg20
+  !dbg20 write(200,*) '#', 'ipcpt,ip1,ip2=',ipcpt,ip1,ip2 !dbg20
+  !dbg20 write(200,'((1x,1pg15.7))') (workv2(j,ipcpt), j=1,self%n3) !dbg20
+  !dbg20 write(200,*) '#---------------#' !dbg20
+  !dbg20 end if !dbg20
+  !dbg20 end if !dbg20
 
            layout_type2: select case (numerics%layout)
-           case(1,2,12)
+           case(1,2)
               ! assumes data input on phi periodic cell, not zeta cell (phi=-zeta)
               do j=1,self%n3
                  zbx=workv2(j,1)
@@ -332,6 +371,37 @@ subroutine apb_readmlab(self,numerics,infile)
                  self%field(j,1,k,l)=zcosa*zbx+zsina*zby
                  self%field(j,2,k,l)=-zsina*zbx+zcosa*zby
                  self%field(j,3,k,l)=zbz
+              end do
+           case(12)
+              ! another option for unravelling periodic cases
+              !do j=1,self%n3
+              !   jj=mod(j+ioff,self%n3)+1
+              do j=1,self%n3-1
+                 jj=mod(j+ioff,self%n3-1)+1
+                 zbx=workv2(j,1)
+                 zby=workv2(j,2)
+                 zbz=workv2(j,3)
+                 self%field(jj,1,k,l)=zcosa*zbx+zsina*zby
+                 self%field(jj,2,k,l)=-zsina*zbx+zcosa*zby
+                 self%field(jj,3,k,l)=zbz
+                 !dbg19 if (k*l==1) then !dbg19
+                 !dbg19 write(*,*) 'j,jj',j,jj,(self%field(jj,jk,k,l),jk=1,3) !dbg19
+                 !dbg19 end if !dbg19
+              end do
+           case(14)
+              ! staggered option for unravelling periodic cases
+              do j=1,self%n3
+                 im=mod(j+self%n3-3,self%n3-1)+1
+                 zbx=0.5*(workv2(im,1)+workv2(j,1))
+                 zby=0.5*(workv2(im,2)+workv2(j,2))
+                 zbz=0.5*(workv2(im,3)+workv2(j,3))
+                 jj=mod(j+ioff,self%n3)+1
+                 self%field(jj,1,k,l)=zcosa*zbx+zsina*zby
+                 self%field(jj,2,k,l)=-zsina*zbx+zcosa*zby
+                 self%field(jj,3,k,l)=zbz
+                  !dbg22 if (k*l==1) then !dbg22
+                  !dbg22 write(*,*) 'im,j,jj',im,j,jj,(self%field(jj,jk,k,l),jk=1,3) !dbg22
+                  !dbg22 end if !dbg22
               end do
            case(23)
               ! option for unravelling stacked periodic cases
@@ -361,12 +431,12 @@ subroutine apb_readmlab(self,numerics,infile)
 
   !! rearrange entries in pos3
   layout_type3: select case (numerics%layout)
-  case(2,3,12)
+  case(2,3,12,14)
      zdalph=abs(self%pos3(self%n3)-self%pos3(1))/in3
      do j=1,in3+1
         self%pos3(j)=(j-1)*zdalph
      end do
-  case(23,33,34,42)
+  case(23,33,34,35,42)
      zdalph=abs(self%pos3(self%n3)-self%pos3(1))/in3
      do j=1,in3+1
         self%pos3(j)=(j-1)*zdalph
@@ -379,13 +449,14 @@ subroutine apb_readmlab(self,numerics,infile)
   !d      end if
   !dbg20 if (ipcpt3==3) then !dbg20
   !dbg20 write(203,*) '#', 'ipcpt3,ip1,ip2=',ipcpt3,ip1,ip2 !dbg20
-  !dbg20 write(203,'(3(1x,1pg14.7))') ((self%field(j,l,ip1,ip2),l=1,self%ncpt),j=1,self%n3) !dbg20
+  !dbg20 write(203,'(3(1x,1pg15.7))') ((self%field(j,l,ip1,ip2),l=1,self%ncpt),j=1,self%n3) !dbg20
   !dbg20 write(203,*) '#---------------#' !dbg20
   !dbg20 else !dbg20
   !dbg20 write(200,*) '#', 'ipcpt,ip1,ip2=',ipcpt,ip1,ip2 !dbg20
-  !dbg20 write(200,'((1x,1pg14.7))') (self%field(j,ipcpt,ip1,ip2), j=1,self%n3) !dbg20
+  !dbg20 write(200,'((1x,1pg15.7))') (self%field(j,ipcpt,ip1,ip2), j=1,self%n3) !dbg20
   !dbg20 write(200,*) '#---------------#' !dbg20
   !dbg20 end if !dbg20
+  !dbg20 stop !dbg20
   close(iin)
 
 end subroutine apb_readmlab
@@ -427,7 +498,7 @@ subroutine apb_checkperiod(self)
         zzphin=self%field(self%n3,3,k,l)
         zzref=(1.e-5+abs(zzphi0)+abs(zzphin))/2
         zzerr=(abs(zzphi0-zzphin))/zzref
-        !dbg  write(*,*) 'l,k,zrerr,zzerr ',l,k,zrerr,zzerr,abs(zrphi0-zrphin),abs(zzphi0-zzphin)  !dbg
+        !dbg write(*,*) 'l,k,zrerr,zzerr ',l,k,zrerr,zzerr,abs(zrphi0-zrphin),abs(zzphi0-zzphin)  !dbg
         zzerrmax=max(zzerrmax,zzerr)
         zerrmax=max(zerrmax,abs(zzphi0-zzphin))
      end do
@@ -501,7 +572,7 @@ subroutine apb_copy(self,selfcopy)
         do i=1,self%ncpt
            do j=1,self%n3
               selfcopy%field(j,i,k,l)=self%field(j,i,k,l)
-              !     write(*,*) 'j,i,k,l test',j,i,k,l
+              !dbgjikl     write(*,*) 'j,i,k,l test',j,i,k,l !dbgjikl
            end do
         end do
      end do
@@ -530,6 +601,8 @@ subroutine apb_scale(self,numerics,pfac)
         end do
      end do
   end do
+  print '("3D field scaled by factor = ",1pg15.8)',pfac
+  call log_value("3D field scaled by factor ",pfac)
 
 end subroutine apb_scale
 !---------------------------------------------------------------------
@@ -544,15 +617,31 @@ subroutine apb_qartwrite(self,numerics,kout)
   !! local
   character(*), parameter :: s_name='apb_qartwrite' !< subroutine name
   integer(ki4) :: in3 !< compressed number of points in 3 direction
+  integer(ki4) :: in3o !< output number of points in 3 direction
   integer(ki4) :: inp !< number of points per period
   integer(ki4) :: ioff !< offset within cell
   integer(ki4) :: jj !< local variable
   real(kr8) :: zalph !< toroidal angle extent from n3 array entries
+  real(kr8) :: zdalph !< mean angular separation between points
+  real(kr8) :: zstart !< start toroidal angle output
+  real(kr8) :: zend !< end toroidal angle output
 
   in3=self%n3-1
   ioff=in3/2
   zalph=abs(self%pos3(self%n3)-self%pos3(1))
-  zdum=0
+
+  in3o=self%n3
+  zstart=-0.5*zalph
+  zend=0.5*zalph
+  ! corrects for n3 even
+  if (2*(self%n3/2)==self%n3) then
+     in3o=self%n3+1
+     ioff=ioff+1
+     zdalph=zalph/in3
+     zstart=zstart-0.5*zdalph
+     zend=zend+0.5*zdalph
+  end if
+
   ! pseudo namelist output
   write(kout,'(A)') '&fmeshparameters'
   write(kout,'(A)') '  mesh_transform=.FALSE., mesh_formula=''limits'''
@@ -561,15 +650,17 @@ subroutine apb_qartwrite(self,numerics,kout)
   write( kout,'(a8,1pg14.7,a6,g14.7,a4,i6)' ) &
   ' ystart=',self%pos2(1),',yend=',self%pos2(self%n2),',ny=',self%n2
   write( kout,'(a8,1pg14.7,a6,g14.7,a4,i6)' ) &
-  ' zstart=',-0.5*zalph,',zend=',0.5*zalph,',nz=',self%n3
+  ' zstart=',zstart,',zend=',zend,',nz=',in3o
   write(kout,'(A)') '/'
 
   write(kout,'(i6)') self%n1
   write(kout,'(i6)') self%n2
-  write(kout,'(i6)') self%n3
-  do j=1,self%n3
+  write(kout,'(i6)') in3o
+  do j=1,in3o+1
      ! map from (0,2pi) to (-pi,pi)
-     jj=mod(j+ioff-1,in3)+1
+     jj=mod(j+ioff-1,in3o)+1
+     ! omit duplicate (or undefined)
+     if (jj==in3o) cycle
      !dbg19 write(*,*) 'j,jj=',j,jj !dbg19
      do l=1,self%n2
         do k=1,self%n1
@@ -578,10 +669,62 @@ subroutine apb_qartwrite(self,numerics,kout)
      end do
   end do
 
-   !dbg20 write(201,*) '#', 'ipcpt2,ip1,ip2=',ipcpt2,ip1,ip2 !dbg20
-   !dbg20 write(201,'((1x,1pg14.7))') (self%field(jj,ipcpt2,ip1,ip2), jj=1,self%n3) !dbg20
+  !dbg20 write(201,*) '#', 'ipcpt2,ip1,ip2=',ipcpt2,ip1,ip2 !dbg20
+  !dbg20 write(201,'((1x,1pg14.7))') (self%field(jj,ipcpt2,ip1,ip2), jj=1,in3o) !dbg20
 
 end subroutine apb_qartwrite
+!---------------------------------------------------------------------
+!> evaluate field at a point
+subroutine apb_eval(self,pt,pe)
+
+  !! arguments
+  type(apb_t), intent(in) :: self   !< object data structure
+  real(kr8), dimension(3), intent(in) :: pt   !< coordinates of point i(third coordinate of point on \f$ (0,2\pi) \f$)
+  real(kr8), dimension(3), intent(out) :: pe   !< value of vector at pt
+
+  !! local
+  character(*), parameter :: s_name='apb_eval' !< subroutine name
+  real(kr8) :: zxof !< x coordinate offset
+  real(kr8) :: zyof !< y coordinate offset
+  real(kr8) :: zzof !< z coordinate offset
+  real(kr8) :: zx !< x real quantised coordinate
+  real(kr8) :: zy !< y real quantised coordinate
+  real(kr8) :: zz !< z real quantised coordinate
+  real(kr8) :: zfx !< x fractional coordinate
+  real(kr8) :: zmx !<  complementary x fractional coordinate
+  integer(ki4) :: ix !< x index
+  integer(ki4) :: iy !< y index
+  integer(ki4) :: iz !< z index
+
+  !convert the current position into array subscripts for the magnetic field
+  zxof=pt(1)-self%pos1(1)
+  zyof=pt(2)-self%pos2(1)
+  zzof=pt(3)-self%pos3(1)
+  zx=zxof*self%n1/(self%pos1(self%n1)-self%pos1(1))
+  zy=zyof*self%n2/(self%pos2(self%n2)-self%pos2(1))
+  zz=zzof*self%n3/(self%pos3(self%n3)-self%pos3(1))
+  !old ix=nint(zx)+1
+  iy=nint(zy)+1
+  iz=nint(zz)+1
+
+  ! ensure always get an answer on grid
+  !old ix=min(max(1,ix),self%n1)
+  iy=min(max(1,iy),self%n2)
+  iz=min(max(1,iz),self%n3)
+
+  !old pe=self%field(iz,:,ix,iy)
+
+  ! use linear interpolation in x to set the vector B
+  ! fractions of unity
+  ix=int(zx)
+  ix=min(max(0,ix),self%n1-2)
+  zfx=zx-real(ix)
+  zmx=1-zfx
+  ix=ix+1
+
+  pe=zmx*self%field(iz,:,ix,iy)+zfx*self%field(iz,:,ix+1,iy)
+
+end subroutine apb_eval
 !---------------------------------------------------------------------
 !> Fourier transform in zeta
 subroutine apb_convert(self,numerics,kinit,rpower,phchange)

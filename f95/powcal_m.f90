@@ -161,12 +161,15 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
 
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
-     ! set size of psista array
+     ! set size of psista and lenpath array
      if(self%decomp%myrankpowcal.eq.0) then
         allocate(self%powres%psista(self%powres%geobjl%ng), stat=status)
         call log_alloc_check(m_name,s_name,4,status)
+        allocate(self%powres%lenpath(self%powres%geobjl%ng), stat=status)
+        call log_alloc_check(m_name, s_name,5,status)
      else
         allocate(self%powres%psista(self%decomp%firstng:self%decomp%lastng), stat=status)
+        allocate(self%powres%lenpath(self%decomp%firstng:self%decomp%lastng), stat=status)
      endif
      self%powres%psista=0
   case default
@@ -174,7 +177,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
   ! set size and zero of mask array
   if(self%decomp%myrankpowcal.eq.0) then
      allocate(self%powres%pmask(self%powres%geobjl%ng), stat=status)
-     call log_alloc_check(m_name,s_name,5,status)
+     call log_alloc_check(m_name,s_name,9,status)
   else
      allocate(self%powres%pmask(self%decomp%firstng:self%decomp%lastng), stat=status)
   endif
@@ -562,6 +565,7 @@ subroutine powcal_readcon(selfn,kin)
   real(kr8) :: diffusion_length !< (m)
   real(kr8) :: q_parallel0 !< parallel reference flux (W/sqm)
   integer(ki4) :: refine_level   !< level of refinement to be used
+  logical :: use_pfc_flux   !< default .FALSE., if true, use value of psi on PFC to evaluate Q
   integer(ki4) :: shadow_control   !< control shadowing
   character(len=80) :: calculation_type !< calculation type
   integer(ki4) :: number_of_tracks !< nonzero, only compute selected tracks
@@ -583,6 +587,7 @@ subroutine powcal_readcon(selfn,kin)
   !! powcal parameters
   namelist /powcalparameters/ &
  &power_split, decay_length, power_loss, refine_level, shadow_control, &
+ &use_pfc_flux, &
  &q_parallel0, &
  &diffusion_length, &
  &calculation_type, &
@@ -601,6 +606,7 @@ subroutine powcal_readcon(selfn,kin)
   diffusion_length=0
   power_loss=7.5e+06_kr8
   refine_level=1
+  use_pfc_flux=.FALSE.
   shadow_control=0
   !! ignore q_parallel0 if negative
   q_parallel0=-1_kr8
@@ -672,6 +678,7 @@ subroutine powcal_readcon(selfn,kin)
   selfn%ploss=power_loss
   selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
+  selfn%usepsista=.NOT.use_pfc_flux
   selfn%shadow=shadow_control
   selfn%qpara0=q_parallel0
 
@@ -730,6 +737,9 @@ subroutine powcal_move(self,gshadl,btree)
               zelt%je=j
               call powelt_move2(zelt,self,gshadl,btree)
            end do
+           if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+              write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+           endif           
         end do
      else
         ! axisymmetric (no ripple field)
@@ -741,6 +751,9 @@ subroutine powcal_move(self,gshadl,btree)
                  zelt%je=j
                  call powelt_move(zelt,self,gshadl,btree)
               end do
+              if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+                 write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+              endif
            end do
         case default ! should only be fldspec=3, all caltypes with termplane
            calcn_type: select case (self%n%caltype)
@@ -751,6 +764,9 @@ subroutine powcal_move(self,gshadl,btree)
                     zelt%je=j
                     call powelt_move0(zelt,self,gshadl,btree)
                  end do
+                 if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+                    write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+                 endif
               end do
            case ('msus','global','msum','middle')
               do i=self%decomp%firstpowe,self%decomp%lastpowe
@@ -760,10 +776,10 @@ subroutine powcal_move(self,gshadl,btree)
                     call powelt_move1(zelt,self,gshadl,btree)
                  end do
                  if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
-                    write(*,"(i3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+                    write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
                  endif
               end do
-              write(*,*)
+              if(self%decomp%myrankpowcal==0) write(*,*)
            end select calcn_type
         end select field_type
      end if
@@ -777,6 +793,10 @@ subroutine powcal_move(self,gshadl,btree)
               zelt%je=j
               call powelt_move4qart(zelt,self,gshadl,btree)
            end do
+           if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+              write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+           endif
+
         end do
      else
         ! older midplane-based termination criteria
@@ -785,21 +805,27 @@ subroutine powcal_move(self,gshadl,btree)
   case default
      if (self%n%ltermplane) then
         ! more sophisticated termination criteria
-        do i=1,self%powres%npowe
+        do i=self%decomp%firstpowe,self%decomp%lastpowe
            zelt%ie=i
            do j=imlevel,inlevel
               zelt%je=j
               call powelt_move4(zelt,self,gshadl,btree)
            end do
+           if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+              write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+           endif
         end do
      else
         ! older midplane-based termination criteria
-        do i=1,self%powres%npowe
+        do i=self%decomp%firstpowe,self%decomp%lastpowe
            zelt%ie=i
            do j=imlevel,inlevel
               zelt%je=j
               call powelt_move3(zelt,self,gshadl,btree)
            end do
+           if(self%decomp%myrankpowcal==0 .and. mod(i,10000)==0) then
+              write(*,"(i3,a1,f6.3,a1)",advance="no") 100*(i)/self%decomp%mynpowe,"%"
+           endif
         end do
      end if
   end select vac_type
@@ -822,7 +848,7 @@ subroutine powcal_calc(self,gshadl)
      zelt%ie=i
      do j=imlevel,inlevel
         zelt%je=j
-        call powelt_dep(zelt,self,gshadl)        
+        call powelt_dep(zelt,self,gshadl)
      end do
   end do
 
@@ -970,6 +996,9 @@ subroutine powcal_writev(self,kchar,kplot)
      if (allocated(self%powres%psista)) then
         call vfile_rscalarwrite(self%powres%psista,self%powres%geobjl%ng,'psista','CELL',kplot,0)
      end if
+     if (allocated(self%powres%lenpath)) then
+        call vfile_rscalarwrite(self%powres%lenpath, self%powres%geobjl%ng, 'lenpath', 'CELL', kplot, 0)
+     end if
      call vfile_iscalarwrite(self%powres%pmask,self%powres%geobjl%ng,'Msign','CELL',kplot,0)
      if (infilelevel>self%n%nlevel) then
         ! restore nodl
@@ -1004,13 +1033,13 @@ subroutine powcal_refine(self,gshadl,btree)
      allocate(self%powres%geobjl%obj(self%powres%geobjl%ng), stat=status)
      self%powres%geobjl%nwset=2
      allocate(gshadl%obj(gshadl%ng), stat=status)
-     gshadl%nwset=2
      call log_alloc_check(m_name,s_name,1,status)
+     gshadl%nwset=2
   case('msus','global')
      ! need launch obj array (=weight)
      allocate(self%powres%geobjl%obj(self%powres%geobjl%ng), stat=status)
-     self%powres%geobjl%nwset=2
      call log_alloc_check(m_name,s_name,2,status)
+     self%powres%geobjl%nwset=2
   end select calcn_type
 
   imlevel=1
@@ -1167,6 +1196,7 @@ subroutine powcal_delete(self)
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
      deallocate(self%powres%psista)
+     deallocate(self%powres%lenpath)
   case default
   end select calcn_type
 

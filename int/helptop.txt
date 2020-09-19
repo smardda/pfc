@@ -1,16 +1,16 @@
-To calculate power deposition on PFCs using SMITER
+To calculate power deposition on PFCs using SMARDDA-PFC
 for the first time, work through the menu items in order.
 (The default parameter options should be OK for this.)
-SMITER requires geometry and an equilibrium magnetic field,
+SMARDDA-PFC requires geometry and an equilibrium magnetic field,
 plus a definition of the power (output) deposition profile.
 Output may be visualised using gnuplot and ParaView.
 
 If this is your first use of this script, you probably
 need "more information" for input conventions.
 
-Also access slides used in the SMITER training course as web-based
+Also access slides used in the SMARDDA-PFC training course as web-based
 help launchable from the "more information" menu-box. 
 Links to the ParaView manual are also provided.
-SMITER is "SMARDDA for ITER". There are two published papers
+SMARDDA-PFC is "SMARDDA for ITER". There are two published papers
 showing the capabilities of SMARDDA, similarly accessible.
 

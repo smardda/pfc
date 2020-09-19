@@ -9,6 +9,7 @@ include ../config/path.inc
 SOURCES = \
 apb_h.f90 \
 apb_m.f90 \
+smitermpi_m.f90 \
 mcontrol_m.f90 \
 magtfm.f90
  

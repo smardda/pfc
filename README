@@ -5,10 +5,11 @@ for a description of the SMARDDA ray-tracing algorithm applied to fieldlines
 see http://dx.doi.org/10.1109/TPS.2014.2320904 (also http://arxiv.org/abs/1403.7142 ).
 SMARDDA-PFC uses SMARDDA-LIB which contains the SMARDDA ray-tracing kernel
 see  http://dx.doi.org/10.1109/TPS.2015.2458897 (also http://arxiv.org/abs/1403.6750 ).
-The SMARDDA modules have been tested on CentOS 7.0, Ubuntu 18.04 and Red Hat 4.4 (Scientific Linux).
+The SMARDDA modules have been tested on CentOS 7.0, Ubuntu 18.04 and Red Hat 4.4 (Scientific Linux)
+and are known to run on MacOS and WSL 1.
 Try to use the latest stable fortran compiler version available.
 
-*NOTE* you must first install the ray-tracing kernel SMARDDA-lIB
+*NOTE* you must first install the ray-tracing kernel SMARDDA-LIB
 
 To proceed to build from here (and only from here), type
 export SMITER_DIR=$PWD
@@ -23,6 +24,7 @@ that SMITER_DIR and SMALIB_DIR are always set by modifying your .bashrc file, by
 for example
 export SMITER_DIR=~/smardda/smardda-pfc
 export SMALIB_DIR=~/smardda/smardda-lib
+(3) requires responding to a prompt Y/N regarding the production of documentation
 
 bash shell release 3.2 or later (i.e. from 2005 or later) is needed.
 ParaView may be downloaded separately from www.paraview.org if not already installed.
@@ -30,8 +32,10 @@ ParaView may be downloaded separately from www.paraview.org if not already insta
 To produce the html documentation in $SMITER_DIR/doc, note
 particularly that doxygen 1.8.6+ is needed.
 (For creation of user manual as a pdf the texlive/2015 module is needed:
+if it is installed as on freia, then the commands are:
 module load texlive/2015
-cd ./doc/srcdoc/latex/; pdflatex refman )
+cd ./doc/srcdoc/latex/; pdflatex refman
+else a version suitable for the target machine will have to be found and installed)
 
 To run the test deck, to be found in separate directory smiter-aux,
 https://git.iter.org/projects/BND/repos/smiter-aux/browse
@@ -51,10 +55,10 @@ module load convert
 (others may be needed, and not all machines will have exactly these versions).
 The test deck should be run before any problems are reported.
 
-The script ismiter guides the user interactively through the setting up of a basic test
+The script smpfcint guides the user interactively through the setting up of a basic test
 case, starting with the sub-class of MSC Nastran-TM .dat files output by CATIA-TM.
-ismiter has a significant inbuilt help capability
-For efficient ismiter interaction with ParaView, the following settings are needed:
+smpfcint has a significant inbuilt help capability
+For efficient smpfcint interaction with ParaView, the following settings are needed:
 Settings->General, Click on gearwheel, untick Show Splash Screen, tick AutoApply (near top)
 (Also useful is parallel projection:
 [vtk file loaded] -> Properties tab, Click gearwheel, tick Camera Parallel projection (near bottom)
