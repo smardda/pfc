@@ -47,7 +47,7 @@ module geoq_m
   geoq_makebcart, &
   geoq_makefrzxi, &
   geoq_bcast
-  
+
   private :: &
   geoq_skylspec, & !< special addition of skylight object(s) into model
   geoq_skyladd,   & !< skylight(s) into geobjlist for faster tracing
@@ -1492,6 +1492,7 @@ subroutine geoq_writev(self,kchar,kplot)
            write(kplot,'(1X,I8)') geobj_code_fn(ityp)
         end do
      end if
+
      ! output normal vectors
      write(kplot,'(''VECTORS Normal float'')')
      do j=1,self%objl%ng
@@ -1572,8 +1573,8 @@ subroutine geoq_makebcart(self,geoq)
   self%numnparpos = geoq%objl%posl%numnparpos
   self%nparpos = geoq%objl%posl%nparpos
   self%numrparpos = geoq%objl%posl%numrparpos
-  self%rparpos = geoq%objl%posl%rparpos  
-  
+  self%rparpos = geoq%objl%posl%rparpos
+
   if(.not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)
   do j=1,self%np
      ! field at nodes
@@ -1582,9 +1583,11 @@ subroutine geoq_makebcart(self,geoq)
      call beq_b(geoq%beq,posang,0)
      self%pos(j)%posvec=posang%vec
   end do
-  
+
 end subroutine geoq_makebcart
 
+!> Returns a position list with frzxi transform applied
+!> This has been superseded by geoq_makeveclis which chooses the transform
 subroutine geoq_makefrzxi(self,geoq)
 
   !! Arguments
@@ -1603,14 +1606,14 @@ subroutine geoq_makefrzxi(self,geoq)
   ztfmdata%scale=(/1.,  1.,  1. /)
   ztfmdata%offset=(/0.,  0.,  0. /)
   ztfmdata%scale(3)=real(geoq%beq%nzets)
-  
+
   self%np = geoq%objl%posl%np
   self%numnparpos = geoq%objl%posl%numnparpos
   self%nparpos = geoq%objl%posl%nparpos
   self%numrparpos = geoq%objl%posl%numrparpos
-  self%rparpos = geoq%objl%posl%rparpos  
-  
-  if(.not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)    
+  self%rparpos = geoq%objl%posl%rparpos
+
+  if(.not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)
 
   do j=1,self%np
      ! transform positions to R-Z-xi space and write
@@ -1621,12 +1624,69 @@ subroutine geoq_makefrzxi(self,geoq)
      zpostfm=position_tfm(zpos,ztfmdata)
      self%pos(j)%posvec=zpostfm%posvec
   end do
-  
+
 end subroutine geoq_makefrzxi
+
+!> Replaced makefrzxi. Returns a position list with appropriate transforms
+subroutine geoq_makeveclis(self,geoq)
+
+  !! Arguments
+  type(posveclis_t),intent(inout) :: self
+  type(geoq_t),intent(inout) :: geoq
+
+  type(posang_t) :: posang !< position and vector involving anglea
+  type(tfmdata_t) :: ztfmdata !< local variable
+  type(posvecl_t) :: zpostfm !< local variable
+  type(posvecl_t) :: zpos !< local variable
+
+  ! Initialise the new position list
+  self%np = geoq%objl%posl%np
+  self%numnparpos = geoq%objl%posl%numnparpos
+  self%nparpos = geoq%objl%posl%nparpos
+  self%numrparpos = geoq%objl%posl%numrparpos
+  self%rparpos = geoq%objl%posl%rparpos
+
+  if(.not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)
+
+  fldspec_type: select case(geoq%beq%n%fldspec)
+  case (1)
+     self%nparpos(2) = 2 ! This is changed when the geoq vtk file is written
+
+     do j=1,self%np
+        ! transform positions to psi-theta-zeta space and write
+        posang%pos=geoq%objl%posl%pos(j)%posvec
+        posang%opt=0 ; posang%units=-3
+        call posang_invtfm(posang,0)
+        call posang_psitfm(posang,geoq%beq)
+        self%pos(j)%posvec=posang%pos
+     end do
+  case default
+     self%nparpos(2) = 3 ! This is changed when the geoq vtk file is written
+
+     ztfmdata%ntfm=2
+     ztfmdata%matrix(1,:)=(/1.,  0.,  0. /)
+     ztfmdata%matrix(2,:)=(/0.,  1.,  0. /)
+     ztfmdata%matrix(3,:)=(/0.,  0.,  1. /)
+     ztfmdata%scale=(/1.,  1.,  1. /)
+     ztfmdata%offset=(/0.,  0.,  0. /)
+     ztfmdata%scale(3)=real(geoq%beq%nzets)
+
+     do j=1,self%np
+        ! transform positions to R-Z-xi space and write
+        posang%pos=geoq%objl%posl%pos(j)%posvec
+        posang%opt=0 ; posang%units=-3
+        call posang_invtfm(posang,0)
+        zpos%posvec=posang%pos
+        zpostfm=position_tfm(zpos,ztfmdata)
+        self%pos(j)%posvec=zpostfm%posvec
+     end do
+  end select fldspec_type
+
+end subroutine geoq_makeveclis
 
 ! Routine to broadcast geoq data to powcal and hdsgen - called from geoq only
 ! It is here to avoid a circular dependency on smitermpi_m
-subroutine geoq_bcast(self,decomp)    
+subroutine geoq_bcast(self,decomp)
 
   !! Arguments
   type(geoq_t), intent(inout) :: self
@@ -1634,22 +1694,22 @@ subroutine geoq_bcast(self,decomp)
 
   !! Local variables
   type(posveclis_t)   :: bcast_veclis, bcast_vecb
-  
+
   ! Broadcast results geometry to powcal
   if (decomp%myrank == decomp%procgeoqres .and. decomp%bcastpowcal) then
      call clock_start(31,"results to powcal broadcast time")
      call geoq_makebcart(bcast_vecb,self)
      call bcast_powcal(self%objl,self%objl%posl,bcast_vecb,decomp%myrankgeoqres,decomp%commgeoqres)
-     call geoq_makefrzxi(bcast_veclis,self)
+     call geoq_makeveclis(bcast_veclis,self)
      call bcast_position(bcast_veclis,decomp%myrankgeoqres,decomp%commgeoqres)
      deallocate(bcast_veclis%pos,bcast_vecb%pos)
      call clock_stop(31)
   endif
-  
+
   ! Broadcast beq to powcal and shadow data to hdsgen and powcal
   if (decomp%myrank == decomp%procgeoqshad) then
      ! Make a veclis in the proper units for broadcast to hds and powcal
-     call geoq_makefrzxi(bcast_veclis,self)
+     call geoq_makeveclis(bcast_veclis,self)
      ! First broadcast geoq to hdsgen as it needs to get going
      if(decomp%bcasthdsgen) then
         call clock_start(31,"shadow to hdsgen broadcast time")
@@ -1674,8 +1734,8 @@ subroutine geoq_bcast(self,decomp)
      deallocate(bcast_veclis%pos)
   endif
 
-  
-  
+
+
 end subroutine geoq_bcast
 
 

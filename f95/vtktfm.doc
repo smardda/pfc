@@ -1,0 +1,18 @@
+!>
+!!
+!! This code transforms \Tt{vtk} files by rotation and translation.
+!!
+!! \Bold{Type}
+!!
+!! Geometrical processing; Main program unit.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{vtktfm}.
+!!
+!! \Bold{Function}
+!!
+!! This code transforms \Tt{vtk} files by rotation and translation.
+!!
+!!
+!<

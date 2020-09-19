@@ -1,0 +1,10 @@
+s/$/!QQQ/
+/!QQQ/ma a
+g/^  *subr/-1,.co$
+'a,$-1g/!/m+
+'a,$-1s/(.*//
+'a,$g/subroutine/s/$/,  \&/
+'a,$g/subroutine/j
+'a,$s/subroutine//
+'a,$s/!>/!</
+$s/,  &//

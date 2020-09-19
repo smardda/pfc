@@ -175,15 +175,31 @@ subroutine smanal_rekey(self)
 
   end select new_key
 
-  ! create dictionary
-  call indict_bycluster(self%rdict,self%bin,iindict,zbinsiz,self%nrdict)
+  new_key2: select case (self%n%newkey)
+  case('userde')
+     !  ! replace dictionary using input dictionary
+     !  self%ndict=self%n%nudict
+     !  self%dict(1:self%ndict)=self%n%userdict(1:self%n%nudict)
+     ! new key using input dictionary
+     iindict=self%n%nudict
+     allocate(self%newkey(0:iindict), stat=status)
+     call log_alloc_check(m_name,s_name,3,status)
+     self%newkey(1:iindict)=self%n%userdict(1:iindict)
+     self%newkey(0)=iindict+1
 
-  ! new key
-  allocate(self%newkey(iindict), stat=status)
-  call log_alloc_check(m_name,s_name,3,status)
-  do i=1,iindict
-     self%newkey(i)=indict(self%rdict,self%bin(i),self%nrdict)
-  end do
+  case default
+     ! create dictionary
+     call indict_bycluster(self%rdict,self%bin,iindict,zbinsiz,self%nrdict)
+
+     ! new key
+     allocate(self%newkey(0:iindict), stat=status)
+     call log_alloc_check(m_name,s_name,4,status)
+     do i=1,iindict
+        self%newkey(i)=indict(self%rdict,self%bin(i),self%nrdict)
+     end do
+     ! dummy for consistency with 'userde' case
+     self%newkey(0)=iindict+1
+  end select new_key2
 
   !write(*,*) self%newkey
   if (self%n%rekey) then
@@ -191,6 +207,7 @@ subroutine smanal_rekey(self)
      do j=1,self%geobjl%ng
         ikey=self%key(j)
         indx=indict(self%dict,ikey,self%ndict)
+        if (indx>iindict) indx=0
         self%key(j)=self%newkey(indx)
      end do
      call indict_fromlist(self%dict,self%key,self%ndict)
@@ -473,15 +490,24 @@ subroutine smanal_writeg(self,select,channel)
 
   case('gnureanal')
      write(channel,'(A18,A18)',iostat=status) '#New_key:', self%n%newkey
-     write(channel,'(A)',iostat=status) '#New_key Key_value     Old_key'
-     if(status/=0) then
-        call log_error(m_name,s_name,10,error_fatal,'Error writing header')
+     if (allocated(self%rdict)) then
+        ! user defined dictionary does not need rdict
+        write(channel,'(A)',iostat=status) '#New_key Key_value     Old_key'
+        if(status/=0) then
+           call log_error(m_name,s_name,10,error_fatal,'Error writing header')
+        end if
+        do i=1,self%inbin
+           inewkey=indict(self%rdict,self%bin(i),self%nrdict)
+           write(channel,'(I8,1X,1PG12.5,1X,I8)',iostat=status) inewkey,self%bin(i),self%oldict(i)
+           call log_write_check(m_name,s_name,11,status)
+        end do
+     else
+        write(channel,'(A)',iostat=status) '#New_key    Old_key'
+        do i=1,self%n%nudict
+           write(channel,'(I8,1X,I8)',iostat=status) self%newkey(i),i
+           call log_write_check(m_name,s_name,12,status)
+        end do
      end if
-     do i=1,self%inbin
-        inewkey=indict(self%rdict,self%bin(i),self%nrdict)
-        write(channel,'(I8,1X,1PG12.5,1X,I8)',iostat=status) inewkey,self%bin(i),self%oldict(i)
-        call log_write_check(m_name,s_name,11,status)
-     end do
 
   case default
 

@@ -1,40 +1,42 @@
-SMITER software from UKAEA
---------------------------
-SMITER = SMARDDA for ITER ; for a description of the SMARDDA algorithm for fieldlines
+SMARDDA-PFC software from UKAEA
+-------------------------------
+SMARDDA-PFC is the fieldline tracing kernel of SMITER = SMARDDA for ITER ;
+for a description of the SMARDDA ray-tracing algorithm applied to fieldlines
 see http://dx.doi.org/10.1109/TPS.2014.2320904 (also http://arxiv.org/abs/1403.7142 )
-SMITER has been tested on CentOS 7.0, Ubuntu 14.04 and Red Hat 4.4 (Scientific Linux),
+SMARDDA-PFC has been tested on CentOS 7.0, Ubuntu 14.04 and Red Hat 4.4 (Scientific Linux),
 also MacOS, 64-bit.
 bash shell release 3.2 or later (i.e. from 2005 or later) is needed.
-ParaView 4.4 for 64-bit linux may be downloaded separately from www.paraview.org to directory ??
-(and needs to be set up so that it can be invoked by typing paraview at the command prompt).
+ParaView 4.4 (or later) for 64-bit linux may be downloaded separately from www.paraview.org
+to pvdirname (and needs to be set up so that it can be invoked by typing
+paraview at the command prompt).
 
 If you are using pre-installed software, then the install script can be replaced by
-export SMITER_DIR=~smiter
+export SMITER_DIR=~/smiter
 export SMITER_DOC=$SMITER_DIR/doc/srcdoc/html
 export PATH=$SMITER_DIR/exec:$PATH
-export PATH=??/ParaView-4.4.0-Qt4-Linux-64bit/bin/:$PATH
+export PATH=pvdirname/bin:$PATH
 
 You may find it a good idea to ensure
 that SMITER_DIR is always set by modifying your .bashrc file, by adding the above lines
 
-The script ismiter guides the user interactively through the setting up of a basic test
+The script smpfcint guides the user interactively through the setting up of a basic test
 case, starting with the sub-class of MSC Nastran-TM .dat files output by CATIA-TM.
-ismiter has a significant inbuilt help capability
-For efficient ismiter interaction with ParaView, the following settings are needed:
+smpfcint has a significant inbuilt help capability
+For efficient smpfcint interaction with ParaView, the following settings are needed:
 Settings->General, Click on gearwheel, untick Show Splash Screen, tick AutoApply (near top)
 (Also useful is parallel projection:
 [vtk file loaded] -> Properties tab, Click gearwheel, tick Camera Parallel projection (near bottom)
 
-See SMITER user manual webpages for further details of (i)smiter use.
+See SMARDDA-PFC user manual webpages for further details of smardda-pfc and smpfcint use.
 file://$SMITER_DOC/index.html
 
-Note that the CADfix-TM interface between CATIA-TM and SMARDDA/SMITER is not 
+Note that the CADfix-TM interface between CATIA-TM and SMARDDA-PFC/SMITER is not 
 well documented, and effective use of the commercially licensed
 CADfix software requires a significant amount of training.
 Paraview can also be used to convert triangulated surface geometries from a number
 of different packages into the legacy (ASCII) vtk format.
 
-The directory ~warter/smiteraux contains the smiter test deck and should be
+The directory ~warter/smiter-aux contains the smiter test deck and should be
 copied into the user's home space. The file tests.bash runs the text-deck.
 
 The script tes.sgo in $SMITER_DIR/Extras show how SMITER works in detail, given the

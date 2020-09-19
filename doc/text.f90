@@ -14,7 +14,7 @@
 !! SMARDDA object-oriented Fortran-95 modules
 !! for ray, particle and fieldline tracing.
 !! SMARDDA-PFC is primarily a script-based interface to the same modules
-!! plus a bash dialog interface \Bold{ismiter} primarily for teaching purposes.
+!! plus a bash dialog interface \Bold{smpfcint} primarily for teaching purposes.
 !! Both SMITER and SMARDDA-PFC use ParaView for visualisation.
 !! SMARDDA-PFC depends on the open-source SMARDDA-LIB ray-tracing core,
 !! as indicated in the figure by the f95 and f77 lib box.
@@ -142,7 +142,7 @@
 !! Office staff)
 !! 2. Conversion of .dat format (proprietary MSC Nastran or
 !! a project specific 'gnu dat' format \ref sec2formats) to
-!! legacy .vtk format (OpenSource) by SMARDDA/PFC datvtk.
+!! legacy .vtk format (OpenSource) by SMARDDA-PFC datvtk.
 !! 3. Combination of part bodies to form PFC geometry under study, by
 !! SMARDDA-LIB vtktfm.
 !! 4. Conversion of STL and obj files to legacy .vtk format (OpenSource) by
@@ -220,7 +220,7 @@
 !! (re)defined in any order.
 !! Variables are documented using doxygen 1.8, which produces
 !! .html files for input to firefox or more generally xdg-open,
-!! which are linked to the \Bold{ismiter} script \ref sec2ismiter.
+!! which are linked to the \Bold{smpfcint} script \ref sec2smpfcint.
 !! 
 !! Example .ctl file input to geoq \n
 !! &inputfiles \n
@@ -282,7 +282,7 @@
 !! L=lenpath and objhit are taken from trackx file header line described below.
 !! Mapped geometry refers either to flux-mapped coordinates or cylindricals
 !! depending on the type of calculation.
-!! In the \Bold{ismiter} single directory,
+!! In the \Bold{smpfcint} single directory,
 !! hdsgen and powcal outputs acquire initial distinguishing "_hds" and "_pow" suffices respectively.
 !! \arg _angnu < statistics of field per geometry unit output in gnuplot format
 !! \arg _angnure < statistics of rekeying of field per geometry unit output in gnuplot format
@@ -297,10 +297,10 @@
 !! \arg _hdsm < HDS > hdsgen output in mapped geometry
 !! \arg _hdsq < HDS > hdsgen output in quantised geometry
 !! \arg _powlenx < Q Msign \f$ \psi_{start} \f$ L objhit > _powx file augmented using \Bold{addlenvtk}
-!! \arg _powm < Q Msign \f$ \psi_{start} \f$ > powcal output on mapped geometry
+!! \arg _powm < Q \f$ \psi_{start} \f$ L Msign > powcal output on mapped geometry
 !! \arg _powstatm < Q-avg Q-dev > powcal output on mapped geometry (EXPERT)
 !! \arg _powstatx < Q-avg Q-dev > powcal output on Cartesian geometry (EXPERT)
-!! \arg _powx < Q Msign \f$ \psi_{start} \f$ > powcal output on Cartesian geometry
+!! \arg _powx < Q \f$ \psi_{start} \f$ L Msign > powcal output on Cartesian geometry
 !! \arg _RZsil < points \f$ \psi \f$ > \Bold{geoqgnu} output in RZ geometry
 !! \arg _silm < points \f$ \psi \f$ > \Bold{geoqgnu} output in flux-mapped geometry
 !! 
@@ -347,12 +347,13 @@
 !! 
 !! \subsection sec1install SMARDDA-PFC Installation
 !! 
-!! First install SMARDDA-lIB which is available from CCFE gitlab or
+!! First install SMARDDA-LIB which is available from CCFE gitlab or
 !! IMAS, by
 !! \arg Clone or pull from IMAS git repository
 !! http://git.iter.org/projects/BND/repos/smardda/smardda-lib/browse
 !! and follow instructions in README, noting that
-!! \arg produce executables and documentation by typing in the smardda/smardda-lib top directory \n
+!! \arg produce executables and optionally documentation (script will enquire)
+!! by typing in the smardda/smardda-lib top directory \n
 !! source ./exec/build intel \n
 !! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
 !! \arg Ensure that for subsequent sessions environment variable
@@ -363,14 +364,15 @@
 !! \arg Clone or pull from IMAS git repository
 !! http://git.iter.org/projects/BND/repos/smardda/smardda-pfc/browse
 !! and follow instructions in README, noting that
-!! \arg produce executables and documentation by typing in the smardda/smardda-pfc top directory \n
+!! \arg produce executables and optionally documentation (script will enquire)
+!! by typing in the smardda/smardda-pfc top directory \n
 !! source ./exec/build intel \n
 !! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
 !! \arg SMARDDA was developed in 2007 onwards, whereas the ITER-hpc cluster
 !! runs Centos vintage 2005, hence special
 !! modules are needed.
 !! \arg ParaView needs a one-off re-setting of defaults (for
-!! better \Bold{ismiter} integration)
+!! better \Bold{smpfcint} integration)
 !! \arg SMARDDA-PFC has a test-deck (data files for which are in the smiter-aux repo),
 !! see \ref sec3 for more details, which should be used to check the installation.
 !!
@@ -386,7 +388,7 @@
 !! \section sec2 Description of Constituent Codes and Scripts
 !!
 !! \ref sec1work  indicates how the codes are combined to perform a
-!! shadowing calculation, and the \Bold{ismiter} script \ref sec2ismiter
+!! shadowing calculation, and the \Bold{smpfcint} script \ref sec2smpfcint
 !! leads the user implicitly through this process. Each of the codes
 !! is briefly described below. As described in the introduction, they are
 !! driven ultimately by namelists in .ctl files. The namelists expected in the
@@ -526,9 +528,10 @@
 !!
 !! powcal may also produce the track files described in \ref sec1output if
 !! the right plotselections are made. The utility \Bold{addlenvtk} is provided
-!! to process connection length information, and append to the corresponding
+!! to process \f$ L \f$, connection length information, and append to the corresponding
 !! _powx.vtk file (the root of which must be specified), producing
-!! a file root_powlenx.vtk
+!! a file root_powlenx.vtk. Alternatively the _powx.vtk file contains \f$ L \f$ as a
+!! scalar field defined for all triangles.
 !!
 !! Namelist order in .ctl as follows
 !! \arg inputfiles 
@@ -554,15 +557,15 @@
 !! \arg positionparameters 
 !! \arg plotselections 
 !! 
-!! \subsection sec2ismiter ismiter script
-!! \Bold{ismiter} is the main GUI for SMARDDA-PFC, designed to help the beginning user:
+!! \subsection sec2smpfcint smpfcint script
+!! \Bold{smpfcint} is the main GUI for SMARDDA-PFC, designed to help the beginning user:
 !! \arg Assemble geometry from meshed parts or bodies
 !! \arg Run and analyse simple problems interactively
 !! and start:
 !! \arg Constructing scripts for investigations of problem sequences
 !! \arg Editing .ctl files to access more advanced features
 !! 
-!! Primarily \Bold{ismiter} is a bash 3.0 script using Linux dialog, with features
+!! Primarily \Bold{smpfcint} is a bash 3.0 script using Linux dialog, with features
 !! \arg Self-contained as an introduction to SMARDDA-PFC
 !! \arg Point-and-click is optional
 !! \arg Help on dialog usage from top-level menu
@@ -571,21 +574,21 @@
 !! (bash 3.0 is described in the book Learning the bash shell 3rd Edition, by
 !! C.Newham and B.Rosenblatt, O'Reilly 2005)
 !! 
-!! \Bold{ismiter} start
+!! \Bold{smpfcint} start
 !! \arg Create directory and preferably copy geometry
 !! and equilibrium files into it (although you can
 !! copy later): Linux  \Emph{mkdir},  \Emph{cp} and  \Emph{cd} commands.
-!! \arg Attach (\Emph{cd}) to directory, type \Bold{ismiter}
+!! \arg Attach (\Emph{cd}) to directory, type \Bold{smpfcint}
 !! \arg First time, click on Help button \n
 !! Note: Ctrl/C (undocumented) can get you out of
 !! problems on menus below top menu
 !! 
-!! \Bold{ismiter} finish
-!! \arg \Bold{ismiter} as it finishes tells you
+!! \Bold{smpfcint} finish
+!! \arg \Bold{smpfcint} as it finishes tells you
 !! 1. Where it logged the codes it ran, this file is potential starting-point
 !! for a control script (contains !* where errors occurred)
 !! 2. Which scratch directory it used (usually ./ismtemp),
-!! contains files logging \Bold{ismiter} script input data for
+!! contains files logging \Bold{smpfcint} script input data for
 !! reuse and potentially provenancing.
 !! \arg Directory now full of input and output files.
 !! vtk and png files may be visualised at any time
@@ -607,7 +610,7 @@
 !! integrations within a "beancan", which should lie outside and preferably
 !! enclose the volume of interest.
 !! 
-!! The resulting files in the \Bold{ismiter} directory were: \n
+!! The resulting files in the \Bold{smpfcint} directory were: \n
 !! beancan.ctl control file for datvtk execution \n
 !! beancan.log file logging output of datvtk \n
 !! beancan_RZ.dat point data used to define a surface by datvtk \n
@@ -620,8 +623,8 @@
 !! dZ.png 2-D plot of contours of Z derivative of flux from \Bold{geoqgnu} \n
 !! dZ.ps 2-D plot of contours of Z derivative of flux from \Bold{geoqgnu} \n
 !! HR.eqdsk equilibrium in EQDSK G format \n
-!! ismfiles.sav records principal geometry and equilibrium file(s) used by ismiter \n
-!! ismform.sav records principal parameters used by ismiter \n
+!! ismfiles.sav records principal geometry and equilibrium file(s) used by \Bold{smpfcint} \n
+!! ismform.sav records principal parameters used by \Bold{smpfcint} \n
 !! ismtemp scratch directory \n
 !! partshad1_modifier.ctl control file for vtktfm execution \n
 !! partshad1_modifier.log file logging output of vtktfm \n
@@ -717,7 +720,7 @@
 !!
 !! \subsection sec2vtktfm vtktfm code
 !! The code transforms and/or combines .vtk format surface geometry files (ASCII format).
-!! In the \Bold{ismiter} script, vtktfm is used either to apply a solid body
+!! In the \Bold{smpfcint} script, vtktfm is used either to apply a solid body
 !! transformation or to combine files, but in fact as shown by the validation
 !! cases, the code can simultaneously transform and combine, although no more
 !! than one transformation on any body in one code usage.
@@ -759,7 +762,7 @@
 !! \arg plotselections 
 !! \arg smanalparameters 
 !! 
-!! \subsection sec2paraview ParaView and SMARDDA/PFC
+!! \subsection sec2paraview ParaView and SMARDDA-PFC
 !! The initial chapters of the official guide explain basic concepts such as the 
 !! graphics pipeline and should be at least skim-read before reading these
 !! SMARDDA-PFC-specific hints. (As of 5.2, there is an initial pop-up window
@@ -779,7 +782,7 @@
 !! \arg Toggling the gear-wheel symbol gives access to a wider and often useful
 !! range of extra functionality.
 !! 
-!! The functionality most often needed for SMARDDA/PFC concerns the making and saving
+!! The functionality most often needed for SMARDDA-PFC concerns the making and saving
 !! of selections of the data in the .vtk files.
 !! A specific example is the **visualisation of fieldlines emanating from part
 !! of the geometry.** 
@@ -934,7 +937,7 @@
 !! The .sgo scripts have extensive internal documentation (q.v.).
 !! It is here noted that the .sgo scripts in ./smardda/smardda-pfc/Extras arrange
 !! files in a subdirectory structure within the main run directory
-!! for each case, unlike \Bold{ismiter} where files are created directly in one
+!! for each case, unlike \Bold{smpfcint} where files are created directly in one
 !! run directory. These .sgo subdirectories are named M, G, S, H and P
 !! and correspond to execution of the code with the corresponding
 !! initial letter, thus "G" for geoq, "P" for powcal, etc., except that

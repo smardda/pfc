@@ -247,11 +247,12 @@ end module hdsgen_p
 program hdsgen
   
   use hdsgen_p
-  use smitermpi_h
   
   type(decomp_t) :: decomp
 
-  call hdsgen_sub(1,.False.,decomp)
+  if(serialmpi_init()) call hdsgen_sub(1,.False.,decomp)
+
+  call serialmpi_finish()
   
 end program hdsgen
 #endif

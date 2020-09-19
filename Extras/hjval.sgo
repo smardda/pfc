@@ -1,5 +1,5 @@
 #! /bin/bash --norc
-## script for SMITER data processing
+## script for SMARDDA-PFC data processing
 #
 ## Steps
 ## (In other workflows Step 1 would consist of simplifying and
@@ -15,17 +15,17 @@
 ## 5. Run powcal code to produce power deposition profiles.
 #
 ## Directories
-## HS set to smiter top directory
+## HS set to smardda-pfc top directory
 if [[ -z "$HS" ]] ; then
-  if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+  if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smardda/smardda-pfc; fi
 fi
 if [ ! -d $HS ] ; then
-  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smiter exists - installation corrupt ?"
+  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smardda/smardda-pfc exists - installation corrupt ?"
   echo "Script quitting"; exit
 fi
 export HS
 ## Must have auxilliary file directory for geometry and equilibria
-if [[ -z "$HSAUX" ]] ; then export HSAUX=$HOME/smiteraux ; fi
+if [[ -z "$HSAUX" ]] ; then export HSAUX=$HOME/smiter-aux ; fi
 if [ ! -d $HSAUX ] ; then
   echo "Auxilliary directory $HSAUX does not exist - redefine environment variable \$HSAUX ?"
   echo "Script quitting"; exit
@@ -34,7 +34,7 @@ fi
 INT=$HS/int
 ## scratch directory for script
 tempdir=$HSAUX/ismtemp$$
-## This directory is part of the smiter installation
+## This directory is part of the smardda-pfc installation
 extra=$HS/Extras
 datgeom=$HSAUX/Data/Geometry
 geom=$HSAUX/Data/VTK

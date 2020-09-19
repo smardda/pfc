@@ -1,5 +1,5 @@
 #! /bin/bash
-if [[ -z "$SMITER_DIR" ]] ; then SMITER_DIR=$HOME/smiter; fi
+if [[ -z "$SMITER_DIR" ]] ; then SMITER_DIR=$HOME/smardda/smardda-pfc; fi
 extra=$SMITER_DIR/Extras
 rm -f obj2stl.py
 echo $* > obj2stl.py

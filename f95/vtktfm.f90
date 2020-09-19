@@ -115,10 +115,10 @@ program vtktfm_p
      ! just one file with Body data
      call geobjlist_read(geobjl,file%vtkdata(1),kched=iched,leave_open=.true.)
      !dbgw     write(*,*) 'first',(geobjl%nodl(j),j=1,20) !dbgw
-     print*, "Read geobjlist"
+     !dbgw print*, "Read geobjlist" !dbgw
      nin=0
      call vfile_iscalarread(bods%list,nscal,file%vtkdata(1),numerics%name,nin,iopt) !W
-!dbgw  write(*,*) "fn,iopt=",file%nvtkdata, iopt !dbgw
+     !dbgw write(*,*) "fn,iopt=",file%nvtkdata, iopt !dbgw
      if (iopt==0) then
         numerics%npans=maxval(bods%list)
 ! read data OK, but may still suppress

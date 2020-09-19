@@ -1,4 +1,4 @@
-ismiter uses Linux dialog commands to provide a simple portable GUI
+smpfcint uses Linux dialog commands to provide a simple portable GUI
 based around working through a sequence of boxed dialogues, normally
 moving on by clicking on an option presented below each box.
 Generally both in the box and below it, selections will be made
@@ -14,7 +14,7 @@ Hitting return will normally terminate any interaction immediately
 with whatever options are highlighted, hitting cancel will TRY
 to return to a sensible menu level with a helpful hint.
 
-ismiter manipulates only files in the current working directory.
+smpfcint manipulates only files in the current working directory.
 File selections (and most other actions) are dynamic, so the user
 may move new data-files into the directory at any time.
 There is no key-stroke logging as such, but cautious users may

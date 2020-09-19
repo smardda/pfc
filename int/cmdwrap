@@ -3,7 +3,7 @@
 # if argument to command is string "null" then ignore
 if [ $# -le 1 ] ; then echo "Command log-dir argument expected"; exit
 elif [ $# -eq 2 ] ; then echo "Arguments to command expected"; exit;fi
-#smiter special
+#smardda-pfc special
 if [[ -z "$HS" ]] ; then HSS=;else HSS=$HS/exec/;fi
 exe=$HSS$2
 if [ -z $(type -p $exe) ] ; then echo "Command $exe not found";exit;fi

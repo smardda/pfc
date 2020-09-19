@@ -90,6 +90,7 @@ subroutine mcontrol_read(file,numerics,plot)
   integer(ki4) :: spline_order    !< order of spline
   integer(ki4) :: split_transform    !< order of transform splitting
   integer(ki4) :: nzetap    !< namelist \f$ N_{\zeta P} \f$
+  real(kr8) :: zeta_start    !< Toroidal angle \f$ zeta \f$ of first point in samples (degrees) \f$ \zeta_{0} \f$
   integer(ki4), dimension(3) :: min_wavenumber !< minimum wavenumber for evaluation
   integer(ki4), dimension(3) :: max_wavenumber !< maximum wavenumber for evaluation
   integer(ki4), dimension(3) :: mode_parity !< parity (1=even,2=odd,3=both)
@@ -120,6 +121,7 @@ subroutine mcontrol_read(file,numerics,plot)
   namelist /miscparameters/ &
  &radius_of_axis,vacuum_field_axis_calculation,spline_order,split_transform,&
  &nzetap,&
+ &zeta_start,&
  &min_wavenumber,max_wavenumber,&
  &mode_parity, mode_cutoff, &
  &data_layout, &
@@ -137,6 +139,7 @@ subroutine mcontrol_read(file,numerics,plot)
 
   !! read input file names
   mag_input_file='null'
+  mag_output_file='null'
   read(nin,nml=magfiles,iostat=status)
   if(status/=0) then
      print '("Fatal error reading input filenames")'
@@ -148,8 +151,7 @@ subroutine mcontrol_read(file,numerics,plot)
   file%magdata   = mag_input_file
   file%magout   = mag_output_file
 
-  !!check file exists
-
+  !!check iinput file exists
   call log_value("magnetic field data file, mag_input_file",trim(file%magdata))
   if(file%magdata/='null') then
      inquire(file=mag_input_file,exist=filefound)
@@ -160,20 +162,21 @@ subroutine mcontrol_read(file,numerics,plot)
      end if
   end if
 
-  !! create output file names from root
-
-  !! output file
-  file%mout = trim(root)//"_v.out"
+  !! check output file does not exist
   filefound=.false.
-  !     inquire(file=file%mout,exist=filefound)
-  !     call log_value("magtfm output file",trim(file%mout))
+  inquire(file=file%magout,exist=filefound)
+  call log_value("magtfm output file",trim(file%magout))
   if(filefound) then
      !! error opening file
-     print '("Fatal error: Output file ",a, " already exists")',trim(file%mout)
+     print '("Fatal error: Output file ",a, " already exists")',trim(file%magout)
      print '("Remove it and restart run")'
      call log_error(m_name,s_name,4,error_fatal,'Output file already exists')
   end if
 
+  !! create output file names from root
+
+  !! output file ( not used )
+  file%mout = trim(root)//"_m.out"
   !!vtk file roots
   file%cartv     =trim(root)//"_cartv"
   file%allcartv     =trim(root)//"_allcartv"
@@ -190,6 +193,7 @@ subroutine mcontrol_read(file,numerics,plot)
   spline_order = 4
   split_transform = 2
   nzetap = 1
+  zeta_start = 370.
   min_wavenumber = (/1,1,0/)
   max_wavenumber = 1
   mode_parity = (/2,2,1/)
@@ -219,6 +223,8 @@ subroutine mcontrol_read(file,numerics,plot)
  &call log_error(m_name,s_name,14,error_fatal,'only double split allowed')
   if(nzetap<1) &
  &call log_error(m_name,s_name,14,error_fatal,'repeat factor must be positive integer')
+  if(zeta_start<-360.OR.zeta_start>400.) &
+ &call log_error(m_name,s_name,15,error_fatal,'start toroidal angle must be in range -360 to +360 degrees')
   if(minval(max_wavenumber)>=0) then
      ! assume explicit wavenumber limit
      if(minval(min_wavenumber)<0) &
@@ -244,6 +250,7 @@ subroutine mcontrol_read(file,numerics,plot)
   numerics%nord=spline_order
   numerics%n0=split_transform
   numerics%nzetap=nzetap
+  numerics%zetsta=zeta_start
   numerics%kmin=min_wavenumber
   numerics%kmax=max_wavenumber
   numerics%parity=mode_parity

@@ -1,0 +1,18 @@
+!>
+!!
+!! This module reads the control file and control data for \Tt{beq}.
+!!
+!! \Bold{Type}
+!!
+!! Control data input and checking, magnetic field processing; Object-oriented modu.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}.
+!!
+!! \Bold{Function}
+!!
+!! This module reads the control file and control data for \Tt{beq}.
+!!
+!!
+!<

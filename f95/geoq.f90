@@ -25,7 +25,7 @@ module geoq_p
   use beqan_m
   use beqart_m
   use posang_m
-  
+
   use bods_h
   use geobjlist_h
   use position_m
@@ -55,7 +55,7 @@ module geoq_p
   use geoq_h
   use smitermpi_h
   use smitermpi_m
-  
+
   implicit none
 
 contains
@@ -66,7 +66,7 @@ contains
     integer(ki4) :: arg ! The number of the command line argument conatining the input file
     logical :: combined ! Is this run as part of the combined smiter output
     type(decomp_t) :: decomp
-    
+
     ! Local variables
     character(*), parameter :: m_name='geoq' !< module name
     type(bfiles_t)     :: file      !< names of files
@@ -90,8 +90,8 @@ contains
     real(kr8):: zivac !< value of I in field file
     character(len=80) :: ibuf !< character workspace
     integer(ki4) :: ready = 0, status, ierr
-    
-    
+
+
     !--------------------------------------------------------------------------
     !! initialise timing
 
@@ -170,6 +170,31 @@ contains
     !! read  geobjl data
 
     call clock_start(4,'geobjlist_read time')
+    ! The following values before geobjlist_read are set to initial value,
+    ! because valgrind reports them as being uninitialized.
+
+    ! geoq%objl%ngtype is not needed by GEOQ. It is used by HDSGEN for stating
+    ! the type of elements: Either 1 (points) or 2 (triangles). So to avoid
+    ! using it we set it to 0. Same goes for
+    geoq%objl%ngtype = 0
+
+    ! geoq%objl%coordbb and geoq%objl%binbb are not needed by GEOQ, as they are
+    ! properly initialized in subroutine geobjlist_init called from hdsgen
+    ! and smannal. These two variables are bounding boxes of geobj coord and
+    ! geobj binning, respectively.
+    geoq%objl%coordbb = 0
+    geoq%objl%binbb = 0
+
+
+    ! geoq%objl%ngunassigned is set to 0 in geobjlist_init but nothing is done
+    ! with it in geobjlist_read, therefore an uninitialized broadcast is done
+    ! with mpi. The value is not used for calculating except for writing in
+    ! log file.
+    geoq%objl%ngunassigned = 0
+
+    ! geoq%objl%nsampl is an UNUSED variable used in subroutine
+    ! geobjlist_bindyn which is never called.
+    geoq%objl%nsampl = 0
     call geobjlist_read(geoq%objl,file%vtkdata)
     call clock_stop(4)
 
@@ -203,6 +228,9 @@ contains
        call beq_xilt(geoq%beq)
        call geoq_objaddcon(geoq)
     case default
+       ! nctrack gets set in geoq_objaddcon. In this case nctrack is
+       ! uninitialized
+       geoq%beq%nctrack = 0
        call beq_centre(geoq%beq)
        call geoq_init(geoq)
        call beq_psilt(geoq%beq)
@@ -374,7 +402,7 @@ contains
     call goutfile_write(geoq,timestamp)
     call goutfile_close
     call clock_stop(30)
-    
+
     if(plot%geofldx) then
        call clock_start(22,'vfile_geofldx time')
        call geobjlist_makehedline(geoq%objl,'allcart',vtkdesc)
@@ -462,11 +490,12 @@ end module geoq_p
 program geoq
 
   use geoq_p
-  use smitermpi_h
 
   type(decomp_t) :: decomp
-  
-  call geoq_sub(1,.False.,decomp)
+
+  if(serialmpi_init()) call geoq_sub(1,.False.,decomp)
+
+  call serialmpi_finish()
 
 end program geoq
 #endif

@@ -4,13 +4,12 @@ ixit=0
 for i in $*; do tst=$i #echo $tst
 if [ "${tst#-}" != $tst ] ; then ixit=1
   if [ "${tst##--}" == version ] ;  then
-    echo "Introduces/interacts with SMITER 1.1"
-    echo "(c) UKAEA and IO 2016"
+    echo "Introduces/interacts with SMARDDA-PFC"
+    echo "(c) UKAEA and IO 2016, 2018"
   elif [ "${tst##--}" == help ] ;  then
     echo "Introduces the occasional linux user to fieldline tracing"
-    echo "using SMITER, SMARDDA for ITER"
+    echo "using SMARDDA-PFC"
     echo "with web-links to extensive more advanced material."
-    echo "Report issues using the IMAS system."
   elif [ "${tst##--}" == tmp ] ;  then
     ixit=2
   elif [ "${tst##--}" == force ] ;  then

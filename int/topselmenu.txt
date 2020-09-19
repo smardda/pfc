@@ -4,5 +4,5 @@
 2t "Select geometry and equil files" off
 3t "Set run type" off
 4t "Change default parameters"  off
-5t "Run SMITER" off
+5t "Run SMARDDA-PFC" off
 6t "Analyse output" off

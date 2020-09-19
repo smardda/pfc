@@ -105,6 +105,9 @@ subroutine skyl_init(self,beq,geobjl,fileroot)
   real(kr8) :: zmax !< \f$ Z_{\max} \f$ for equilibrium data
   real(kr4) :: totarea !< total area of geobjlist objects
 
+  ! Set endgle to 0 so that smiter combined can run HJL - this should be changed
+  self%dn%endgle = 0
+  
   rmin=beq%rmin
   rmax=beq%rmax
   zmin=beq%zmin

@@ -1,5 +1,5 @@
 #! /bin/bash --norc
-## script for SMITER data processing to be called by ismiter
+## script for SMARDDA-PFC data processing to be called by smpfcint
 #
 ## Steps 1 & 2 are assumed completed using the geometry menu item
 ## (In other workflows Step 1 would consist of simplifying and
@@ -17,12 +17,12 @@
 ## 5. Run powcal code to produce power deposition profiles.
 #
 ## directories
-## HS set to smiter top directory
+## HS set to smardda-pfc top directory
 if [[ -z "$HS" ]] ; then
- if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smiter; fi
+ if [[ -n "$SMITER_DIR" ]] ; then HS=$SMITER_DIR; else HS=$HOME/smardda-pfc; fi
 fi
 if [ ! -d $HS ] ; then
-  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smiter exists - installation corrupt ?"
+  echo "Neither directory \$SMITER_DIR=$SMITER_DIR nor $HOME/smardda-pfc exists - installation corrupt ?"
   echo "Script quitting"; exit
 fi
 export HS
@@ -148,7 +148,7 @@ if [ ${swa[0]} != 0 ] ; then
 fi
 if [ ${swa[1]} == 0 ] ; then
   echo "Now inspect and possibly edit .ctl files before proceeding"
-  echo "***rsmiter completed successfully***" 
+  echo "***rsmardda-pfc completed successfully***" 
   exit 2
 fi
 #
@@ -186,4 +186,4 @@ if [ ${swa[1]} == 2 ] || [ ! -e "$gres"_pow_powcal.out ] ; then
 fi
 echo "End script" $(date) >> $runlog
 echo ""
-echo "***rsmiter completed successfully***" 
+echo "***rsmardda-pfc completed successfully***" 

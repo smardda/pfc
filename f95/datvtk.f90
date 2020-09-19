@@ -143,7 +143,7 @@ program datvtk_p
   call clock_start(4,'geobjlist_(d)read time')
   input_type: select case(optarg(1:1))
   case('v')
-     call geobjlist_read(geobjl,trim(fileroot)//'.vtk',kched=iched)
+     call geobjlist_read(geobjl,trim(fileroot)//'.vtk',kched=iched,leave_open=.true.)
      inquire(file=trim(fileroot)//'.vtk',number=nread)
      iopt=1
      call vfile_iscalarread(bods%list,geobjl%ng,trim(fileroot)//'.vtk','Body',nread,iopt)
