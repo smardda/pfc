@@ -24,7 +24,7 @@ that SMITER_DIR and SMALIB_DIR are always set by modifying your .bashrc file, by
 for example
 export SMITER_DIR=~/smardda/smardda-pfc
 export SMALIB_DIR=~/smardda/smardda-lib
-(3) requires responding to a prompt Y/N regarding the production of documentation
+(3) takes an optional argument N stopping the production of documentation
 
 bash shell release 3.2 or later (i.e. from 2005 or later) is needed.
 ParaView may be downloaded separately from www.paraview.org if not already installed.
