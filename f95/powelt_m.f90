@@ -237,8 +237,7 @@ subroutine powelt_normalm(self,powcal,pnormal)
   inpow=powelt_addr(self,powcal%powres%npowe)
   iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
   iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
-  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag, &
-& znormal2dm)
+  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag)
 
   pnormal=znormal
 
