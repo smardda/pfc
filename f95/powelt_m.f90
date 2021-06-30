@@ -29,6 +29,7 @@ module powelt_m
 ! public subroutines
   public :: &
   powelt_init, & !< create tables for element centre addressing
+  powelt_centre, & !< position of element centre in Cartesians
   powelt_pos, & !< position of element centre in tracking coordinates
   powelt_vec,   & !< magnetic field in cartesians at centre of element
   powelt_normal, & !< normal in cartesians at centre of element
@@ -125,6 +126,27 @@ subroutine powelt_init
 
 end subroutine powelt_init
 !---------------------------------------------------------------------
+!> position of element centre in Cartesians
+subroutine powelt_centre(self,powcal,pos)
+
+  !! arguments
+  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powcal_t), intent(in) :: powcal !< powcal data structure
+  real(kr4), dimension(3), intent(out) :: pos !< output position vector
+
+  !! local
+  character(*), parameter :: s_name='powelt_centre' !< subroutine name
+  type(geobj_t) :: iobj !< object
+
+  inpow=powelt_addr(self,powcal%powres%npowe)
+  iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
+  iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
+  call geobj_nodes(iobj,powcal%powres%vecx,powcal%powres%geobjl%nodl,xnodes)
+  pos=powelt_weights(1,1)*xnodes(:,1)+&
+ &powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
+
+end subroutine powelt_centre
+!---------------------------------------------------------------------
 !> position of element centre in tracking coordinates
 subroutine powelt_pos(self,powcal,pos)
 
@@ -208,13 +230,15 @@ subroutine powelt_normalm(self,powcal,pnormal)
   !! local
   character(*), parameter :: s_name='powelt_normalm' !< subroutine name
   real(kr4), dimension(3) :: znormal !< unit normal vector
+  real(kr4), dimension(3) :: znormal2dm=(/0,0,1/) !< default normal vector to plane in mapped coords
   real(kr4) :: zmag !< magnitude of normal vector
   type(geobj_t) :: iobj !< object
 
   inpow=powelt_addr(self,powcal%powres%npowe)
   iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
   iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
-  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag)
+  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag, &
+& znormal2dm)
 
   pnormal=znormal
 
@@ -582,24 +606,9 @@ subroutine powelt_move(self,powcal,gshadl,btree)
      write(ibuff,'(''elt= '',I6,'' sub= '',I2,'' trackx'')') self%ie,self%je
      write(icfile,'(''trackx'',I7.7,I2.2)') self%ie,self%je
      call vfile_init(icfile,ibuff,nplot)
-     ! write track in Cartesian coordinates???
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        zposang%pos=zpos2%posvec
-        zposang%opt=2 ; zposang%units=0
-        call posang_invpsitfm(zposang,powcal%powres%beq)
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
      ! write track
      call position_writelis(wposl,'track',nplot)
      ! close file and deallocate
-     deallocate(wposl%pos)
      close(nplot)
   end if
   deallocate(wposl%pos)
@@ -999,24 +1008,6 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
 
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
-     ! first convert track
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
-     call position_lenlis(wposl,phylenpath)
      !DVEC         do l=1,ip-1 !DVEC
      !DVEC         zr=sqrt(wposl%pos(l)%posvec(1)**2+wposl%pos(l)%posvec(2)**2)/1000 !DVEC
      !DVEC         wposl%pos(l)%posvec=(wposl%pos(l+1)%posvec-wposl%pos(l)%posvec)/& !DVEC
@@ -1035,7 +1026,6 @@ subroutine powelt_move0(self,powcal,gshadl,btree)
      !DIAG!   dump end point !DIAG
      !DIAG!        call position_writev(wposl%pos(ip),88) !DIAG
      ! close file and deallocate
-     deallocate(wposl%pos)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
@@ -1505,24 +1495,6 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
-     ! first convert track
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
-     call position_lenlis(wposl,phylenpath)
      !DVEC         do l=1,ip-1 !DVEC
      !DVEC         zr=sqrt(wposl%pos(l)%posvec(1)**2+wposl%pos(l)%posvec(2)**2)/1000 !DVEC
      !DVEC         wposl%pos(l)%posvec=(wposl%pos(l+1)%posvec-wposl%pos(l)%posvec)/& !DVEC
@@ -1541,7 +1513,6 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
      !DIAG!   dump end point !DIAG
      !DIAG!        call position_writev(wposl%pos(ip),88) !DIAG
      ! close file and deallocate
-     deallocate(wposl%pos)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
@@ -1867,27 +1838,9 @@ subroutine powelt_move2(self,powcal,gshadl,btree)
      write(ibuff,'(''elt= '',I6,'' sub= '',I2,'' trackx'')') self%ie,self%je
      write(icfile,'(''trackx'',I7.7,I2.2)') self%ie,self%je
      call vfile_init(icfile,ibuff,nplot)
-     ! write track in Cartesian coordinates
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
      ! write track
      call position_writelis(wposl,'track',nplot)
      ! close file and deallocate
-     deallocate(wposl%pos)
      close(nplot)
   end if
   deallocate(wposl%pos)
@@ -2225,24 +2178,6 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
 
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
-     ! first convert track
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
-     call position_lenlis(wposl,phylenpath)
      !DVEC         do l=1,ip-1 !DVEC
      !DVEC         zr=sqrt(wposl%pos(l)%posvec(1)**2+wposl%pos(l)%posvec(2)**2)/1000 !DVEC
      !DVEC         wposl%pos(l)%posvec=(wposl%pos(l+1)%posvec-wposl%pos(l)%posvec)/& !DVEC
@@ -2261,7 +2196,6 @@ subroutine powelt_move3(self,powcal,gshadl,btree)
      !DIAG!   dump end point !DIAG
      !DIAG!        call position_writev(wposl%pos(ip),88) !DIAG
      ! close file and deallocate
-     deallocate(wposl%pos)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
@@ -2659,24 +2593,6 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
   powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
-     ! first convert track
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
-     call position_lenlis(wposl,phylenpath)
      !DVEC         do l=1,ip-1 !DVEC
      !DVEC         zr=sqrt(wposl%pos(l)%posvec(1)**2+wposl%pos(l)%posvec(2)**2)/1000 !DVEC
      !DVEC         wposl%pos(l)%posvec=(wposl%pos(l+1)%posvec-wposl%pos(l)%posvec)/& !DVEC
@@ -2695,7 +2611,6 @@ subroutine powelt_move4(self,powcal,gshadl,btree)
      !DIAG!   dump end point !DIAG
      !DIAG!        call position_writev(wposl%pos(ip),88) !DIAG
      ! close file and deallocate
-     deallocate(wposl%pos)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
@@ -3091,24 +3006,6 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
   powcal%powres%lenpath(inpow)=phylenpath
   if (ibacktr==ipback.AND.powcal%powres%flinx) then
      ! write track in Cartesian coordinates
-     ! first convert track
-     allocate(wposl%pos(ip), stat=status)
-     call log_alloc_check(m_name,s_name,10,status)
-     do l=1,ip
-        ! dequantise
-        zpos1%posvec=powcal%odes%vecp%pos(l)%posvec
-        zpos2=position_invqtfm(zpos1,powcal%powres%geobjl%quantfm)
-        ! convert xi to zeta
-        zzeta=(zpos2%posvec(3)+2*const_pid*powcal%odes%posk(l))&
- &      /powcal%powres%beq%nzets
-        zpos2%posvec(3)=zzeta
-        zposang%pos=zpos2%posvec
-        zposang%opt=1 ; zposang%units=0
-        call posang_tfm(zposang,-3)
-        wposl%pos(l)%posvec=zposang%pos
-     end do
-     wposl%np=ip
-     call position_lenlis(wposl,phylenpath)
      !DVEC         do l=1,ip-1 !DVEC
      !DVEC         zr=sqrt(wposl%pos(l)%posvec(1)**2+wposl%pos(l)%posvec(2)**2)/1000 !DVEC
      !DVEC         wposl%pos(l)%posvec=(wposl%pos(l+1)%posvec-wposl%pos(l)%posvec)/& !DVEC
@@ -3127,7 +3024,6 @@ subroutine powelt_move4qart(self,powcal,gshadl,btree)
      !DIAG!   dump end point !DIAG
      !DIAG!        call position_writev(wposl%pos(ip),88) !DIAG
      ! close file and deallocate
-     deallocate(wposl%pos)
      !DVEC         deallocate(work1)  !DVEC
      close(nplot)
   end if
@@ -3823,5 +3719,29 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
   end if
 
 end subroutine powelt_setpow
+
+subroutine powelt_anglevec(self, a, b, msign, phi)
+    ! Calculates the angle between input vectors a and b and returns the angle
+    ! phi.
+    type(powelt_t), intent(in) :: self  !< object data structure
+    real(kr4), dimension(3), intent(in) :: a, b  !< vectors
+    integer(ki4), intent(in) :: msign !< Msign
+    real(kr4), intent(out) :: phi  !< angle between vectors
+
+    real(kr4) norm_a, norm_b, dot_ab, arg
+
+    dot_ab = dot_product(a, b)
+    norm_a = dot_product(a, a)
+    norm_b = dot_product(b, b)
+
+    if (norm_a * norm_b == 0._kr4) then
+        phi = 0._kr4
+        return
+    end if
+
+    arg = dot_ab  / sqrt(norm_a * norm_b)
+    phi = msign * (90._kr4 - acos(arg) * 180._kr4 / const_pi)
+
+end subroutine powelt_anglevec
 
 end module powelt_m
