@@ -102,7 +102,7 @@ program datvtk_p
         buf2=adjustl(buf1(inda+1:))
         i=min(len_trim(buf2),3)
         if (i>0) then
-           optarg(1:i)=buf2
+           optarg(1:i)=buf2(1:i)
         else
 !! no option specified after "-"
            print *, 'Fatal error: no option specified after "-".'

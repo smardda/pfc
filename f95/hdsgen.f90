@@ -50,7 +50,7 @@ contains
 
     ! Arguments
     integer(ki4) :: arg
-    logical :: combined
+    logical :: combined=.FALSE.
     type(decomp_t) :: decomp
 
     ! Local variables
