@@ -450,13 +450,35 @@ contains
                0,self%decomp%commpowcal,ierr)
        endif
 
+       if (allocated(self%powres%angle)) then
+          call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
+               self%powres%angle,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
+               0,self%decomp%commpowcal,ierr)
+       endif
+
        if (allocated(self%powres%lenpath)) then
           call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
                self%powres%lenpath,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
                0,self%decomp%commpowcal,ierr)
        endif
 
-       
+       if (allocated(self%powres%zbdotn)) then
+          call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
+               self%powres%zbdotn,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
+               0,self%decomp%commpowcal,ierr)
+       endif
+
+       if (allocated(self%powres%bfield)) then
+          call MPI_Gatherv(MPI_IN_PLACE,3*self%decomp%mynpowe,MPI_DOUBLE, &
+               self%powres%bfield,3*self%decomp%localsize,3*self%decomp%localdisp,MPI_DOUBLE, &
+               0,self%decomp%commpowcal,ierr)
+       endif
+
+       if (allocated(self%powres%norm)) then
+          call MPI_Gatherv(MPI_IN_PLACE,3*self%decomp%mynpowe,MPI_DOUBLE, &
+               self%powres%norm,3*self%decomp%localsize,3*self%decomp%localdisp,MPI_DOUBLE, &
+               0,self%decomp%commpowcal,ierr)
+       endif
 
        call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
             self%powres%pow,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &

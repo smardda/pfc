@@ -63,9 +63,9 @@ contains
   subroutine geoq_sub(arg,combined,decomp)
 
     ! Arguments
-    integer(ki4), intent(in) :: arg ! The number of the command line argument conatining the input file
-    logical, intent(in) :: combined ! Is this run as part of the combined smiter output
-    type(decomp_t), intent(in) :: decomp ! is the code running as a single executable
+    integer(ki4), intent(in) :: arg !< The number of the command line argument conatining the input file
+    logical, intent(in) :: combined !< Is this run as part of the combined smiter output
+    type(decomp_t), intent(in) :: decomp !< is the code running as a single executable
 
     ! Local variables
     character(*), parameter :: m_name='geoq' !< module name
@@ -141,6 +141,7 @@ contains
     call clock_start(3,'beq_init time')
     fileq=file%equil
     ifldspec=numerics%fldspec
+    ! default flag for external code generating file defining axisymmetric field
     numerics%fiesta=0
     select case (numerics%eqtype)
     case ('ana')

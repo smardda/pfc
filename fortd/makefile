@@ -10,9 +10,9 @@ src =  bsplvn.f bsplwn.f  bvalue.f  interu.f  interv.f  interw.f tb06a.f  tc01a.
 
 obj = $(src:.f=.o)
 
-lib$(DBG).a: $(obj) randlx.o
-	ar ru lib$(DBG).a $(obj) randlx.o
-	ranlib lib$(DBG).a
+libsmarddalib$(DBG).a: $(obj) randlx.o
+	ar ru libsmarddalib$(DBG).a $(obj) randlx.o
+	ranlib libsmarddalib$(DBG).a
 
 randlx.o:
 	$(FC) $(FSFLAG) -c randlx.f
@@ -24,4 +24,4 @@ clean:
 	rm -f $(obj) randlx.o
 
 libclean: clean
-	rm -f lib$(DBG).a
+	rm -f libsmarddalib$(DBG).a

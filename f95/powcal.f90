@@ -78,9 +78,9 @@ contains
   subroutine powcal_sub(arg,combined,decomp)
 
     ! Arguments
-    integer(ki4), intent(in) :: arg ! The number of the command line argument conatining the input file
-    logical, intent(in) :: combined ! Is this run as part of the combined smiter output
-    type(decomp_t), intent(in)  :: decomp ! is the code running as a single executable
+    integer(ki4), intent(in) :: arg !< The number of the command line argument conatining the input file
+    logical, intent(in) :: combined !< Is this run as part of the combined smiter output
+    type(decomp_t), intent(in)  :: decomp !< is the code running as a single executable
 
     ! Local variables
     character(*), parameter :: m_name='powcal' !< module name

@@ -237,7 +237,8 @@ subroutine powelt_normalm(self,powcal,pnormal)
   inpow=powelt_addr(self,powcal%powres%npowe)
   iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
   iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
-  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag)
+  call geobj_normal(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,znormal,zmag, &
+& znormal2dm)
 
   pnormal=znormal
 
@@ -370,6 +371,11 @@ subroutine powelt_dep(self,powcal,gshadl)
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
+     powcal%powres%zbdotn(inpow)=zbdotn
+     powcal%powres%bfield(:, inpow)=zb(:)
+     powcal%powres%norm(:, inpow)=znormal(:)
+     call powelt_anglevec(self, zb, znormal, powcal%powres%pmask(inpow), &
+                        & powcal%powres%angle(inpow))
      !        write(*,*) inpow, zpow, zbdotn, zpsi
   end if
 

@@ -4,6 +4,8 @@ module apb_m
 !      use const_numphys_h
   use log_m
   use misc_m
+  use fmesh_h
+  use fmesh_m
   use mcontrol_h
   use mcontrol_m
   use date_time_m
@@ -24,10 +26,6 @@ module apb_m
 
 ! public types
   integer :: nin !< input file unit
-
-! private subroutines
-  private :: &
- &apb_fileafter !< move to point in file after line beginning with string
 
 ! private variables
   character(*), parameter :: m_name='apb_m' !< module name
@@ -64,7 +62,7 @@ subroutine apb_readmlab(self,numerics,infile)
   character(*), parameter :: s_name='apb_readmlab' !< subroutine name
   character(13), parameter :: cfmt0='(1x,f14.7)'
   character(13), parameter :: cfmt1='(5(f14.7,1x))'
-  !! logical :: unitused !< flag to test unit is available
+  type(fmesh_t)  :: fmesh      !< mesh
   integer :: iin   !< input channel for object data structure
 
   real(kr8), dimension(:,:), allocatable :: workv2 !< vector work array
@@ -94,70 +92,24 @@ subroutine apb_readmlab(self,numerics,infile)
   if (status/=0) then
      call log_error(m_name,s_name,1,error_fatal,'Error opening file')
   end if
-  ! skip header data
-  call apb_fileafter('Zeta grid',iin)
 
-  read(iin,*,iostat=status) self%n3
-  if(status/=0) then
-     call log_error(m_name,s_name,11,error_fatal,'Error reading object data')
-  end if
-  ! position 3 array
-  !! allocate position 3 storage
-  if(self%n3>0) then
-     allocate(self%pos3(self%n3), stat=status)
-     call log_alloc_check(m_name,s_name,12,status)
-  else
-     call log_error(m_name,s_name,13,error_fatal,'No 1D data')
-  end if
+  call fmesh_readmlab(fmesh,iin)
+  
+  !! assign to apb variables
+  self%n1=fmesh%nxf
+  allocate(self%pos1(self%n1), stat=status)
+  call log_alloc_check(m_name,s_name,11,status)
+  self%pos1=fmesh%xf
 
-  read(iin,*,iostat=status)(self%pos3(i),i=1,self%n3)
-  call log_alloc_check(m_name,s_name,14,status)
-  print '("number of zeta values read = ",i10)',self%n3
-  call log_value("number of zeta values read ",self%n3)
+  self%n2=fmesh%nyf
+  allocate(self%pos2(self%n2), stat=status)
+  call log_alloc_check(m_name,s_name,12,status)
+  self%pos2=fmesh%yf
 
-  call apb_fileafter('R grid',iin)
-
-  read(iin,*,iostat=status) self%n1
-  call log_read_check(m_name,s_name,21,status)
-  ! position 1 array
-  !! allocate position 1 storage
-  if(self%n1>0) then
-     allocate(self%pos1(self%n1), stat=status)
-     call log_alloc_check(m_name,s_name,22,status)
-  else
-     call log_error(m_name,s_name,23,error_fatal,'No 1D data')
-  end if
-
-  read(iin,*,iostat=status)(self%pos1(i),i=1,self%n1)
-  call log_alloc_check(m_name,s_name,24,status)
-  print '("number of R values read = ",i10)',self%n1
-  call log_value("number of R values read ",self%n1)
-
-  call apb_fileafter('Z grid',iin)
-
-  read(iin,*,iostat=status) self%n2
-  call log_read_check(m_name,s_name,33,status)
-  ! position 2 array
-  !! allocate position 2 storage
-  if(self%n2>0) then
-     allocate(self%pos2(self%n2), stat=status)
-     call log_alloc_check(m_name,s_name,32,status)
-  else
-     call log_error(m_name,s_name,33,error_fatal,'No 1D data')
-  end if
-
-  read(iin,*,iostat=status)(self%pos2(i),i=1,self%n2)
-  call log_alloc_check(m_name,s_name,34,status)
-  print '("number of Z values read = ",i10)',self%n2
-  call log_value("number of Z values read ",self%n2)
-
-  !!     write(*,*)(self%pos1(i),i=1,self%n1)
-  !!     write(*,*)(self%pos2(i),i=1,self%n2)
-  !!     write(*,*)(self%pos3(i),i=1,self%n3)
-
-  ! skip blank and non-blank
-  read(iin,fmt='(a)',iostat=status) ibuff
-  read(iin,fmt='(a)',iostat=status) ibuff
+  self%n3=fmesh%nzf
+  allocate(self%pos3(self%n3), stat=status)
+  call log_alloc_check(m_name,s_name,13,status)
+  self%pos3=fmesh%zf
 
   !! number of components
   self%ncpt=3
@@ -923,28 +875,5 @@ subroutine apb_convert(self,numerics,kinit,rpower,phchange)
   end if
 
 end subroutine apb_convert
-!>---------------------------------------------------------------------
-subroutine apb_fileafter(kfind,kin)
-  !< move to point in file after line beginning with string
-  !! arguments
-  character(len=*), intent(in) :: kfind   !< character string to find
-  integer, intent(in) :: kin   !< file unit for reading
-
-  !! local
-  character(*), parameter :: s_name='apb_fileafter' !< subroutine name
-  character(len=80) :: ibuff   !< character string
-
-  do
-     read(kin,fmt='(a)',iostat=status) ibuff
-     call log_read_check(m_name,s_name,1,status)
-     if (adjustl(ibuff)==kfind) exit
-  end do
-
-  if (adjustl(ibuff)/=kfind) then
-     ! jm string not found
-     call log_error(m_name,s_name,10,error_fatal,'Error reading object data')
-  end if
-
-end subroutine apb_fileafter
 
 end module apb_m

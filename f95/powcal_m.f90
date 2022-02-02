@@ -161,17 +161,33 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
 
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
-     ! set size of psista and lenpath array
+     ! set size of psista, angle and other diagnostics arrays
      if(self%decomp%myrankpowcal.eq.0) then
         allocate(self%powres%psista(self%powres%geobjl%ng), stat=status)
         call log_alloc_check(m_name,s_name,4,status)
+        allocate(self%powres%angle(self%powres%geobjl%ng), stat=status)
+        call log_alloc_check(m_name,s_name,5,status)
+        allocate(self%powres%zbdotn(self%powres%geobjl%ng), stat=status)
+        call log_alloc_check(m_name, s_name,6,status)
+        allocate(self%powres%bfield(3, self%powres%geobjl%ng), stat=status)
+        call log_alloc_check(m_name, s_name,7,status)
+        allocate(self%powres%norm(3, self%powres%geobjl%ng), stat=status)
+        call log_alloc_check(m_name, s_name,8,status)
         allocate(self%powres%lenpath(self%powres%geobjl%ng), stat=status)
-        call log_alloc_check(m_name, s_name,5,status)
+        call log_alloc_check(m_name, s_name,9,status)
      else
         allocate(self%powres%psista(self%decomp%firstng:self%decomp%lastng), stat=status)
+        allocate(self%powres%angle(self%decomp%firstng:self%decomp%lastng), stat=status)
+        allocate(self%powres%zbdotn(self%decomp%firstng:self%decomp%lastng), stat=status)
         allocate(self%powres%lenpath(self%decomp%firstng:self%decomp%lastng), stat=status)
+        allocate(self%powres%bfield(3, self%decomp%firstng:self%decomp%lastng), stat=status)
+        allocate(self%powres%norm(3, self%decomp%firstng:self%decomp%lastng), stat=status)
      endif
      self%powres%psista=0
+     self%powres%angle=0
+     self%powres%zbdotn=0
+     self%powres%bfield=0
+     self%powres%norm=0
   case default
   end select calcn_type
   ! set size and zero of mask array
@@ -553,7 +569,7 @@ end subroutine powcal_quant
 subroutine powcal_readcon(selfn,kin)
 
   !! arguments
-  type(pnumerics_t), intent(out) :: selfn   !< object control data structure
+  type(pnumerics_t), intent(inout) :: selfn   !< object control data structure
   integer, intent(in) :: kin   !< input channel for object data structure
 
 
@@ -566,6 +582,7 @@ subroutine powcal_readcon(selfn,kin)
   real(kr8) :: q_parallel0 !< parallel reference flux (W/sqm)
   integer(ki4) :: refine_level   !< level of refinement to be used
   logical :: use_pfc_flux   !< default .FALSE., if true, use value of psi on PFC to evaluate Q
+  logical :: flux_from_pfc   !< default .FALSE., if true, use value of psi on PFC to evaluate Q
   integer(ki4) :: shadow_control   !< control shadowing
   character(len=80) :: calculation_type !< calculation type
   integer(ki4) :: number_of_tracks !< nonzero, only compute selected tracks
@@ -588,6 +605,7 @@ subroutine powcal_readcon(selfn,kin)
   namelist /powcalparameters/ &
  &power_split, decay_length, power_loss, refine_level, shadow_control, &
  &use_pfc_flux, &
+ &flux_from_pfc, &
  &q_parallel0, &
  &diffusion_length, &
  &calculation_type, &
@@ -607,6 +625,7 @@ subroutine powcal_readcon(selfn,kin)
   power_loss=7.5e+06_kr8
   refine_level=1
   use_pfc_flux=.FALSE.
+  flux_from_pfc=.FALSE.
   shadow_control=0
   !! ignore q_parallel0 if negative
   q_parallel0=-1_kr8
@@ -678,7 +697,7 @@ subroutine powcal_readcon(selfn,kin)
   selfn%ploss=power_loss
   selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
-  selfn%usepsista=.NOT.use_pfc_flux
+  selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc
   selfn%shadow=shadow_control
   selfn%qpara0=q_parallel0
 
@@ -996,8 +1015,20 @@ subroutine powcal_writev(self,kchar,kplot)
      if (allocated(self%powres%psista)) then
         call vfile_rscalarwrite(self%powres%psista,self%powres%geobjl%ng,'psista','CELL',kplot,0)
      end if
+     if (allocated(self%powres%angle)) then
+        call vfile_rscalarwrite(self%powres%angle,self%powres%geobjl%ng,'angle','CELL',kplot,0)
+     end if
      if (allocated(self%powres%lenpath)) then
         call vfile_rscalarwrite(self%powres%lenpath, self%powres%geobjl%ng, 'lenpath', 'CELL', kplot, 0)
+     end if
+     if (allocated(self%powres%zbdotn)) then
+        call vfile_rscalarwrite(self%powres%zbdotn,self%powres%geobjl%ng,'zbdotn','CELL',kplot,0)
+     end if
+     if (allocated(self%powres%bfield)) then
+        call vfile_dvectorwrite(self%powres%bfield,self%powres%geobjl%ng,'bfield','CELL',kplot,0)
+     end if
+     if (allocated(self%powres%norm)) then
+        call vfile_dvectorwrite(self%powres%norm,self%powres%geobjl%ng,'normal','CELL',kplot,0)
      end if
      call vfile_iscalarwrite(self%powres%pmask,self%powres%geobjl%ng,'Msign','CELL',kplot,0)
      if (infilelevel>self%n%nlevel) then
@@ -1196,7 +1227,11 @@ subroutine powcal_delete(self)
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
      deallocate(self%powres%psista)
+     deallocate(self%powres%angle)
+     deallocate(self%powres%zbdotn)
      deallocate(self%powres%lenpath)
+     deallocate(self%powres%bfield)
+     deallocate(self%powres%norm)
   case default
   end select calcn_type
 

@@ -1263,6 +1263,8 @@ subroutine geoq_writev(self,kchar,kplot)
   !  integer(ki4) :: irzzeta !< flag plot 'all' option
   real(kr4), dimension(3) :: znormal !< unit normal vector
   real(kr4), dimension(3) :: zbary !< vector of barycentre of geobj
+  real(kr4) :: dot_aa, dot_ab
+  real(kr4) :: angle !< Angle
   real(kr4) :: zmag !< magnitude of normal vector
   type(geobj_t) :: iobj !< object
   logical, parameter :: output_cartv=.TRUE. !< local variable
@@ -1530,6 +1532,42 @@ subroutine geoq_writev(self,kchar,kplot)
         posang%opt=16
         call posang_invtfm(posang,-3)
         call posang_writev(posang,kplot,2)
+     end do
+
+     write(kplot, '('' '')')
+     ! Angles
+     write(kplot,'(''SCALARS Angles float'')')
+     write(kplot, '(''LOOKUP_TABLE default'')')
+     do j=1,self%objl%ng
+        iobj%geobj=self%objl%obj2(j)%ptr
+        iobj%objtyp=self%objl%obj2(j)%typ
+        call geobj_normal(iobj,self%objl%posl,self%objl%nodl,znormal,zmag)
+
+        ! Calculate BField
+        call geobj_centre(iobj,self%objl%posl,self%objl%nodl,zbary)
+        ! evaluate field at barycentre
+        posang%pos=zbary
+        posang%opt=0 ; posang%units=-3
+        call beq_b(self%beq,posang,0)
+        ! Calculate Normal
+
+        dot_aa = dot_product(posang%vec, posang%vec)
+
+        if (abs(dot_aa) < 1e-4) then
+          angle = 0._kr4
+        else
+          dot_ab = dot_product(posang%vec, znormal)
+          angle = acos(dot_ab / sqrt(dot_aa)) * 180._kr4 / const_pi
+        end if
+
+        ! We subtract with/from 90 because of the tilted apex of Panel.
+        if (angle > 90._kr4) then
+          angle = angle - 90._kr4
+        else
+          angle = 90._kr4 - angle
+        end if
+
+        write(kplot, *) angle
      end do
 
      write(kplot, '('' '')')
