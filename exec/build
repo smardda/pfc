@@ -45,7 +45,7 @@ else
     compiler=$compiler4
 fi
 
-echo "Building smiter with" $compiler
+echo "Building SMARDDA-PFC with" $compiler
 
 #(Re)generate documentation option, can take minutes
 if [ $# = 2 ] ; then
