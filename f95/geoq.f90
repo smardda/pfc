@@ -63,9 +63,9 @@ contains
   subroutine geoq_sub(arg,combined,decomp)
 
     ! Arguments
-    integer(ki4) :: arg ! The number of the command line argument conatining the input file
-    logical :: combined ! Is this run as part of the combined smiter output
-    type(decomp_t) :: decomp
+    integer(ki4), intent(in) :: arg ! The number of the command line argument conatining the input file
+    logical, intent(in) :: combined ! Is this run as part of the combined smiter output
+    type(decomp_t), intent(in) :: decomp ! is the code running as a single executable
 
     ! Local variables
     character(*), parameter :: m_name='geoq' !< module name
@@ -170,31 +170,10 @@ contains
     !! read  geobjl data
 
     call clock_start(4,'geobjlist_read time')
-    ! The following values before geobjlist_read are set to initial value,
+    ! Values in geobjlist are initialised
     ! because valgrind reports them as being uninitialized.
-
-    ! geoq%objl%ngtype is not needed by GEOQ. It is used by HDSGEN for stating
-    ! the type of elements: Either 1 (points) or 2 (triangles). So to avoid
-    ! using it we set it to 0. Same goes for
-    geoq%objl%ngtype = 0
-
-    ! geoq%objl%coordbb and geoq%objl%binbb are not needed by GEOQ, as they are
-    ! properly initialized in subroutine geobjlist_init called from hdsgen
-    ! and smannal. These two variables are bounding boxes of geobj coord and
-    ! geobj binning, respectively.
-    geoq%objl%coordbb = 0
-    geoq%objl%binbb = 0
-
-
-    ! geoq%objl%ngunassigned is set to 0 in geobjlist_init but nothing is done
-    ! with it in geobjlist_read, therefore an uninitialized broadcast is done
-    ! with mpi. The value is not used for calculating except for writing in
-    ! log file.
-    geoq%objl%ngunassigned = 0
-
-    ! geoq%objl%nsampl is an UNUSED variable used in subroutine
-    ! geobjlist_bindyn which is never called.
-    geoq%objl%nsampl = 0
+    call geobjlist_cinit(geoq%objl)
+    ! read in geometry
     call geobjlist_read(geoq%objl,file%vtkdata)
     call clock_stop(4)
 

@@ -78,8 +78,9 @@ contains
   subroutine powcal_sub(arg,combined,decomp)
 
     ! Arguments
-    integer(ki4) :: arg
-    logical :: combined
+    integer(ki4), intent(in) :: arg ! The number of the command line argument conatining the input file
+    logical, intent(in) :: combined ! Is this run as part of the combined smiter output
+    type(decomp_t), intent(in)  :: decomp ! is the code running as a single executable
 
     ! Local variables
     character(*), parameter :: m_name='powcal' !< module name
@@ -91,7 +92,6 @@ contains
     type(fmesh_t)  :: fmesh      !< mesh for Cartesian B
     type(btree_t)  :: btree      !< binary tree
     type(powcal_t)  :: powcal      !< power and results geometry data structure
-    type(decomp_t)  :: decomp
     type(geobjlist_t) :: gshadl !< shadowing geometrical objects
     type(date_time_t) :: timestamp !< timestamp of run
     type(date_time_t) :: timeold !< timestamp of preceding HDSGEN run

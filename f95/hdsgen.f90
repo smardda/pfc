@@ -49,9 +49,9 @@ contains
   subroutine hdsgen_sub(arg,combined,decomp)
 
     ! Arguments
-    integer(ki4) :: arg
-    logical :: combined=.FALSE.
-    type(decomp_t) :: decomp
+    integer(ki4), intent(in) :: arg
+    logical, intent(in) :: combined
+    type(decomp_t), intent(in) :: decomp ! is the code running as a single executable
 
     ! Local variables
     character(*), parameter :: m_name='hdsgen' !< module name
@@ -250,7 +250,7 @@ program hdsgen
   
   type(decomp_t) :: decomp
 
-  if(serialmpi_init()) call hdsgen_sub(1,.False.,decomp)
+  if(serialmpi_init()) call hdsgen_sub(1,.FALSE.,decomp)
 
   call serialmpi_finish()
   
