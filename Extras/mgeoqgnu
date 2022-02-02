@@ -1,0 +1,163 @@
+#! /bin/bash
+# plot (with gnuplot) .gnu files produced by geoq (MAST)
+if [ $# -eq 0 ] || [ $# -gt 1 ] ; then
+  echo "Usage: $0 [<geoq run name>]"
+  exit
+fi
+HS=$SMITER_DIR
+rm -f table*.dat
+if [ -f $1_gnu.gnu ] ; then
+  if [ ! -e mwall.txt ] ; then
+    ln -sf $HS/Extras/wall.txt
+    echo "Silhouette file mwall.txt not found - fix up attempted"
+  fi 
+  gnuplot << ++
+  set yrange [-2.2:0]
+  set xrange [0:2.2]
+  unset surface
+  set contour
+  set cntrparam bspline
+  set cntrparam levels auto 20
+  #set cntrparam levels discrete 1.8,1.85,1.9,1.95 
+  set table 'table.dat'
+  splot '$1_gnu.gnu' using (\$3):(\$4):(\$5) with lines
+  unset table
+  unset key
+  set xlabel "R"
+  set ylabel "Z"
+  set title "Contours of {/Symbol y}"
+  set output "beq+wall.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3 size 7,7
+  plot 'table.dat' with lines, 'mwall.txt' with lines
+  set terminal x11
+  set title "Contours of d{/Symbol y}/dR"
+  set table 'tabledR.dat'
+  splot '$1_gnu_dR.gnu' using (\$3):(\$4):(\$5) with lines
+  unset table
+  unset key
+  set output "dR.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3 size 7,7
+  plot 'tabledR.dat' with lines
+  set terminal x11
+  set title "Contours of d{/Symbol y}/dZ"
+  set table 'tabledZ.dat'
+  splot '$1_gnu_dZ.gnu' using (\$3):(\$4):(\$5) with lines
+  unset table
+  unset key
+  set output "dZ.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3 size 7,7
+  plot 'tabledZ.dat' with lines
+++
+fi
+if [ -f $1_gnu_R.gnu ] ; then
+  gnuplot << @@
+  unset surface
+  set contour
+  set cntrparam bspline
+  set cntrparam levels auto 20
+  set title "Contours of R"
+  set xlabel "{/Symbol y}"
+  set ylabel "Polar {/Symbol q}"
+  set table 'tableR.dat'
+  splot '$1_gnu_R.gnu' using (\$3):(57.29578*\$4):(\$5) with lines
+  unset table
+  unset key
+  set output "R.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3
+  plot 'tableR.dat' with lines
+  set terminal x11
+  set title "Contours of Z"
+  set table 'tableZ.dat'
+  splot '$1_gnu_Z.gnu' using (\$3):(57.29578*\$4):(\$5) with lines
+  unset table
+  unset key
+  set output "Z.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3
+  plot 'tableZ.dat' with lines
+  set terminal x11
+  set title "Contours of R/J"
+  set table 'tableRJ.dat'
+  splot '$1_gnu_RJ.gnu' using (\$3):(57.29578*\$4):(\$5) with lines
+  unset table
+  unset key
+  set output "RJ.ps"
+  set terminal postscript enhanced color dashed dashlength 2 font "Helvetica,30" \
+  linewidth 3
+  plot 'tableRJ.dat' with lines
+@@
+fi
+if [ -f $1_gnu_RZ.gnu ] && [ -f table.dat ] ; then
+  gnuplot << --
+  set yrange [-2.2:0]
+  set xrange [0:2.2]
+  set title "Contours of {/Symbol y}"
+  set xlabel "R"
+  set ylabel "Z"
+  unset key
+  set output "RZ.ps"
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3 size 7,7
+  plot 'table.dat' with lines, '$1_gnu_RZ.gnu' using (\$5):(\$6) with lines
+--
+fi
+if [ -f $1_gnu_RZ.gnu ] ; then
+  gnuplot << $$
+  unset key
+  set title "Contours of {/Symbol y}"
+  set xlabel "R"
+  set ylabel "Z"
+  set output "RZoom.ps"
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3
+  plot '$1_gnu_RZ.gnu' using (\$5):(\$6) with lines
+$$
+fi
+if [ -f $1_gnusil.gnu ] && [ -f table.dat ] ; then
+  gnuplot << ++
+  unset key
+  set title "Detailed silhouette"
+  set xlabel "R"
+  set ylabel "Z"
+  set terminal unknown
+  plot '$1_gnusil.gnu' using (\$2):(\$3) with dots
+  set output '$1_RZsil.ps'
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3
+  plot [GPVAL_X_MIN:GPVAL_X_MAX][GPVAL_Y_MIN:GPVAL_Y_MAX] '$1_gnusil.gnu' using (\$2):(\$3) with dots, 'table.dat' with lines
+++
+elif [ -f $1_gnusil.gnu ] ; then
+  gnuplot << ++
+  unset key
+  set title "Detailed silhouette"
+  set xlabel "R"
+  set ylabel "Z"
+  set output '$1_RZsil.ps'
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3
+  plot '$1_gnusil.gnu' using (\$2):(\$3) with dots
+++
+fi
+if [ -f $1_gnusilm.gnu ] && [ -f table.dat ] ; then
+  gnuplot << ++
+  unset key
+  set title "Detailed silhouette"
+  set xlabel "{/Symbol y}"
+  set ylabel "Polar {/Symbol q}"
+  set terminal unknown
+  plot '$1_gnusilm.gnu' using (\$2):(\$3) with dots
+  set output '$1_silm.ps'
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3
+  plot [GPVAL_X_MIN:GPVAL_X_MAX][GPVAL_Y_MIN:GPVAL_Y_MAX] '$1_gnusilm.gnu' using (\$2):(\$3) with dots, 'table.dat' with lines
+++
+elif [ -f $1_gnusilm.gnu ] ; then
+  gnuplot << ++
+  unset key
+  set title "Detailed silhouette"
+  set xlabel "{/Symbol y}"
+  set ylabel "Polar {/Symbol q}"
+  set output '$1_silm.ps'
+  set terminal postscript enhanced color font "Helvetica,30" linewidth 3
+  plot '$1_gnusilm.gnu' using (\$2):(\$3) with dots
+++
+fi
