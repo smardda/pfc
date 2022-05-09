@@ -1,5 +1,7 @@
+!> @defgroup groupname7 SMARDDA-PFC-NEW Header Modules
+!> @{
 module apb_h
-
+!> @}
 
   use const_kind_m
 

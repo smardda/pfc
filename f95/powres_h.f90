@@ -1,5 +1,7 @@
+!> @addtogroup groupname7
+!> @{
 module powres_h
-
+!> @}
   use const_kind_m
   use geobjlist_h
   use geobj_m

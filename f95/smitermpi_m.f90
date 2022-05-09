@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module smitermpi_m
-
+!> @}
   use smitermpi_h
   use log_m
   use powcal_h
@@ -38,10 +40,10 @@ module smitermpi_m
        bcast_hds, &        !> broadcasts hds values for powcal
        bcast_position, &   !> broadcasts position values for powcal and hdsgen
        bcast_skyl, &       !> broadcasts skylight_t values for powcal and hdsgen
-       smitermpi_barrier
+       smitermpi_barrier !>
 
   character(*), parameter :: m_name='smitermpi_m' !< module name
-  integer :: status
+  integer :: status !<
 
 contains
 
@@ -52,8 +54,8 @@ contains
   !> calls mpi_init and defines decomp structure
   subroutine smitermpi_init(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !<
+    logical :: init_flag !<
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
@@ -133,12 +135,12 @@ contains
 
     !! Arguments
     type(decomp_t), intent(inout) :: self !< decomp data structure
-    logical, optional :: hdsonly
+    logical, optional :: hdsonly !<
 
-    integer(ki4) :: ierr
-    integer(ki4) :: groupsmiter,groupgeoqshad,groupgeoqres,grouphdsgen,grouppowcal
-    integer(ki4) :: grouppg,groupps,groupph,groupsh
-    integer(ki4) :: excl(3),incl(1)
+    integer(ki4) :: ierr !<
+    integer(ki4) :: groupsmiter,groupgeoqshad,groupgeoqres,grouphdsgen,grouppowcal !<
+    integer(ki4) :: grouppg,groupps,groupph,groupsh !<
+    integer(ki4) :: excl(3),incl(1) !<
 
 #ifdef WITH_MPI
     excl(1) = 0
@@ -196,8 +198,8 @@ contains
   !> calls mpi_init and defines decomp structure
   subroutine powcalmpi_init(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !<
+    logical :: init_flag !<
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
@@ -240,8 +242,8 @@ contains
   !> calls mpi_finalize and cleans up decomp structure
   subroutine smitermpi_finish(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !<
+    logical :: init_flag !<
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
     if(allocated(self%localsize)) deallocate(self%localsize)
@@ -259,8 +261,8 @@ contains
   !> calls mpi_finalize and cleans up decomp structure
   subroutine powcalmpi_finish(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !<
+    logical :: init_flag !<
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
     if(allocated(self%localsize)) deallocate(self%localsize)
@@ -277,8 +279,8 @@ contains
   !> initialises mpi for "serial" codes that run on single processes during mpi execution
   function serialmpi_init()
 
-    integer :: ierr, myrank, commserial
-    logical :: init_flag, serialmpi_init
+    integer :: ierr, myrank, commserial !<
+    logical :: init_flag, serialmpi_init !<
 
     serialmpi_init = .False.
     myrank = 0
@@ -299,8 +301,8 @@ contains
   !> calls mpi_finalize for "serial" codes that run on single processes during mpi execution
   subroutine serialmpi_finish()
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !<
+    logical :: init_flag !<
 
 #ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
@@ -312,7 +314,7 @@ contains
   !> sets reading and broadcast flags for powcal
   subroutine powcalmpi_setio(self)
 
-    integer :: ierr
+    integer :: ierr !<
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
@@ -354,8 +356,8 @@ contains
   !> assigns a set of starting points to each process
   subroutine powcalmpi_decomp(self,npowe,ng)
 
-    integer :: ierr
-    integer, intent(in) :: npowe,ng
+    integer :: ierr !<
+    integer, intent(in) :: npowe,ng !<
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
 !    if(self%myrankpowcal .eq. 0) print*, "Distributing", npowe ,"trajectories"
@@ -386,9 +388,9 @@ contains
   !> stores it in an array for use by the collect step
   subroutine powcalmpi_localsize(self,npowe)
 
-    integer, intent(in) :: npowe
+    integer, intent(in) :: npowe !<
     type(decomp_t), intent(inout) :: self !< decomp data structure
-    integer :: i, proc
+    integer :: i, proc !<
 
     if(self%nprocpowcal .eq. 1) then
        self%localsize(0) = npowe
@@ -410,9 +412,9 @@ contains
 
   subroutine smitermpi_barrier(comm)
 
-    integer, intent(in) :: comm
+    integer, intent(in) :: comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 #ifdef WITH_MPI
     call MPI_Barrier(comm,ierr)
 #endif
@@ -427,7 +429,7 @@ contains
   !> Collects data from all processes for writing to disk
   subroutine powcalmpi_collect(self)
 
-    integer :: ierr
+    integer :: ierr !<
     type(powcal_t), intent(inout) :: self   !< object data structure
 
 #ifdef WITH_MPI
@@ -559,7 +561,7 @@ contains
     type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
     type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
     type(pplots_t), intent(out) :: plot !< vtk plot selectors
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     call bcast_pnumerics(numerics,rank,comm)
 
@@ -578,9 +580,9 @@ contains
 
     !! Arguments
     type(pnumerics_t), intent(inout) :: self !< input numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
@@ -652,7 +654,7 @@ contains
 
     !! Arguments
     type(edgprof_t), intent(inout) :: self !< input ODE numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     integer :: ierr
 #ifdef WITH_MPI
@@ -701,9 +703,9 @@ contains
 
     !! Arguments
     type(onumerics_t), intent(inout) :: self !< input ODE numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%npdim,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%nstartcon,1,MPI_INTEGER,0,comm,ierr)
@@ -723,7 +725,7 @@ contains
 
     !! Arguments
     type(pfiles_t), intent(inout) :: self !< file names
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     integer :: ierr
 #ifdef WITH_MPI
@@ -740,9 +742,9 @@ contains
 
     !! Arguments
     type(pplots_t), intent(inout) :: self !< vtk plot selectors
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 #ifdef WITH_MPI
     ! Bcast the plot structure which contains 15 logicals that are commented 
     call MPI_Bcast(self%cartv,15,MPI_LOGICAL,0,comm,ierr) 
@@ -772,8 +774,8 @@ contains
 
     !! Arguments
     type(beq_t), intent(inout) :: self   !< object data structure
-    integer(ki4) , intent(in) :: rank,comm
-    integer :: ierr
+    integer(ki4) , intent(in) :: rank,comm !<
+    integer :: ierr !<
 
 #ifdef WITH_MPI
     ! Quite a few variables are missing from this routine however
@@ -850,9 +852,9 @@ contains
 
     !! Arguments
     type(bnumerics_t), intent(inout) :: self   !< object data structure
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 #ifdef WITH_MPI
     ! Vac field type, fieldspec and centres
     call MPI_Bcast(self%vactype,3,MPI_CHARACTER,0,comm,ierr)
@@ -890,11 +892,11 @@ contains
 
     !! Arguments
     type(spl2d_t), intent(inout) :: self !< Spline struct
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     !! Variables
     character(*), parameter :: s_name='bcast_spl2d' !< subroutine name
-    integer :: splsize,ierr
+    integer :: splsize,ierr !<
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%lunif,1,MPI_INTEGER,0,comm,ierr)
@@ -942,8 +944,8 @@ contains
 
     !! Arguments
     type(geobjlist_t), intent(inout) :: self   !< object data structure
-    type(posveclis_t), intent(inout) :: vecx,vecb
-    integer(ki4) , intent(in) :: rank,comm
+    type(posveclis_t), intent(inout) :: vecx,vecb !<
+    integer(ki4) , intent(in) :: rank,comm !<
 
     call bcast_geobjlist(self,rank,comm)
 
@@ -959,10 +961,10 @@ contains
 
     !! Arguments
     type(geobjlist_t), intent(inout) :: self   !< data structure
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     !! Variables
-    integer(ki4) :: ierr, size, num
+    integer(ki4) :: ierr, size, num !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%ngtype,1,MPI_INTEGER,0,comm,ierr)
 
@@ -1015,9 +1017,9 @@ contains
   subroutine bcast_position(self,rank,comm)
 
     type(posveclis_t), intent(inout) :: self !< position list data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer(ki4) :: ierr, i, num
+    integer(ki4) :: ierr, i, num !<
 #ifdef WITH_MPI
     ! posvec is an array of 3 element 4 byte reals
     ! the position structure contains this an integer from position_h
@@ -1042,10 +1044,10 @@ contains
     type(geobjlist_t), intent(inout) :: geobjl !< point data
     type(numerics_t), intent(inout) :: numerics !< geobjlist controls
     type(btree_t), intent(inout) :: btree !< btree data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     !! Variables
-    integer :: ierr
+    integer :: ierr !<
 
     call bcast_numerics(numerics,geobjl,rank,comm)
 
@@ -1057,10 +1059,10 @@ contains
 
     !! Arguments
     type(btree_t), intent(inout) :: self !< btree data
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !<
 
     !! Variables
-    integer :: ierr
+    integer :: ierr !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%nt,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%npter,1,MPI_INTEGER,0,comm,ierr)
@@ -1099,10 +1101,10 @@ contains
 
     !! arguments
     type(ls_t), intent(inout) :: self   !< ls data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
     !! Variables
-    integer :: ierr,ilist,isizel,isizeh
+    integer :: ierr,ilist,isizel,isizeh !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%nlist,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%n2,1,MPI_INTEGER,0,comm,ierr)
@@ -1127,10 +1129,10 @@ contains
     !! Arguments
     type(numerics_t), intent(inout) :: self !< local variable
     type(geobjlist_t), intent(inout) :: geobjl !< point data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer :: ierr
-    integer :: type
+    integer :: ierr !<
+    integer :: type !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%nsize,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%nsizep,1,MPI_INTEGER,0,comm,ierr)
@@ -1182,9 +1184,9 @@ contains
 
     !! Arguments
     type(skyl_t), intent(inout) :: self !< local variable
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !<
 
-    integer(ki4) :: ierr,ibdim,indbox(2)
+    integer(ki4) :: ierr,ibdim,indbox(2) !<
 
 #ifdef WITH_MPI
     ! numerics structure
@@ -1229,9 +1231,9 @@ contains
 
     !! Arguments
     type(sknumerics_t), intent(inout) :: self !< local variable
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !<
 
-    integer(ki4) :: ierr
+    integer(ki4) :: ierr !<
 #ifdef WITH_MPI
     call MPI_Bcast(self%psiexts,4,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%extsopt,4,MPI_INTEGER,0,comm,ierr)
@@ -1257,9 +1259,9 @@ contains
 
     !! Arguments
     type(dnumerics_t), intent(inout) :: self !< local variable
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !<
 
-    integer :: ierr
+    integer :: ierr !<
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%tfm,80,MPI_CHARACTER,0,comm,ierr)

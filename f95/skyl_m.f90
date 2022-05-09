@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module skyl_m
-
+!> @}
   use log_m
   use misc_m
   use dcontrol_h

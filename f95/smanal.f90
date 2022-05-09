@@ -1,4 +1,7 @@
+!> @defgroup groupname9 SMARDDA-PFC-NEW Programs
+!> @{
 program smanal_p
+!> @}
 #ifdef WITH_MPI
   use mpi
 #endif

@@ -1,5 +1,7 @@
+!> @defgroup groupname8 SMARDDA-PFC-NEW Non Header Modules
+!> @{
 module termplane_m
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use log_m

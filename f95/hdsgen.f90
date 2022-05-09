@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module hdsgen_p
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use control_h
@@ -244,8 +246,10 @@ end module hdsgen_p
 
 
 #ifndef COMBINED
+!> @addtogroup groupname9
+!> @{
 program hdsgen
-  
+!> @}  
   use hdsgen_p
   
   type(decomp_t) :: decomp

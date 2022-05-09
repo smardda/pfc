@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module smanal_m
-
+!> @}
   use log_m
   use misc_m
   use const_numphys_h

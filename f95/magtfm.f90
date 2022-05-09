@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module magtfm_p
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -235,8 +237,10 @@ contains
 end module magtfm_p
 
 #ifndef COMBINED
+!> @addtogroup groupname9
+!> @{
 program magtfm
-  
+!> @} 
   use magtfm_p
   
   type(decomp_t) :: decomp

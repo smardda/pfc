@@ -1,4 +1,7 @@
+!> @addtogroup groupname7
+!> @{
 module geoq_h
+!> @}
 
   use const_kind_m
   use position_h
