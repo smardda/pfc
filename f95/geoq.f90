@@ -1,6 +1,6 @@
 !> @addtogroup groupname8
 !> @{
-module geoq_p
+module geoq_p 
 !> @}
   use const_kind_m
   use const_numphys_h

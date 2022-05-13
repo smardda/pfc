@@ -1,6 +1,9 @@
-!> @defgroup groupname8 SMARDDA-PFC-NEW Non Header Modules
+!> @addtogroup groupname333
+!> @{
+!> @defgroup groupname8 SMARDDA-PFC-NEW
 !> @{
 module termplane_m
+!> @}
 !> @}
   use const_kind_m
   use const_numphys_h

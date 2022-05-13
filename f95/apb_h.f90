@@ -1,8 +1,10 @@
-!> @defgroup groupname7 SMARDDA-PFC-NEW Header Modules
+!> @addtogroup groupname222
+!> @{
+!> @defgroup groupname7 SMARDDA-PFC-NEW
 !> @{
 module apb_h
 !> @}
-
+!> @}
   use const_kind_m
 
 ! public types
