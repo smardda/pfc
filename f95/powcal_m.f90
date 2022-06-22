@@ -869,7 +869,7 @@ subroutine powcal_calc(self,gshadl)
      zelt%ie=i
      do j=imlevel,inlevel
         zelt%je=j
-        call powelt_dep(zelt,self,gshadl)
+        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,self%powres%beq%rxpt,self%powres%beq%zxpt,self%powres%beq%psixpt)
      end do
   end do
 
