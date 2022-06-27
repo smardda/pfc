@@ -373,7 +373,7 @@ subroutine powelt_dep(self,powcal,gshadl,cen,rxpt,zxpt,psixpt)
 
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
-     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid,zr,cen,rxpt,zxpt,psixpt)
+     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid,zpos1%posvec(1)/1000.0d0,cen,rxpt,zxpt,psixpt)
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi

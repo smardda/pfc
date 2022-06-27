@@ -99,13 +99,16 @@ subroutine powcal_readv(self,vtkfile)
 end subroutine powcal_readv
 !---------------------------------------------------------------------
 !> initialise  powcal data structure
-subroutine powcal_init(self,numerics,plot,gnumerics)
+subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
   type(pnumerics_t), intent(in) :: numerics   !< object control data structure
   type(pplots_t), intent(in) :: plot   !< vtk plot selectors
   type(numerics_t), intent(inout), optional :: gnumerics   !< object control data structure
+      real(kr8) :: rxpt   !<  position x point \f$ R \f$
+    real(kr8) :: zxpt   !<  position x point \f$ Z \f$
+    real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
 
   !! local
   character(*), parameter :: s_name='powcal_init' !< subroutine name
@@ -225,18 +228,21 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
         gnumerics%position_coord_tfm%ntfm=1
      end if
      ! quantise relevant quantities
-     call powcal_quant(self,gnumerics)
+     call powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   end if
 
 end subroutine powcal_init
 !---------------------------------------------------------------------
 !> quantise relevant quantities
-subroutine powcal_quant(self,gnumerics)
+subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
   type(numerics_t), intent(in) :: gnumerics   !< object control data structure
-
+  real(kr8) :: rxpt   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_quant' !< subroutine name
   type(posveclis_t) :: zposl !< local variable
@@ -562,7 +568,11 @@ subroutine powcal_quant(self,gnumerics)
         ! prevent application of flux skylight
         self%powres%beq%n%skylpsi=.FALSE.
      end if
-
+     open (unit = 101, file = "test.txt")
+           READ(101,*) rxpt
+           READ(101,*) zxpt
+           READ(101,*) psixpt
+     CLOSE(101)
   end select field_type
 
 end subroutine powcal_quant
@@ -854,12 +864,15 @@ subroutine powcal_move(self,gshadl,btree)
 end subroutine powcal_move
 !---------------------------------------------------------------------
 !> coordinate calculation of power deposition (=powres_XX)
-subroutine powcal_calc(self,gshadl)
+subroutine powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
-
+  real(kr8) :: rxpt   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_calc' !< subroutine name
   type(powelt_t) :: zelt   !< powelt data instance
@@ -869,7 +882,7 @@ subroutine powcal_calc(self,gshadl)
      zelt%ie=i
      do j=imlevel,inlevel
         zelt%je=j
-        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,self%powres%beq%rxpt,self%powres%beq%zxpt,self%powres%beq%psixpt)
+        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,rxpt,zxpt,psixpt)
      end do
   end do
 
@@ -1049,13 +1062,16 @@ subroutine powcal_writev(self,kchar,kplot)
 end subroutine powcal_writev
 !---------------------------------------------------------------------
 !> set refinement level
-subroutine powcal_refine(self,gshadl,btree)
+subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout), optional :: btree !< btree data
-
+  real(kr8) :: rxpt   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_refine' !< subroutine name
 
@@ -1081,7 +1097,7 @@ subroutine powcal_refine(self,gshadl,btree)
      if (self%n%shadow/=0) then
         call powcal_move(self,gshadl,btree)
      end if
-     call powcal_calc(self,gshadl)
+     call powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
      imlevel=inlevel+1
   end do
 
