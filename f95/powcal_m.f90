@@ -52,6 +52,7 @@ module powcal_m
 ! private types
 
 ! private variables
+  logical :: double_null=.FALSE. !<  if .TRUE., read in values required for double null
   character(*), parameter :: m_name='powcal_m' !< module name
   integer   :: status   !< error status
   character(len=80) :: ibuf1 !< buffer for input/output
@@ -568,11 +569,13 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         ! prevent application of flux skylight
         self%powres%beq%n%skylpsi=.FALSE.
      end if
+     IF(double_null) THEN
      open (unit = 101, file = "test.txt")
            READ(101,*) rxpt
            READ(101,*) zxpt
            READ(101,*) psixpt
      CLOSE(101)
+     END IF
   end select field_type
 
 end subroutine powcal_quant
@@ -627,7 +630,7 @@ subroutine powcal_readcon(selfn,kin)
  &power_in_pfr, &
  &employ_skyl_pfr, &
  &skylight, &
- &skylight_tolerance, &
+ &skylight_tolerance, double_null, &
  &analytic_launch_type, power_on_launch_geo, power_on_shadow_geo
 
   !! set default powcal parameters
