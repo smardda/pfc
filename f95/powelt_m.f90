@@ -247,16 +247,17 @@ subroutine powelt_normalm(self,powcal,pnormal)
 end subroutine powelt_normalm
 !---------------------------------------------------------------------
 !> power deposition formula of element
-subroutine powelt_dep(self,powcal,gshadl,cen,rxpt,zxpt,psixpt)
+subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(in), optional :: gshadl   !< shadow data structure
-  real(kr8) :: cen    !<  position centre of plasma \f$ R \f$
-  real(kr8) :: rxpt   !<  position x point \f$ R \f$
-  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+  real(kr8) :: cenr    !<  position centre of plasma \f$ R \f$
+  real(kr8) :: cenz    !<  position centre of plasma \f$ Z \f$
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
 
   !! local
   character(*), parameter :: s_name='powelt_dep' !< subroutine name
@@ -373,7 +374,7 @@ subroutine powelt_dep(self,powcal,gshadl,cen,rxpt,zxpt,psixpt)
 
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
-     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid,zpos1%posvec(1)/1000.0d0,cen,rxpt,zxpt,psixpt)
+     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,zpos1%posvec(1)/1000.0d0,zpos1%posvec(2)/1000.0d0,cenr,cenz,rxpt,zxpt,psixpt)
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi

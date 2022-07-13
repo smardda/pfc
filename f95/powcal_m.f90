@@ -107,9 +107,9 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   type(pnumerics_t), intent(in) :: numerics   !< object control data structure
   type(pplots_t), intent(in) :: plot   !< vtk plot selectors
   type(numerics_t), intent(inout), optional :: gnumerics   !< object control data structure
-      real(kr8) :: rxpt   !<  position x point \f$ R \f$
-    real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-    real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
 
   !! local
   character(*), parameter :: s_name='powcal_init' !< subroutine name
@@ -240,9 +240,9 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
   type(numerics_t), intent(in) :: gnumerics   !< object control data structure
-  real(kr8) :: rxpt   !<  position x point \f$ R \f$
-  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
     
   !! local
   character(*), parameter :: s_name='powcal_quant' !< subroutine name
@@ -570,11 +570,10 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         self%powres%beq%n%skylpsi=.FALSE.
      end if
      IF(double_null) THEN
-     open (unit = 101, file = "test.txt")
-           READ(101,*) rxpt
-           READ(101,*) zxpt
-           READ(101,*) psixpt
-     CLOSE(101)
+		open (unit = 101, file = "x-points.txt")
+           READ(101,*) rxpt(1),zxpt(1),psixpt(1)
+           READ(101,*) rxpt(2),zxpt(2),psixpt(2)
+		CLOSE(101)
      END IF
   end select field_type
 
@@ -872,9 +871,9 @@ subroutine powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
-  real(kr8) :: rxpt   !<  position x point \f$ R \f$
-  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
     
   !! local
   character(*), parameter :: s_name='powcal_calc' !< subroutine name
@@ -885,7 +884,7 @@ subroutine powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
      zelt%ie=i
      do j=imlevel,inlevel
         zelt%je=j
-        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,rxpt,zxpt,psixpt)
+        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,self%powres%beq%n%zcen,rxpt,zxpt,psixpt)
      end do
   end do
 
@@ -1071,9 +1070,9 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout), optional :: btree !< btree data
-  real(kr8) :: rxpt   !<  position x point \f$ R \f$
-  real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-  real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
     
   !! local
   character(*), parameter :: s_name='powcal_refine' !< subroutine name

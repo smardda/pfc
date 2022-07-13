@@ -107,9 +107,9 @@ contains
     real(kr8):: zfac !< ratio of I in different field files
     integer(ki4) :: iextra=0 !< extra info in file
     integer(ki4) :: ierr
-    real(kr8) :: rxpt   !<  position x point \f$ R \f$
-    real(kr8) :: zxpt   !<  position x point \f$ Z \f$
-    real(kr8) :: psixpt !<  \f$ \psi \f$ at x point
+    real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+    real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+    real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
 
 
     !--------------------------------------------------------------------------
