@@ -79,13 +79,13 @@
 !! \image html circ.png
 !! \image latex circ.eps "Toroidal coordinates" width=5cm
 !! Toroidal coordinates \f$ r\theta\zeta \f$, angles in radians. Angle
-!! measured from vertical through X-point. Also \f$ r\theta\xi \f$.
+!! measured from vertical through bottom X-point. Also \f$ r\theta\xi \f$.
 !!
 !>
 !! \image html fcirc.png
 !! \image latex fcirc.eps "Flux coordinates" width=5cm
 !! Flux coordinates \f$ \psi\theta\zeta \f$, angles in radians. Angle 
-!! measured from vertical through X-point. Also \f$ \psi\theta\xi \f$.
+!! measured from vertical through bottom X-point. Also \f$ \psi\theta\xi \f$.
 !! 
 !! Angle \f$ \xi \f$ is \f$ \zeta \f$ scaled so that \f$ \xi \f$ runs from 
 !! \f$ -\pi \f$  to \f$ +\pi \f$ in a toroidal segment, which is a
@@ -105,6 +105,71 @@
 !! every surface. \n
 !! Lots of triangles to test for intersection with fieldline
 !! segments, unless you get SMARDDA.
+!! 
+!! \subsection sec1dnull Single and Double Null Equilibria
+!! Many magnetic equilibria with divertors are single null (SN),
+!! meaning the plasma region is restricted by an X-point
+!! assumed to lie below at the bottom of the plasma, as sketched.
+!!>
+!! \image html BtopoSN.png
+!! \image latex BtopoSN.eps "Single Null Equilibrium" width=5cm
+!! Sketch of single null (SN) equilibrium. 
+!! The appearance of the X-point in the contours
+!! of flux in the symmetry plane implies that the restrictive
+!! flux surface is singular.
+!!
+!! A double-null (DN) equilibrium is one where the plasma region is not
+!! only restricted by a bottom X-point, but also by a second X-point above.
+!!>
+!! \image html Btopo1.png
+!! \image latex Btopo1.eps "Double Null Equilibrium" width=5cm
+!! Sketch of double null (DN) equilibrium. X-point "1" always
+!! lies at the bottom, even if the flux surface through the upper X-point
+!! contains a smaller region of plasma.
+!!
+!! It is expected that plasma is always confined to the
+!! smaller region restricted by an X-point, so that to maximise
+!! region size, equilibria are sought where both bottom
+!! and top X-points lie on the same (singular) flux surface. Such equilibria
+!! are described as symmetric double null (SDN).
+!!>
+!! \image html BtopoSDN.png
+!! \image latex BtopoSDN.eps "Symmetric Double Null Equilibrium" width=5cm
+!! Sketch of symmetric double null (SDN) equilibrium. X-point "1" always
+!! lies at the bottom.
+!!
+!! The different flux surface topologies indicated by the sketches
+!! make possible different physical behaviour, eg. in the SDN, the
+!! scrape-off layer (SOL) is split into two disconnected parts
+!! inboard and outboard of the X-points' common major radius.
+!! Since it is generally agreed that plasma escapes more easily
+!! on the low field side (LFS) of the tokamak, it is likely that not only
+!! that more of the lost power will go outboard, but that the
+!! loss profile across the SOL will be different in the two parts.
+!! In fact, referring to the sketch of DN, there may be up to four distinct
+!! profiles characterising the loss at the midplane, viz.
+!! 1. Inboard of both singular flux surfaces
+!! 2. Inboard, between the two singular flux surfaces
+!! 3. Outboard, between the two singular flux surfaces
+!! 4. Outboard of both singular flux surfaces
+!! The behaviour in each may be separately specified as exponential,
+!! double-exponential, Eich etc.
+!! 
+!! To determine which profile is appropriate for a given fieldline
+!! (supposed to correspond to flux surface value \f$ \psi \f$),
+!! values of flux \f$ \psi_{x1} \f$ and \f$ \psi_{x2} \f$ corresponding
+!! respectively to the two X-point values are first computed in the
+!! preprocessing stage. To determine the power deposited,
+!! the fieldline \f$ \psi \f$ is then compared with
+!! \f$ \psi_{x1} \f$ and \f$ \psi_{x2} \f$, enabling its midpoint intersection
+!! to be determined as lying either in SOL parts 1 and 4, or in parts 2 and 3.
+!! To determine whether the intersection is inboard or outboard, the
+!! coordinates of the position
+!! of the fieldline intersection \f$ (R,Z) \f$  with the first wall
+!! are then examined. If the point is below the plasma centre,
+!! ie. \f$ Z<Z_{cen} \f$, then \f$ R \f$ is compared with \f$ R_{x1} \f$,
+!! else \f$ R \f$ is compared with \f$ R_{x2} \f$.
+!! In each case, should \f$ R \f$ be smaller, it is supposed to lie inboard.
 !! 
 !! \subsection sec1alg SMARDDA Algorithm
 !! Reduces number of triangles to test by:
