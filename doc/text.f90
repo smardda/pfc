@@ -152,6 +152,7 @@
 !! 2. Inboard, between the two singular flux surfaces
 !! 3. Outboard, between the two singular flux surfaces
 !! 4. Outboard of both singular flux surfaces
+!!
 !! The behaviour in each may be separately specified as exponential,
 !! double-exponential, Eich etc.
 !! 
