@@ -60,6 +60,8 @@ module powelt_m
   type, public :: powelt_t
      integer(ki4)  :: ie !< geometrical object
      integer(ki4)  :: je !< sub-element object
+     real(kr8), dimension (:), allocatable :: R
+     real(kr8), dimension (:), allocatable :: Z
   end type powelt_t
 
 ! public variables
@@ -374,7 +376,8 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
 
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
-     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,zpos1%posvec(1)/1000.0d0,zpos1%posvec(2)/1000.0d0,cenr,cenz,rxpt,zxpt,psixpt)
+     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,self%R(inpow),zz,cenr,cenz,rxpt,zxpt,&
+							psixpt,powcal%powres%beq%rbdry(1),powcal%powres%beq%rbdry(2))
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
@@ -392,7 +395,7 @@ end subroutine powelt_dep
 subroutine powelt_move(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -671,7 +674,7 @@ end subroutine powelt_move
 subroutine powelt_move0(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1091,7 +1094,7 @@ end subroutine powelt_move0
 subroutine powelt_move1(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1578,7 +1581,7 @@ end subroutine powelt_move1
 subroutine powelt_move2(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1872,7 +1875,7 @@ end subroutine powelt_move2
 subroutine powelt_move3(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -2261,7 +2264,7 @@ end subroutine powelt_move3
 subroutine powelt_move4(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -2676,7 +2679,7 @@ end subroutine powelt_move4
 subroutine powelt_move4qart(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -3089,7 +3092,7 @@ end subroutine powelt_move4qart
 subroutine powelt_move5(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -3627,7 +3630,7 @@ subroutine powelt_write(self,kout)
   !! local
   character(*), parameter :: s_name='powelt_write' !< subroutine name
 
-  write(kout,*,iostat=status) self
+  write(kout,*,iostat=status) self%ie,self%je
   call log_write_check(m_name,s_name,1,status)
 
 end subroutine powelt_write
@@ -3642,7 +3645,7 @@ subroutine powelt_writev(self,kplot)
   !! local
   character(*), parameter :: s_name='powelt_writev' !< subroutine name
 
-  write(kplot,*,iostat=status) self
+  write(kplot,*,iostat=status) self%ie,self%je
   call log_write_check(m_name,s_name,1,status)
 
 end subroutine powelt_writev
@@ -3670,7 +3673,7 @@ end function powelt_addr
 subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
 
   !! arguments
-  type(powelt_t), intent(in) :: self   !< object data structure
+  type(powelt_t), intent(inout) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   integer(ki4), intent(in) :: nobjhit   !< object hit
   type(posnode_t), intent(in) :: zm !< final position
@@ -3722,7 +3725,9 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
            zpsi=zpos%posvec(1)
         case default
            zr=zm%posvec(1)
+           self%R(inpow)=zr
            zz=zm%posvec(2)
+           self%Z(inpow)=zz
            call spl2d_eval(powcal%powres%beq%psi,zr,zz,zpsi)
         end select field_type
         powcal%powres%pow(inpow)=1

@@ -269,7 +269,27 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   integer(ki4) :: ibdim !<  second dimension of boxr,z arrays
   integer(ki4) :: ntyps !<  upper or lower skylight type
   integer(ki4) :: interm   !< index of dynamical entry in termplane
-
+  integer(ki4) :: lc   !< used in line count of double null case
+    
+ !    IF(double_null) THEN
+  !   CALL EXECUTE_COMMAND_LINE('wc -l x-points.txt >> lc.txt')
+   !  open (unit = 101, file = "lc.txt")
+   !  READ(101,*) lc
+   !  close(101)
+!		open (unit = 101, file = "x-points.txt")!
+!		IF(lc==1) THEN 
+ !          READ(101,*) rxpt(1),zxpt(1),psixpt(1)
+  !         rxpt(2)=rxpt(1);zxpt(2)=zxpt(1);psixpt(2)=psixpt(1);		
+	!	ELSE
+    !       READ(101,*) rxpt(1),zxpt(1),psixpt(1)
+    !       READ(101,*) rxpt(2),zxpt(2),psixpt(2)
+    !    END IF
+!		CLOSE(101)
+ !    end if
+       rxpt=self%powres%beq%rxpt_temp
+     zxpt=self%powres%beq%zxpt_temp
+     psixpt=self%powres%beq%psixpt_temp
+     
   zpar=0
   self%powres%beq%domlen=0
 
@@ -361,6 +381,23 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         call spl2d_ptscale(self%powres%beq%rispldz,self%powres%geobjl%quantfm)
      end select field_typeinr
 
+
+     allocate(zposl%pos(4),stat=status)
+     zposl%pos(1)%posvec=(/rxpt(1), zxpt(1), 0._kr8/)
+     zposl%pos(2)%posvec=(/rxpt(2), zxpt(2), 0._kr8/)
+     zposl%pos(3)%posvec=(/self%powres%beq%rbdry(1), 0._kr8, 0._kr8/)
+     zposl%pos(4)%posvec=(/self%powres%beq%rbdry(2), 0._kr8, 0._kr8/)
+     zposl%np=4
+     call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+     rxpt(1)=zposl%pos(1)%posvec(1)
+     rxpt(2)=zposl%pos(2)%posvec(1)
+     zxpt(1)=zposl%pos(1)%posvec(2)
+     zxpt(2)=zposl%pos(2)%posvec(2)
+     self%powres%beq%rbdry(1)=zposl%pos(3)%posvec(1)
+     self%powres%beq%rbdry(2)=zposl%pos(4)%posvec(1)
+     ! domain control
+     deallocate(zposl%pos)
+     
      ! domain control
      allocate(zposl%pos(6),stat=status)
      call log_alloc_check(m_name,s_name,30,status)
@@ -569,12 +606,6 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         ! prevent application of flux skylight
         self%powres%beq%n%skylpsi=.FALSE.
      end if
-     IF(double_null) THEN
-		open (unit = 101, file = "x-points.txt")
-           READ(101,*) rxpt(1),zxpt(1),psixpt(1)
-           READ(101,*) rxpt(2),zxpt(2),psixpt(2)
-		CLOSE(101)
-     END IF
   end select field_type
 
 end subroutine powcal_quant
@@ -746,16 +777,16 @@ subroutine powcal_readcon(selfn,kin)
 end subroutine powcal_readcon
 !---------------------------------------------------------------------
 !> loop over entries in results
-subroutine powcal_move(self,gshadl,btree)
+subroutine powcal_move(self,zelt,gshadl,btree)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
+  type(powelt_t) :: zelt   !< power element
   type(geobjlist_t), intent(inout) :: gshadl   !< shadow data structure
   type(btree_t), intent(inout) :: btree !< btree data
 
   !! local
   character(*), parameter :: s_name='powcal_move' !< subroutine name
-  type(powelt_t) :: zelt   !< power element
 
   ! check for axisymmetric !mpi1!
   vac_type: select case (self%powres%beq%n%vactype(1:3))
@@ -866,10 +897,11 @@ subroutine powcal_move(self,gshadl,btree)
 end subroutine powcal_move
 !---------------------------------------------------------------------
 !> coordinate calculation of power deposition (=powres_XX)
-subroutine powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
+subroutine powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
+  type(powelt_t), intent(inout) :: post   !< powelt data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
   real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
@@ -877,14 +909,13 @@ subroutine powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
     
   !! local
   character(*), parameter :: s_name='powcal_calc' !< subroutine name
-  type(powelt_t) :: zelt   !< powelt data instance
 
   ! calculate power deposition
   do i=self%decomp%firstpowe,self%decomp%lastpowe
-     zelt%ie=i
+     post%ie=i
      do j=imlevel,inlevel
-        zelt%je=j
-        call powelt_dep(zelt,self,gshadl,self%powres%beq%n%rcen,self%powres%beq%n%zcen,rxpt,zxpt,psixpt)
+        post%je=j
+        call powelt_dep(post,self,gshadl,self%powres%beq%rcenq,self%powres%beq%zcenq,rxpt,zxpt,psixpt)
      end do
   end do
 
@@ -1076,7 +1107,8 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
     
   !! local
   character(*), parameter :: s_name='powcal_refine' !< subroutine name
-
+  type(powelt_t) :: post   !< powelt data structure
+  
   calcn_type: select case (self%n%caltype)
   case('afws','local')
   case('msum','middle')
@@ -1092,14 +1124,14 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
      call log_alloc_check(m_name,s_name,2,status)
      self%powres%geobjl%nwset=2
   end select calcn_type
-
+  allocate(post%R(self%powres%npowe),post%Z(self%powres%npowe))
   imlevel=1
   do level=1,self%n%nlevel
      inlevel=powelt_table(level,2)
      if (self%n%shadow/=0) then
-        call powcal_move(self,gshadl,btree)
+        call powcal_move(self,post,gshadl,btree)
      end if
-     call powcal_calc(self,gshadl,rxpt,zxpt,psixpt)
+     call powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
      imlevel=inlevel+1
   end do
 

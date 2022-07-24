@@ -231,7 +231,7 @@ subroutine geoq_init(self)
      else
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
-  case (4,8)
+  case (4,8,16)
      ! boundary from X-point
      call beq_psix(self%beq)
      !B     if (beq_rsig()>0) then
@@ -997,7 +997,8 @@ subroutine geoq_psilimiter(self)
 
   call log_error(m_name,s_name,1,log_info,'Reference boundary values')
   call log_value("SMITER-GEOQ psiltr ",self%beq%psiltr)
-  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry)
+  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry(1))
+  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry(2))
   call log_value("SMITER-GEOQ zbdry ",zz)
   call log_value("SMITER-GEOQ bpbdry ",self%beq%bpbdry)
   call log_value("SMITER-GEOQ btotbdry ",self%beq%btotbdry)
@@ -1123,7 +1124,8 @@ subroutine geoq_psisilh(self)
   !dbg   write(*,*) self%beq%psiltr,self%beq%psiotr !dbg
   call log_error(m_name,s_name,1,log_info,'Reference boundary values')
   call log_value("SMITER-GEOQ psiltr ",self%beq%psiltr)
-  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry)
+  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry(1))
+  call log_value("SMITER-GEOQ rbdry ",self%beq%rbdry(2))
   call log_value("SMITER-GEOQ zbdry ",zz)
   call log_value("SMITER-GEOQ bpbdry ",self%beq%bpbdry)
   call log_value("SMITER-GEOQ btotbdry ",self%beq%btotbdry)
