@@ -121,7 +121,7 @@
 !! A double-null (DN) equilibrium is one where the plasma region is not
 !! only restricted by a bottom X-point, but also by a second X-point above.
 !!>
-!! \image html Btopo1.png
+!! \image html Btopo1.png 
 !! \image latex Btopo1.eps "Double Null Equilibrium" width=5cm
 !! Sketch of double null (DN) equilibrium. X-point "1" always
 !! lies at the bottom, even if the flux surface through the upper X-point
