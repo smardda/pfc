@@ -1107,7 +1107,6 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
      call log_alloc_check(m_name,s_name,2,status)
      self%powres%geobjl%nwset=2
   end select calcn_type
-  allocate(post%R(self%powres%npowe),post%Z(self%powres%npowe))
   imlevel=1
   do level=1,self%n%nlevel
      inlevel=powelt_table(level,2)
