@@ -376,8 +376,6 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
      rxpt(2)=zposl%pos(2)%posvec(1)
      zxpt(1)=zposl%pos(1)%posvec(2)
      zxpt(2)=zposl%pos(2)%posvec(2)
-     self%powres%beq%rbdry(1)=zposl%pos(3)%posvec(1)
-     self%powres%beq%rbdry(2)=zposl%pos(4)%posvec(1)
      ! domain control
      deallocate(zposl%pos)
      
