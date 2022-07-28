@@ -271,22 +271,7 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   integer(ki4) :: interm   !< index of dynamical entry in termplane
   integer(ki4) :: lc   !< used in line count of double null case
     
- !    IF(double_null) THEN
-  !   CALL EXECUTE_COMMAND_LINE('wc -l x-points.txt >> lc.txt')
-   !  open (unit = 101, file = "lc.txt")
-   !  READ(101,*) lc
-   !  close(101)
-!		open (unit = 101, file = "x-points.txt")!
-!		IF(lc==1) THEN 
- !          READ(101,*) rxpt(1),zxpt(1),psixpt(1)
-  !         rxpt(2)=rxpt(1);zxpt(2)=zxpt(1);psixpt(2)=psixpt(1);		
-	!	ELSE
-    !       READ(101,*) rxpt(1),zxpt(1),psixpt(1)
-    !       READ(101,*) rxpt(2),zxpt(2),psixpt(2)
-    !    END IF
-!		CLOSE(101)
- !    end if
-       rxpt=self%powres%beq%rxpt_temp
+     rxpt=self%powres%beq%rxpt_temp
      zxpt=self%powres%beq%zxpt_temp
      psixpt=self%powres%beq%psixpt_temp
      
@@ -382,12 +367,10 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
      end select field_typeinr
 
 
-     allocate(zposl%pos(4),stat=status)
+     allocate(zposl%pos(2),stat=status)
      zposl%pos(1)%posvec=(/rxpt(1), zxpt(1), 0._kr8/)
      zposl%pos(2)%posvec=(/rxpt(2), zxpt(2), 0._kr8/)
-     zposl%pos(3)%posvec=(/self%powres%beq%rbdry(1), 0._kr8, 0._kr8/)
-     zposl%pos(4)%posvec=(/self%powres%beq%rbdry(2), 0._kr8, 0._kr8/)
-     zposl%np=4
+     zposl%np=2
      call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
      rxpt(1)=zposl%pos(1)%posvec(1)
      rxpt(2)=zposl%pos(2)%posvec(1)

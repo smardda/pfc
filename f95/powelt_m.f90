@@ -60,8 +60,6 @@ module powelt_m
   type, public :: powelt_t
      integer(ki4)  :: ie !< geometrical object
      integer(ki4)  :: je !< sub-element object
-     real(kr8), dimension (:), allocatable :: R
-     real(kr8), dimension (:), allocatable :: Z
   end type powelt_t
 
 ! public variables
@@ -376,7 +374,7 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
 
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
-     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsid,self%R(inpow),zz,cenz,rxpt,powcal%powres%beq%rbdry(1),powcal%powres%beq%rbdry(2))
+     zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,zr,zz,cenz,rxpt,psixpt)
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
@@ -3724,9 +3722,7 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
            zpsi=zpos%posvec(1)
         case default
            zr=zm%posvec(1)
-           self%R(inpow)=zr
            zz=zm%posvec(2)
-           self%Z(inpow)=zz
            call spl2d_eval(powcal%powres%beq%psi,zr,zz,zpsi)
         end select field_type
         powcal%powres%pow(inpow)=1
