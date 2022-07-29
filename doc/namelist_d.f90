@@ -497,7 +497,10 @@ module namelist
 !! - Maximum number of parameters which may used to define fuction,
 !! MAX_NUMBER_OF_PARAMETERS=100
   type, public :: edgprofparameters
-   !> power deposition formula to be used.
+   !> power deposition formula to be used, for each of                                                                                                              
+   !! of the 4 regions outlined in the double null case.
+   !! In the case of a single null, you can use
+   !! profile_formula(1) for inboard, and profile_formula(4) for outboard.
    !! - 'unset' standard exponential profile
    !! - 'exp' standard exponential profile
    !! - 'expdouble' as two exponentials
@@ -507,22 +510,26 @@ module namelist
    !! - 'userdefined' as special f95 subroutine coded by user, called
    !! edgprof_userdefined in file edgprof_m.f90.
    !! N.B. it is up to the user to arrange normalisation.
-     character(len=80) :: profile_formula !<.
+     character(len=80) :: profile_formula(4) !<.
    !> \f$ F \f$ power split ion to electron direction,
    !! must lie between 0 and 1, default 0.5
      real(kr8) :: power_split !<.
-   !> \f$ \lambda_m \f$ power decay length at midplane (m),
+   !> \f$ \lambda_m \f$ power decay length at midplane (m), for each of
+   !! of the 4 regions outlined in the double null case. In the case of a single
+   !! null, you can use decay_length(1) for inboard, and decay_length(4) for outboard.
    !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$
    !! if Eich formula used, default 0.012 (12mm)
-     real(kr8) :: decay_length !<.
+     real(kr8) :: decay_length(4) !<.
    !> \f$ P_{loss} \f$ power crossing the separatrix (W),
    !! default 7.5e+06 (7.5MW)
      real(kr8) :: power_loss !<.
    !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm).
    !! Default -1, if negative, ignored
      real(kr8) :: q_parallel0 !<.
-   !>  \f$ \sigma \f$ Eich formula length (m)
-     real(kr8) :: diffusion_length !<.
+   !>  \f$ \sigma \f$ Eich formula length (m), for each of                                                                                                              
+   !! of the 4 regions outlined in the double null case. In the case of a single                                                                                                   
+   !! null, you can use diffusion_length(1) for inboard, and diffusion_length(4) for outboard.    
+     real(kr8) :: diffusion_length(4) !<.
    !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
    !! for expdouble formula
      real(kr8) :: ratio_of_q_parallel0_near !<.
