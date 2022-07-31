@@ -120,6 +120,8 @@
 !!
 !! A double-null (DN) equilibrium is one where the plasma region is not
 !! only restricted by a bottom X-point, but also by a second X-point above.
+!! These will typically correspond to separatrices that are close in space,
+!! and it will be assumed that no PFCs lie in the region between them.
 !!>
 !! \image html Btopo1.png 
 !! \image latex Btopo1.eps "Double Null Equilibrium" width=5cm
@@ -171,6 +173,57 @@
 !! ie. \f$ Z<Z_{cen} \f$, then \f$ R \f$ is compared with \f$ R_{x1} \f$,
 !! else \f$ R \f$ is compared with \f$ R_{x2} \f$.
 !! In each case, should \f$ R \f$ be smaller, it is supposed to lie inboard.
+!!
+!! In part \f$ i \f$ of the SOL, the power density is assumed to have power
+!! dependence
+!! \f{equation}{
+!! F_i Q_i f_i(\Delta R_i)
+!! \f}
+!! Where \f$ Q_i  \f$ is a normalisation constant, \f$ f_i \f$ is the profile
+!! function, \f$ F_i=1/2 \f$ is the fraction of power directed up or down
+!! (except that in the DN case \f$ F_2=F_3= 1 \f$), and generalising
+!! Appendix A of Arter et al (corrected (p)reprint at http://arxiv.org/abs/1403.7142)
+!! \f{equation}{
+!! \Delta R_i= R_i-R, \;\;i=1,2 \\
+!! \Delta R_i= R-R_i, \;\;i=3,4 \\
+!! \f}
+!! For coding purposes it is convenient to write \f$ \Delta R_i \f$
+!! in terms of the value of the flux \f$ \psi \f$ on the 
+!! surface and the value \f$ \psi_i \f$ at \f$ R=R_i \f$
+!! on the midplane.  Following Arter et al (with further typo correction)
+!! \f{equation}{
+!! \Delta R_i= \frac{\Delta \psi_i}{|\partial \psi/\partial R|_{R=R_i}}
+!! = \frac{\Delta \psi_i}{R_{i}B_{pmi}}
+!! \f}
+!! where \f$ \Delta \psi_i= \psi-\psi_i \f$, and \f$ B_{pmi} \f$
+!! is the absolute value of the poloidal magnetic field at
+!! \f$ R=R_i \f$ on the midplane.
+!! 
+!! Following Arter et al, the power density must be normalised by the
+!! total loss, let this be \f$ P_{li} \f$ in part \f$ i \f$, then
+!! approximating an element of midplane area by 
+!! \f{equation}{
+!! dA = d\phi R_i d (\Delta R_i)
+!! \f}
+!! it follows from axisymmetry that for \f$ i=3,4 \f$ (with obvious
+!! index changes for \f$ i=1,2 \f$)
+!! \f{equation}{
+!! 2\pi R_i Q_i \int^{R=R_{i+1}}_{R=R_i} d (\Delta R_i)
+!! f_i(\Delta R_i) = P_{li}
+!! \f}
+!! where \f$ R_5=\infty \f$, or in practice the major radius of the PFC
+!! at outer midplane,
+!! \f{equation}{
+!! Q_i = \frac{P_{li}}{ 2\pi R_i \int^{|R_{i+1}-R_i|}_0 dx f_i(x)}
+!! \f}
+!! Similarly for \f$ i=1,2 \f$
+!! \f{equation}{
+!! Q_i = \frac{P_{li}}{ 2\pi R_i \int^{|R_{i-1}-R_i|}_0 dx f_i(x)}
+!! \f}
+!! where \f$ R_0=0 \f$ or in practice the major radius of the PFC
+!! at inner midplane, or for Eich \f$ R_0=-\infty \f$.
+!!
+!! For the exponential profile, \f$ f_i(x) = \exp{(-x/\lambda_q)}\f$
 !! 
 !! \subsection sec1alg SMARDDA Algorithm
 !! Reduces number of triangles to test by:
