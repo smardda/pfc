@@ -221,9 +221,44 @@
 !! Q_i = \frac{P_{li}}{ 2\pi R_i \int^{|R_{i-1}-R_i|}_0 dx f_i(x)}
 !! \f}
 !! where \f$ R_0=0 \f$ or in practice the major radius of the PFC
-!! at inner midplane, or for Eich \f$ R_0=-\infty \f$.
+!! at inner midplane. For Eich the situation is slightly different as there is a
+!! contribution from inside the PFR which may be accounted for by 
+!! changing the lower limit of integration from \f$ 0 \f$ to \f$ -\infty \f$.
 !!
-!! For the exponential profile, \f$ f_i(x) = \exp{(-x/\lambda_q)}\f$
+!! For the exponential profile, \f$ f_i(x) = \exp{(-x/\lambda_q)}\f$,
+!! and its integral may be recovered as a special case \f$ \rho=0 \f$ of the double
+!! exponential \f$ f_i(x) = \exp{(-x/\lambda_q)} + \rho \exp{(-x/\lambda_n)}\f$,
+!! which has integral
+!! \f{equation}{
+!! \lambda_q (1 - \exp{(-R'/\lambda_q)} + \rho \lambda_n (1-\exp{(-R'/\lambda_n)}
+!! \f}
+!! where \f$ R'=|R_{i+1}-R_i| \f$ or \f$ R'=|R_{i-1}-R_i| \f$.
+!! The Eich profile is
+!! \f{equation}
+!! f_i(x)=\exp \left(s^2 -\frac{x}{\lambda_q} \right)
+!! \text{erfc} \left( s-\frac{x}{2 \lambda_q s} \right)
+!! \f}
+!! where \f$ s=\frac{\sigma }{2\lambda_q } \f$,
+!! and \f$ x=\frac{\Delta \psi }{R_m B_{pm}} \f$,
+!! and the erfc function is defined as
+!! \f{equation}
+!! \text{erfc}(z) = 1- \frac{2}{\sqrt{\pi}} \int^z_0 \exp{-x^2}dx
+!! \f}
+!! The indefinite integral of the Eich profile is
+!! \f{equation}
+!! -\lambda_q \exp \left(s^2 -\frac{x}{\lambda_q} \right)
+!! \text{erfc} \left( s-\frac{x}{2 \lambda_q s} \right)
+!! +\frac{\lambda_q}{2} \text{erfc} \left( -\frac{x}{2 \lambda_q s} \right)
+!! \f}
+!! from which the normalisation follows by substituting \f$ x=R' \f$.
+!!
+!! One issue when there is more than one region is lack of continuity of 
+!! the power deposition profile. In the case of four regions, this
+!! implies that 
+!! \f{equation}
+!! Q_2 = \frac{F_1 Q_1 f_1(0)}{F_2f_2(R_2-R_1)}\\
+!! Q_3 = \frac{F_4 Q_4 f_4(0)}{F_3f_3(R_4-R_3)}
+!! \f}
 !! 
 !! \subsection sec1alg SMARDDA Algorithm
 !! Reduces number of triangles to test by:
@@ -234,7 +269,7 @@
 !! \arg Track segment from box to box by binary tricks, thanks to use of
 !! quantised coordinates. The quantum lengths \f$ h_i \f$ are chosen so
 !! that \f$ L_i=1024h_i \f$ or similar power of two. (The biggest box has
-!! size \f$ L_1L_2L_3 \f$. There is a single precision restriction \f$ 3\times 10<32 \f$)
+!! size \f$ L_1L_2L_3 \f$. There is a single precision restriction to exponent \f$ <32 \f$.)
 !! \arg Jargon -  an octree is an example of an Hierarchical Data
 !! Structure (HDS), designed to Help Do Surfaces quickly.
 !! 
