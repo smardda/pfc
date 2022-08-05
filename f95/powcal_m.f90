@@ -284,6 +284,18 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   call position_tfmlis(self%powres%geobjl%posl,self%powres%geobjl%tfmdata)
   call position_qtfmlis(self%powres%geobjl%posl,self%powres%geobjl%quantfm)
 
+     allocate(zposl%pos(2),stat=status)
+     zposl%pos(1)%posvec=(/rxpt(1), zxpt(1), 0._kr8/)
+     zposl%pos(2)%posvec=(/rxpt(2), zxpt(2), 0._kr8/)
+     zposl%np=2
+     call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+     rxpt(1)=zposl%pos(1)%posvec(1)
+     rxpt(2)=zposl%pos(2)%posvec(1)
+     zxpt(1)=zposl%pos(1)%posvec(2)
+     zxpt(2)=zposl%pos(2)%posvec(2)
+     ! domain control
+     deallocate(zposl%pos)
+
   field_type: select case (self%powres%beq%n%fldspec)
   case (1)
      ! mapped (psi-theta-zeta) case
@@ -365,19 +377,6 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         call spl2d_ptscale(self%powres%beq%rispldr,self%powres%geobjl%quantfm)
         call spl2d_ptscale(self%powres%beq%rispldz,self%powres%geobjl%quantfm)
      end select field_typeinr
-
-
-     allocate(zposl%pos(2),stat=status)
-     zposl%pos(1)%posvec=(/rxpt(1), zxpt(1), 0._kr8/)
-     zposl%pos(2)%posvec=(/rxpt(2), zxpt(2), 0._kr8/)
-     zposl%np=2
-     call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
-     rxpt(1)=zposl%pos(1)%posvec(1)
-     rxpt(2)=zposl%pos(2)%posvec(1)
-     zxpt(1)=zposl%pos(1)%posvec(2)
-     zxpt(2)=zposl%pos(2)%posvec(2)
-     ! domain control
-     deallocate(zposl%pos)
      
      ! domain control
      allocate(zposl%pos(6),stat=status)
@@ -558,17 +557,14 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
               call log_error(m_name,s_name,60,error_fatal,'termplane(s) must be defined for flux-based  skylight(s)')
            end if
            ! quantise positions
-           allocate(zposl%pos(3),stat=status)
+           allocate(zposl%pos(2),stat=status)
            call log_alloc_check(m_name,s_name,30,status)
            zposl%pos(1)%posvec=(/0._kr8, self%powres%beq%zmin, 0._kr8/)
            zposl%pos(2)%posvec=(/0._kr8, self%powres%beq%zmax, 0._kr8/)
-           zposl%pos(3)%posvec=(/self%powres%beq%rxpt, self%powres%beq%zxpt, 0._kr8 /)
-           zposl%np=3
+           zposl%np=2
            call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
            self%powres%beq%zmin=zposl%pos(1)%posvec(2)
            self%powres%beq%zmax=zposl%pos(2)%posvec(2)
-           self%powres%beq%rxpt=zposl%pos(3)%posvec(1)
-           self%powres%beq%zxpt=zposl%pos(3)%posvec(2)
            deallocate(zposl%pos)
            allocate(zposl%pos(1),stat=status)
            ! only scale
