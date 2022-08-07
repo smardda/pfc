@@ -11,7 +11,9 @@ fi
 #(cd fortd;make)
 cd f95
 ln -sf ../fortd LIB
+make -j -f Makefile.geoq
 for i in geoq powcal magtfm hdsgen; do make -j -f Makefile.$i ; done
+make -j -f Makefile.smanal
 for i in smanal vtktfm datvtk ctlgen parse; do make -j -f Makefile.$i & done
 make -j -f Makefile.smiter
 
