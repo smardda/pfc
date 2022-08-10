@@ -159,7 +159,9 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   psixpt=self%powres%beq%psixpt_temp
   zsign=beq_rsig()
   call edgprof_factors(self%edgprof,&
-       &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,psixpt,self%powres%beq%psibdry)
+       &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
+       psixpt,self%powres%beq%psibdry,self%powres%beq%btotbdry_temp,self%powres%beq%rbdry_temp,&
+       self%powres%beq%bpbdry_temp,self%powres%beq%n%rcen)
   ! track controls
   self%powres%flinx=plot%flinx
   self%powres%flinends=plot%flinends
