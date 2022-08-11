@@ -231,7 +231,7 @@ subroutine geoq_init(self)
      else
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
-  case (4,8,16)
+  case (4,8,16,17)
      ! boundary from X-point
      call beq_psix(self%beq)
      !B     if (beq_rsig()>0) then
