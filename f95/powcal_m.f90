@@ -156,12 +156,12 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
      allocate(self%powres%pows(self%decomp%firstpowe:self%decomp%lastpowe), stat=status)
      allocate(self%powres%powa(self%decomp%firstpowe:self%decomp%lastpowe), stat=status)
   endif
-  psixpt=self%powres%beq%psixpt_temp
+  psixpt=self%powres%beq%psixptarr
   zsign=beq_rsig()
   call edgprof_factors(self%edgprof,&
        &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
-       self%powres%beq%btotbdry_temp,self%powres%beq%rbdry_temp,&
-       self%powres%beq%bpbdry_temp,self%powres%beq%n%rcen)
+       self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
+       self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
   ! track controls
   self%powres%flinx=plot%flinx
   self%powres%flinends=plot%flinends
@@ -273,8 +273,8 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   integer(ki4) :: interm   !< index of dynamical entry in termplane
   integer(ki4) :: lc   !< used in line count of double null case
     
-     rxpt=self%powres%beq%rxpt_temp
-     zxpt=self%powres%beq%zxpt_temp
+  rxpt=self%powres%beq%rxptarr
+  zxpt=self%powres%beq%zxptarr
      
   zpar=0
   self%powres%beq%domlen=0

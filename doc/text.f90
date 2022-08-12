@@ -248,7 +248,7 @@
 !! \f{equation}
 !! -\lambda_q \exp \left(s^2 -\frac{x}{\lambda_q} \right)
 !! \text{erfc} \left( s-\frac{x}{2 \lambda_q s} \right)
-!! +\frac{\lambda_q}{2} \text{erfc} \left( -\frac{x}{2 \lambda_q s} \right)
+!! +\lambda_q \text{erfc} \left( -\frac{x}{2 \lambda_q s} \right)
 !! \f}
 !! from which the normalisation follows by substituting \f$ x=R' \f$.
 !!
