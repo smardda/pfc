@@ -4,9 +4,10 @@ stages:
   - build
   - test
 
-build-pcfr:
+build-pcf:
    stage: build
    script:
+     - apt-get -y update
      - apt-get -y install gfortran
      - make
      - export SMALIB_DIR=$(pwd)/smardda-lib
