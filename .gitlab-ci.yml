@@ -5,7 +5,7 @@ stages:
 build-pcfr:
    stage: build
    script:
-     - apt-get install gfortran
+     - apt-get install gfortran -y
      - make
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - source ./exec/build gfortran_dbg N
