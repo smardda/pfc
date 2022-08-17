@@ -1,3 +1,5 @@
+image: ubuntu:18.04
+
 stages:
   - build
   - test
