@@ -1,0 +1,9 @@
+stages:
+  - build
+  - test
+
+build-pcfr:
+   stage: build
+   script:
+     - echo "hello"
+   
