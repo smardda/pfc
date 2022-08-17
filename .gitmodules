@@ -1,0 +1,3 @@
+[submodule "smardda-lib"]
+	path = smardda-lib
+	url = ../smardda-lib.git
