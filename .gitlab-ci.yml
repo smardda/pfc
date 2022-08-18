@@ -22,7 +22,7 @@ build-pfc-debug:
      - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -j -f Makefile.lib $i ;done
      - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
      - cd ../../
-     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
+     - ln -sf $SMALIB_DIR/config ./config
      - cd ./f95
      - for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
      - for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i & done
