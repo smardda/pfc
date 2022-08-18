@@ -15,8 +15,16 @@ build-pfc-debug:
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
      - cat exec/compile
-     - source ./exec/build gfortran_dbg N
-     - cd ../
+     - cp ./config/config_gfortran_dbg.inc ./config.inc
+     - cd ./fortd
+     - ls
+     - make -f makefile
+     - cd ../f95
+     - ln -sf ../fortd LIB
+     - ls
+     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -j -f Makefile.lib $i ;done
+     - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
+     - cd ../../
      - source ./exec/build gfortran_dbg N
    artifacts:
      paths:
