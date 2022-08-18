@@ -20,13 +20,13 @@ build-pfc-debug:
      - make -f makefile
      - cd ../f95
      - ln -sf ../fortd LIB
-     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -j -f Makefile.lib $i ;done
+     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -f Makefile.lib $i ;done
      - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
      - cd ../../
      - ln -sf $SMALIB_DIR/config ./config
      - cd ./f95
      - for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
-     - for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i & done
+     - for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
      - make -f Makefile.smiter
      - for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse smiter ; do mv -f $i ../exec ;done
    artifacts:
