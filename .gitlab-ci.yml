@@ -14,6 +14,7 @@ build-pfc-debug:
      - apt-get -y install make
      - apt-get -y install build-essential
      - export SMALIB_DIR=$(pwd)/smardda-lib
+     - cd smardda-lib
      - source ./exec/build gfortran_dbg N
      - cd ../../
      - source ./exec/build gfortran_dbg N
