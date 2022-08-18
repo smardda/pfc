@@ -4,12 +4,15 @@ stages:
   - build
   - test
 
-build-pfc:
+build-pfc-debug:
    stage: build
    script:
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install make
      - export SMALIB_DIR=$(pwd)/smardda-lib
+     - cd smardda-lib
+     - source ./exec/build gfortran_dbg N
+     - cd ../
      - source ./exec/build gfortran_dbg N
    
