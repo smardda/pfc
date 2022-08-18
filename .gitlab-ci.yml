@@ -15,26 +15,8 @@ build-pfc-debug:
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
      - source ./exec/build gfortran_dbg N || true
-#      - chmod a+x ./exec/build
-#      - ./exec/build gfortran_dbg N
-#     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
-#     - sed -e "s=SMALIB=$SMALIB_DIR=" <$SMALIB_DIR/config/path_generic.inc > $SMALIB_DIR/config/path.inc
-#     - cd ./fortd
-#     - make -f makefile
-#     - cd ../f95
-#     - ln -sf ../fortd LIB
-#     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -f Makefile.lib $i ;done
-#     - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
      - cd ../
-#     - chmod a+x ./exec/build
-#     - ./exec/build gfortran_dbg N
      - source ./exec/build gfortran_dbg N || true
-#     - ln -sf $SMALIB_DIR/config ./config
-#     - cd ./f95
-#     - for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
-#     - for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
-#     - make -f Makefile.smiter
-#     - for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse smiter ; do mv -f $i ../exec ;done
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a    
