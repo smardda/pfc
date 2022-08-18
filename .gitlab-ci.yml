@@ -12,12 +12,22 @@ build-pfc-debug:
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install make
-     - apt-get -y install build-essential
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
-     - source ./exec/build gfortran_dbg N
+     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
+     - cd ./fortd
+     - make -f makefile
+     - cd ../f95
+     - ln -sf ../fortd LIB
+     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -j -f Makefile.lib $i ;done
+     - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
      - cd ../../
-     - source ./exec/build gfortran_dbg N
+     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
+     - cd ./f95
+     - for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
+     - for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i & done
+     - make -f Makefile.smiter
+     - for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse smiter ; do mv -f $i ../exec ;done
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a    
