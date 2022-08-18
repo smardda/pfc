@@ -18,4 +18,6 @@ build-pfc-debug:
      - source ./exec/build gfortran_dbg N
      - cd ../
      - source ./exec/build gfortran_dbg N
-   
+   artifacts:
+     - paths:
+       - smardda-lib/f95/libsmarddag.a    
