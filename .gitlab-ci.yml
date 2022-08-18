@@ -15,7 +15,7 @@ build-pfc-debug:
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
      - cat exec/compile
-     - cp ./config/config_gfortran_dbg.inc ./config.inc
+     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
      - cd ./fortd
      - ls
      - make -f makefile
