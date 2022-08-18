@@ -14,7 +14,9 @@ build-pfc-debug:
      - apt-get -y install make
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
-     - source ./exec/build gfortran_dbg N || true
+     - sed -e "source ./exec/build gfortran_dbg N"  > ./run.sh
+     - chmod a+x ./run.sh
+     - ./run.sh
 #     - cp ./config/config_gfortran_dbg.inc ./config/config.inc
 #     - sed -e "s=SMALIB=$SMALIB_DIR=" <$SMALIB_DIR/config/path_generic.inc > $SMALIB_DIR/config/path.inc
 #     - cd ./fortd
@@ -24,7 +26,9 @@ build-pfc-debug:
 #     - for i in lib geofil move vtktfm datvtk hdsgen ctlgen parse; do make -f Makefile.lib $i ;done
 #     - for i in geofil move vtktfm datvtk hdsgen ctlgen parse; do mv -f $i ../exec ;done
       - cd ../
-      - source ./exec/build gfortran_dbg N || true
+     - sed -e "source ./exec/build gfortran_dbg N"  > ./run.sh
+     - chmod a+x ./run.sh
+     - ./run.sh
 #     - ln -sf $SMALIB_DIR/config ./config
 #     - cd ./f95
 #     - for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
