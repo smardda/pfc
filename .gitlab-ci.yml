@@ -5,6 +5,8 @@ stages:
   - test
 
 build-pfc-debug:
+   variables:
+     GIT_SUBMODULE_STRATEGY: recursive
    stage: build
    script:
      - apt-get -y update
@@ -12,6 +14,7 @@ build-pfc-debug:
      - apt-get -y install make
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
+     - ls
      - source ./exec/build gfortran_dbg N
      - cd ../
      - source ./exec/build gfortran_dbg N
