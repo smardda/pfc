@@ -1,6 +1,7 @@
 *
 !.gitignore
 !doc
+!docker
 !exec
 !f95
 !fortd
