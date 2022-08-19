@@ -14,9 +14,11 @@ build-pfc-debug:
      - apt-get -y install make
      - export SMALIB_DIR=$(pwd)/smardda-lib
      - cd smardda-lib
-     - source ./exec/build gfortran_dbg N || true
+     - chmod a+x ./exec/build 
+     - ./exec/build gfortran_dbg N
      - cd ../
-     - source ./exec/build gfortran_dbg N || true
+     - chmod a+x ./exec/build 
+     - ./exec/build gfortran_dbg N
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a    
