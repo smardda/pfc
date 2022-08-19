@@ -1,4 +1,4 @@
-image: ubuntu:18.04
+image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
 
 stages:
   - build
