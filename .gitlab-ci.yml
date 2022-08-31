@@ -19,7 +19,7 @@ build-pfc:
      - cd ../
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
-   artefacts:
+   artifacts:
      paths:
        - smardda-lib/exec
        - exec
