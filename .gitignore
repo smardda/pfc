@@ -10,5 +10,6 @@
 !README_windows_bash
 !int
 !smardda-lib
+!smiteraux
 !.gitmodule
 !.gitlab-ci.yml
