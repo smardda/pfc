@@ -1,4 +1,4 @@
-image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
+image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new/docker/:latest
 
 stages:
   - build
