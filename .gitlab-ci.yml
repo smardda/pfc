@@ -5,6 +5,7 @@ stages:
   - test
 
 build-pfc:
+   uses: actions/checkout@v2
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: build
@@ -19,18 +20,21 @@ build-pfc:
      - cd ../
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
-   artifacts:
-     paths:
-       - smardda-lib/exec/
+   uses: actions/upload-artifact@v2
+   with:
+     name: my-artifact
+     path: 
        - exec/
+       - smardda-lib/exec/
 run-test-deck-pfc-dbg:
+   uses: actions/checkout@v2
    stage: test
-   needs:
-     - job: build-pfc
-     -  artifacts: true
    script: 
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
      - cd ./smiteraux
      - chmod a+x ./tests.bash
      - ./tests.bash
+   uses: actions/download-artifact@v2
+   with:
+     name: my-artifact
