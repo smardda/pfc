@@ -1,6 +1,5 @@
 image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
 
-
 stages:
   - build
   - test
@@ -10,7 +9,6 @@ build-pfc-debug:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: build
    script:
-     - /bin/bash
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install make
