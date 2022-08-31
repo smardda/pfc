@@ -1,6 +1,4 @@
 [submodule "smardda-lib"]
 	path = smardda-lib
 	url = ../smardda-lib.git
-[submodule "smiteraux"]
-	path = smiteraux
-	url = ../../warter/smiteraux.git
+
