@@ -19,6 +19,14 @@ build-pfc-debug:
      - cd ../
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
+test-pfc-debug:
+   stage: test
+   script:
+     - export SMITER_DIR=$(pwd)
+     - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
+     - cd ./smiteraux
+     - chmod a+x ./tests.bash
+     - ./tests.bash
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a
@@ -29,11 +37,3 @@ build-pfc-debug:
        - exec
        - f95/*.o 
        - f95/*.mod
-test-pfc-debug:
-   stage: test
-   script:
-     - export SMITER_DIR=$(pwd)
-     - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
-     - cd ./smiteraux
-     - chmod a+x ./tests.bash
-     - ./tests.bash
