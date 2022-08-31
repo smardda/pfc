@@ -26,7 +26,7 @@ build-pfc:
 run-test-deck-pfc-dbg:
    stage: test
    needs:
-      artifacts: true
+     -  artifacts: true
    script: 
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
