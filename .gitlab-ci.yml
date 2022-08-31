@@ -20,6 +20,7 @@ build-pfc-debug:
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
         artifacts:
+   artifacts:
      paths:
        - exec
 test-pfc-debug:
