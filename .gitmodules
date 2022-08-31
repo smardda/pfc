@@ -1,6 +1,6 @@
 [submodule "smardda-lib"]
 	path = smardda-lib
-	url = https://git.ccfe.ac.uk/smardda/smardda-lib
+	url = ../smardda-lib.git
 [submodule "smiteraux"]
 	path = smiteraux
-	url = https://git.ccfe.ac.uk/warter/smiteraux
+	url = ../warter/smiteraux.git
