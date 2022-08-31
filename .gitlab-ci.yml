@@ -5,6 +5,8 @@ stages:
   - test
 
 build-pfc-debug:
+   variables:
+     GIT_SUBMODULE_STRATEGY: recursive
    stage: build
    script:
      - apt-get -y update
