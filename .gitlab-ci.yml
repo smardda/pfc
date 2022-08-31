@@ -22,6 +22,8 @@ build-pfc:
    artifacts:
      untracked: true
      paths:
+       - smardda-lib/f95/
+       - smardda-lib/fortd/
        - smardda-lib/exec/
        - exec/
 run-test-deck-pfc-dbg:
