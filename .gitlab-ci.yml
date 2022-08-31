@@ -22,3 +22,11 @@ build-pfc-debug:
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a
+test-pfc-debug
+   stage: test
+   script:
+     - export SMITER_DIR=$(pwd)
+     - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
+     - cd ./smiteraux
+     - chmod a+x ./tests.bash
+     - ./tests.bash
