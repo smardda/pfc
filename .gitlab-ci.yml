@@ -7,13 +7,6 @@ stages:
 build-and-test-pfc-debug:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
-   stage: test
-   script:
-     - export SMITER_DIR=$(pwd)
-     - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
-     - cd ./smiteraux
-     - chmod a+x ./tests.bash
-     - ./tests.bash
    stage: build
    script:
      - apt-get -y update
