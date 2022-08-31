@@ -3,4 +3,4 @@
 	url = ../smardda-lib.git
 [submodule "smiteraux"]
 	path = smiteraux
-	url = ../warter/smiteraux.git
+	url = ../../warter/smiteraux.git
