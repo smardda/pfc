@@ -4,7 +4,7 @@ stages:
   - build
   - test
 
-build-pfc-debug:
+build-pfc-and-run-test:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: build
@@ -19,19 +19,8 @@ build-pfc-debug:
      - cd ../
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
-build-and-run-test-deck-pfc-debug:
-   stage: test
-   script:
-     - apt-get -y update
-     - apt-get -y install gfortran
-     - apt-get -y install make
-     - export SMALIB_DIR=$(pwd)/smardda-lib
-     - cd smardda-lib
-     - chmod a+x ./exec/build
-     - ./exec/build gfortran_dbg N
-     - cd ../
-     - chmod a+x ./exec/build
-     - ./exec/build gfortran_dbg N
+     stage: test
+     script: 
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
      - cd ./smiteraux
