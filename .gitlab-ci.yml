@@ -21,8 +21,8 @@ build-pfc:
      - ./exec/build gfortran_dbg N
    artifacts:
      paths:
-       - smardda-lib/exec
-       - exec
+       - smardda-lib/exec/
+       - exec/
 run-test-deck-pfc-dbg:
    stage: test
    script: 
