@@ -22,7 +22,13 @@ build-pfc-debug:
    artifacts:
      paths:
        - smardda-lib/f95/libsmarddag.a
+       - smardda-lib/f95/*.o
+       - smardda-lib/f95/*.mod
+       - smarda-lib/fortd/libsmarddalibg.a
+       - smarda-lib/fortd/*.o
        - exec
+       - /f95/*.o 
+       - /f95/*.mod
 test-pfc-debug:
    stage: test
    script:
