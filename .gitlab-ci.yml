@@ -19,8 +19,8 @@ build-pfc-and-run-test:
      - cd ../
      - chmod a+x ./exec/build
      - ./exec/build gfortran_dbg N
-     stage: test
-     script: 
+   stage: test
+   script: 
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
      - cd ./smiteraux
