@@ -7,7 +7,6 @@ stages:
 build-and-test-pfc-debug:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
-   smiteraux: 
    stage: test
    script:
      - export SMITER_DIR=$(pwd)
