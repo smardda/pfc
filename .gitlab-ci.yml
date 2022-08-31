@@ -1,4 +1,7 @@
-image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
+image:
+  name: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
+  entrypoint: [ '/bin/sh', '-c' ]
+
 
 stages:
   - build
