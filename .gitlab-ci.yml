@@ -4,7 +4,7 @@ stages:
   - build
   - test
 
-build-and-test-pfc-debug:
+build-pfc-debug:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: build
