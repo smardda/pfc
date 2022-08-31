@@ -1,5 +1,5 @@
-image: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
-  name: ubuntu:22.04
+image: 
+  name: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
   entrypoint: [ '/bin/sh', '-c' ]
 
 stages:
