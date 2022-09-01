@@ -11,5 +11,6 @@
 !int
 !smardda-lib
 !smiteraux
+!smiter-aux-results
 !.gitmodule
 !.gitlab-ci.yml
