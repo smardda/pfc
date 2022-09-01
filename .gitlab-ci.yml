@@ -40,6 +40,8 @@ run-test-deck-pfc-dbg:
      - ./tests.bash
      - cd ..
      - cd ./smiter-aux-results
+     - tar -xf smiter-aux.tar.xz  
+     - tar -xf smiter-aux.tar
      - tar -Jxvf smiter-aux.tar.xz     
      - mv ./smiter-aux/ ../smiter-aux_old
      - cd ..
