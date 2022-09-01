@@ -33,7 +33,6 @@ run-test-deck-pfc-dbg:
    script: 
      - apt-get -y update
      - apt-get -y install gfortran
-     - apt-get -y install git
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
      - cd ./smiteraux
