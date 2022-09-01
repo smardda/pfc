@@ -4,3 +4,6 @@
 [submodule "smiteraux"]
 	path = smiteraux
 	url = ../../warter/smiteraux.git
+[submodule "smiter-aux-results"]
+	path = smiter-aux-results
+	url = ../smiter-aux-results.git
