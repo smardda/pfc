@@ -6,4 +6,4 @@
 	url = ../../warter/smiteraux.git
 [submodule "smiter-aux-results"]
 	path = smiter-aux-results
-	url = git@git.ccfe.ac.uk:smardda/smiter-aux-results.git
+	url = ../smiter-aux-results.git
