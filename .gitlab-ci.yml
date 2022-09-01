@@ -38,6 +38,7 @@ run-test-deck-pfc-dbg:
      - cd ./smiteraux
      - chmod a+x ./tests.bash
      - ./tests.bash
+     - cd ..
      - cd ./smiter-aux-results
      - tar -Jxvf smiter-aux.tar.xz     
      - mv ./smiter-aux/ ../smiter-aux_old
