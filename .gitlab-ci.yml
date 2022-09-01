@@ -27,6 +27,8 @@ build-pfc:
        - smardda-lib/exec/
        - exec/
 run-test-deck-pfc-dbg:
+   variables:
+     GIT_SUBMODULE_STRATEGY: recursive
    stage: test
    dependencies: 
      - build-pfc
