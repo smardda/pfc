@@ -1,6 +1,8 @@
 image: 
   name: git.ccfe.ac.uk:4567/smardda/smardda-pfc-new:latest
-  entrypoint: [ '/bin/sh', '-c' ]
+  tags:  
+     - lower-privacy
+     - ubuntu
 
 stages:
   - build
@@ -41,3 +43,6 @@ run-test-deck-pfc-dbg:
      - cd ./smiteraux
      - chmod a+x ./tests.bash
      - ./tests.bash
+     - git clone git@git.ccfe.ac.uk:smardda/smiter-aux-results.git
+     - tar -Jxvf ./smiter-aux-results/smiter-aux.tar.xz - C ./smiter-aux-old     
+     - ls 
