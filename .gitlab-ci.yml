@@ -1,4 +1,4 @@
-image: ubuntu:18.04
+image: ubuntu:22.04
 
 stages:
   - build
@@ -26,6 +26,10 @@ build-pfc:
        - smardda-lib/fortd/
        - smardda-lib/exec/
        - exec/
+  tags:  
+     - lower-privacy
+     - ubuntu
+
 run-test-deck-pfc-dbg:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
@@ -50,3 +54,6 @@ run-test-deck-pfc-dbg:
      - cd ./smiteraux
      - chmod a+x ./tests_diff.bash
      - ./tests_diff.bash
+  tags:  
+     - lower-privacy
+     - ubuntu
