@@ -53,7 +53,7 @@ run-test-deck-pfc-dbg:
      - mv ./smiter-aux/ ../smiteraux_old
      - cd ../smiteraux
      - chmod a+x ./tests_diff.bash
-     - ./tests_diff.bash
+     - bash ./tests_diff.bash
    tags:  
      - lower-privacy
      - ubuntu
