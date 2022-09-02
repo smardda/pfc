@@ -50,9 +50,8 @@ run-test-deck-pfc-dbg:
      - cd ./smiter-aux-results
      - unxz < smiter-aux.tar.xz > smiteraux.tar
      - tar -xvf smiteraux.tar
-     - mv ./smiteraux/ ../smiteraux_old
-     - cd ..
-     - cd ./smiteraux
+     - mv ./smiter-aux/ ../smiteraux_old
+     - cd ../smiteraux
      - chmod a+x ./tests_diff.bash
      - ./tests_diff.bash
    tags:  
