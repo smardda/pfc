@@ -43,7 +43,8 @@ run-test-deck-pfc-dbg:
      - ./tests.bash
      - cd ..
      - cd ./smiter-aux-results
-     - tar Jxvf smiteraux.tar.xz
+     - unxz smiteraux.tar.xz
+     - tar -xvf smiteraux.tar
      - mv ./smiteraux/ ../smiteraux_old
      - cd ..
      - cd ./smiteraux
