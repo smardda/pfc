@@ -41,7 +41,6 @@ run-test-deck-pfc-dbg:
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install xz-utils
-     - apt-get -y install git
      - export SMITER_DIR=$(pwd)
      - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
      - cd ./smiteraux
@@ -49,8 +48,7 @@ run-test-deck-pfc-dbg:
      - ./tests.bash
      - cd ..
      - cd ./smiter-aux-results
-     - git pull
-     - unxz < smiteraux.tar.xz > smiteraux.tar
+     - unxz < smiter-aux.tar.xz > smiteraux.tar
      - tar -xvf smiteraux.tar
      - mv ./smiteraux/ ../smiteraux_old
      - cd ..
