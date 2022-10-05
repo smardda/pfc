@@ -51,7 +51,12 @@ run-test-deck-pfc-dbg:
      - unxz < smiter-aux.tar.xz > smiteraux.tar
      - tar -xvf smiteraux.tar
      - mv ./smiter-aux/ ../smiteraux_old
+     - cd ../smiteraux_old
+     - find . -type f -name "*.log" -print0 | xargs -0 sed -i '' -e '/time/d'
+     - find . -type f -name "*.out" -print0 | xargs -0 sed -i '' -e '/time/d'
      - cd ../smiteraux
+     - find . -type f -name "*.log" -print0 | xargs -0 sed -i '' -e '/time/d'
+     - find . -type f -name "*.out" -print0 | xargs -0 sed -i '' -e '/time/d'
      - chmod a+x ./tests_diff.bash
      - bash ./tests_diff.bash
    tags:  
