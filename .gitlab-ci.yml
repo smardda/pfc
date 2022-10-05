@@ -52,6 +52,7 @@ run-test-deck-pfc-dbg:
      - tar -xvf smiteraux.tar
      - mv ./smiter-aux/ ../smiteraux_old
      - cd ../smiteraux_old
+     - ls
      - find . -type f -name "*.log" -print0 | xargs -0 sed -i '' -e '/time/d'
      - find . -type f -name "*.out" -print0 | xargs -0 sed -i '' -e '/time/d'
      - cd ../smiteraux
