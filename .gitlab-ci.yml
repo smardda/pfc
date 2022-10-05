@@ -1,6 +1,6 @@
 image: 
   name: ubuntu:22.04
- 
+
 stages:
   - build
   - test
