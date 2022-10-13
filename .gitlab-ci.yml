@@ -36,7 +36,7 @@ run-test-deck-pfc-dbg:
    script:
      - apt-get -y update
      - apt-get -y install gfortran
-     - apt-get -y install xz-utils
+     - apt-get -y install xz-utils python3
      - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
      - export SMITER_DIR="$(pwd)"
      - export SMALIB_DIR="$(pwd)/smardda-lib"
