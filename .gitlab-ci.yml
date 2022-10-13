@@ -1,4 +1,4 @@
-image: 
+image:
   name: ubuntu:22.04
 
 stages:
@@ -13,13 +13,9 @@ build-pfc:
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install make
-     - export SMALIB_DIR=$(pwd)/smardda-lib
-     - cd smardda-lib
-     - chmod a+x ./exec/build
-     - ./exec/build gfortran_dbg N
-     - cd ../
-     - chmod a+x ./exec/build
-     - ./exec/build gfortran_dbg N
+     - export SMALIB_DIR="$(pwd)/smardda-lib"
+     - bash smardda-lib/exec/build gfortran_dbg N
+     - bash exec/build gfortran_dbg N
    artifacts:
      untracked: true
      paths:
@@ -27,7 +23,7 @@ build-pfc:
        - smardda-lib/fortd/
        - smardda-lib/exec/
        - exec/
-   tags:  
+   tags:
      - lower-privacy
      - ubuntu
 
@@ -35,31 +31,21 @@ run-test-deck-pfc-dbg:
    variables:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: test
-   dependencies: 
+   dependencies:
      - build-pfc
-   script: 
+   script:
      - apt-get -y update
      - apt-get -y install gfortran
      - apt-get -y install xz-utils
-     - export SMITER_DIR=$(pwd)
-     - export PATH=$SMITER_DIR/exec:$SMALIB_DIR/exec:$PATH
-     - cd ./smiteraux
-     - chmod a+x ./tests.bash
-     - ./tests.bash
+     - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
+     - export SMITER_DIR="$(pwd)"
+     - export SMALIB_DIR="$(pwd)/smardda-lib"
+     - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
+     - cd ./smiteraux  # must be in smiteraux directory to run test deck
+     - bash ./tests.bash
      - cd ..
-     - cd ./smiter-aux-results
-     - unxz < smiter-aux.tar.xz > smiteraux.tar
-     - tar -xvf smiteraux.tar
-     - mv ./smiter-aux/ ../smiteraux_old
-     - cd ../smiteraux_old
-     - ls
-     - find . -type f -name "*.log" -print0 | xargs -0 sed -i '' -e '/time/d'
-     - find . -type f -name "*.out" -print0 | xargs -0 sed -i '' -e '/time/d'
-     - cd ../smiteraux
-     - find . -type f -name "*.log" -print0 | xargs -0 sed -i '' -e '/time/d'
-     - find . -type f -name "*.out" -print0 | xargs -0 sed -i '' -e '/time/d'
-     - chmod a+x ./tests_diff.bash
-     - bash ./tests_diff.bash
-   tags:  
+     - tar -xf smiter-aux-results/smiter-aux.tar.xz -C smiter-aux-results
+     - bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
+   tags:
      - lower-privacy
      - ubuntu
