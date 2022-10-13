@@ -108,14 +108,15 @@ for dir in "${DIRS[@]}"; do
 	mapfile -t -O "${#FILES[@]}" FILES < <((cd "${HSAOLD}" && find "${dir}" -type f))
 done
 
-fail=false
+diff_count=0
 for file in "${FILES[@]}"; do
 	echo "${file}"
 	if ! do_diff "${HSAUX}/${file}" "${HSAOLD}/${file}"; then
-		fail=true
+		diff_count=$((diff_count + 1))
 		diff -bu "${HSAUX}/${file}" "${HSAOLD}/${file}"
 	fi
 done
-if [ "${fail}" = true ]; then
+echo "Compared ${#FILES[@]} files. Found ${diff_count} difference(s)."
+if [ ${diff_count} -gt 0 ]; then
 	exit 1
 fi
