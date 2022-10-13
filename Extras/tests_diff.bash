@@ -31,11 +31,11 @@ fi
 
 do_diff() {
 	if [ "${2##*.}" = "log" ]; then
-		/home/bf2936/smardda/compare_logs "$1" "$2"
+		"${SCRIPT_DIR}/compare_logs" "$1" "$2"
 	elif [ "${2##*.}" = "out" ]; then
-		/home/bf2936/smardda/compare_out "$1" "$2"
+		"${SCRIPT_DIR}/compare_out" "$1" "$2"
 	elif [ "${2##*.}" = "hds" ]; then
-		/home/bf2936/smardda/compare_hds "$1" "$2"
+		"${SCRIPT_DIR}/compare_hds" "$1" "$2"
 	elif [ "${2##*.}" = "ps" ]; then
 		[ -f "$1" ] # just check the corresponding file exists
 	else
