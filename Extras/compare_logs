@@ -87,7 +87,9 @@ def parse_file(stream: TextIO) -> LogFile:
     return log_file
 
 
-def compare_logs(log: LogFile, ref_log: LogFile, abs_tol: float, rel_tol: float) -> bool:
+def compare_logs(
+    log: LogFile, ref_log: LogFile, abs_tol: float, rel_tol: float
+) -> bool:
     if log.values.keys() != ref_log.values.keys():
         return False
     if log.warnings != ref_log.warnings:
@@ -101,7 +103,7 @@ def compare_logs(log: LogFile, ref_log: LogFile, abs_tol: float, rel_tol: float)
         if type(value) != type(ref_value):
             return False
         if isinstance(value, float):
-            if abs(value - ref_value) > abs_tol + rel_tol*abs(ref_value):
+            if abs(value - ref_value) > abs_tol + rel_tol * abs(ref_value):
                 return False
         else:
             if value != ref_value:
