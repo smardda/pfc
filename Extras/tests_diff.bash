@@ -36,8 +36,6 @@ do_diff() {
 		"${SCRIPT_DIR}/compare_out" "$1" "$2"
 	elif [ "${2##*.}" = "hds" ]; then
 		"${SCRIPT_DIR}/compare_hds" "$1" "$2"
-	elif [ "${2##*.}" = "ps" ]; then
-		[ -f "$1" ] # just check the corresponding file exists
 	else
 		diff -bu "$1" "$2" >/dev/null
 	fi
@@ -105,7 +103,10 @@ DIRS=(
 	"Val-smanal-mjg"
 )
 for dir in "${DIRS[@]}"; do
-	mapfile -t -O "${#FILES[@]}" FILES < <((cd "${HSAOLD}" && find "${dir}" -type f))
+	found_files=$(cd "${HSAOLD}" && find "${dir}" -type f ! -path "*.ps" ! -path "*.dat")
+	for f in ${found_files}; do
+		FILES+=("${f}")
+	done
 done
 
 diff_count=0
