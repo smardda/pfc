@@ -37,6 +37,7 @@ run-test-deck-pfc-dbg:
      - apt-get -y install gfortran xz-utils python3 python3-pip gnuplot
      - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
      - export SMITER_DIR="$(pwd)"
+     - export SMALIB="$(pwd)/smardda-lib"
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
      - cd ./smiteraux  # must be in smiteraux directory to run test deck
