@@ -11,8 +11,7 @@ build-pfc:
    stage: build
    script:
      - apt-get -y update
-     - apt-get -y install gfortran
-     - apt-get -y install make
+     - apt-get -y install gfortran make gnuplot # gnuplot for .ps files
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - bash smardda-lib/exec/build gfortran_dbg N
      - bash exec/build gfortran_dbg N
@@ -36,7 +35,7 @@ run-test-deck-pfc-dbg:
    script:
      - apt-get -y update
      - apt-get -y install gfortran
-     - apt-get -y install xz-utils python3 python3-pip gnuplot # gnuplot for .ps files
+     - apt-get -y install xz-utils python3 python3-pip
      - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
      - export SMITER_DIR="$(pwd)"
      - export SMALIB_DIR="$(pwd)/smardda-lib"
