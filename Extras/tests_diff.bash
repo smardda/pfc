@@ -116,7 +116,7 @@ for file in "${FILES[@]}"; do
 		diff -bu "${HSAUX}/${file}" "${HSAOLD}/${file}"
 	fi
 done
-echo "Compared ${#FILES[@]} files. Found ${diff_count} difference(s)."
+echo "Compared ${#FILES[@]} files. Found ${diff_count} with differences."
 if [ ${diff_count} -gt 0 ]; then
 	exit 1
 fi
