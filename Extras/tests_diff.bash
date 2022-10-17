@@ -118,6 +118,4 @@ for file in "${FILES[@]}"; do
 	fi
 done
 echo "Compared ${#FILES[@]} files. Found ${diff_count} with differences."
-if [ ${diff_count} -gt 0 ]; then
-	exit 1
-fi
+exit ${diff_count}
