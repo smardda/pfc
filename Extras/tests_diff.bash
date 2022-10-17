@@ -103,7 +103,7 @@ DIRS=(
 	"Val-smanal-mjg"
 )
 for dir in "${DIRS[@]}"; do
-	found_files=$(cd "${HSAOLD}" && find "${dir}" -type f) # ! -path "*.ps" ! -path "*.dat")
+	found_files=$(cd "${HSAOLD}" && find "${dir}" -type f ! -path "*.ps" ! -path "*.dat")
 	for f in ${found_files}; do
 		FILES+=("${f}")
 	done
