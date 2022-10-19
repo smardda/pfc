@@ -40,6 +40,7 @@ run-test-deck-pfc-dbg:
      - export SMALIB="$(pwd)/smardda-lib"
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
+     - apt list --installed
      - cd ./smiteraux  # must be in smiteraux directory to run test deck
      - bash ./tests.bash
      - cd ..
