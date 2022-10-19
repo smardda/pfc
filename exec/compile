@@ -12,7 +12,7 @@ fi
 cd f95
 ln -sf ../fortd LIB
 for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
-for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i & done
+for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
 make -f Makefile.smiter
 
 for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse smiter ; do mv -f $i ../exec ;done
