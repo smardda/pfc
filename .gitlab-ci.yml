@@ -16,6 +16,10 @@ build-pfc:
      - git -C smardda-lib clean -dfx
      - git -C smiteraux clean -dfx
      - export SMALIB_DIR="$(pwd)/smardda-lib"
+     - export SMITER_DIR="$(pwd)"
+     - export SMALIB="$(pwd)/smardda-lib"
+     - export SMALIB_DIR="$(pwd)/smardda-lib"
+     - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
      - bash smardda-lib/exec/build gfortran_dbg N
      - bash exec/build gfortran_dbg N
    artifacts:
