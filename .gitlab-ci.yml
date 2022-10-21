@@ -11,7 +11,10 @@ build-pfc:
    stage: build
    script:
      - apt-get -y update
-     - apt-get -y install gfortran make gnuplot # gnuplot for .ps files
+     - apt-get -y install git gfortran make gnuplot # gnuplot for .ps files
+     - git clean -dfx
+     - git -C smardda-lib clean -dfx
+     - git -C smiteraux clean -dfx
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - bash smardda-lib/exec/build gfortran_dbg N
      - bash exec/build gfortran_dbg N
