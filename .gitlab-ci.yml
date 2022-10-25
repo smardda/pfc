@@ -11,7 +11,7 @@ build-pfc:
    stage: build
    script:
      - apt-get -y update
-     - apt-get -y install git gfortran make qtbase5-dev gnuplot # gnuplot for .ps files
+     - apt-get -y install git gfortran make qt5-default gnuplot # gnuplot for .ps files
      - which gnuplot
      - gnuplot --version
      - git clean -dfx
