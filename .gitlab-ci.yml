@@ -15,6 +15,7 @@ build-pfc:
      - git clean -dfx
      - git -C smardda-lib clean -dfx
      - git -C smiteraux clean -dfx
+     - git -C smiter-aux-results clean -dfx
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - export SMITER_DIR="$(pwd)"
      - export SMALIB="$(pwd)/smardda-lib"
