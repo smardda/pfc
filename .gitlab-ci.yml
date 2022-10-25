@@ -1,5 +1,5 @@
 image:
-  name: ubuntu:22.04
+  name: ubuntu:20.04
 
 stages:
   - build
@@ -11,7 +11,7 @@ build-pfc:
    stage: build
    script:
      - apt-get -y update
-     - apt-get -y install git gfortran make qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gnuplot # gnuplot for .ps files
+     - apt-get -y install git gfortran make gnuplot # gnuplot for .ps files
      - which gnuplot
      - gnuplot --version
      - git clean -dfx
