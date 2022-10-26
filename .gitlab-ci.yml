@@ -12,7 +12,7 @@ build-pfc:
    script:
      - export DEBIAN_FRONTEND=noninteractive  # stop interactive prompts
      - apt-get -y update
-     - apt-get -y install git gfortran make gnuplot
+     - apt-get -y install gfortran make gnuplot
       # Discard symbol in libQt5Core that causes gnuplot to crash.
       # The issue is apparently to do with Qt5 making a system call that's not
       # available in some older kernel versions.
