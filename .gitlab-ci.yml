@@ -11,6 +11,7 @@ build-pfc:
    stage: build
    script:
      - apt-get -y update
+     - export DEBIAN_FRONTEND=noninteractive  # stop interactive prompts
      - apt-get -y install git gfortran make gnuplot # gnuplot for .ps files
      - which gnuplot
      - gnuplot --version
@@ -44,6 +45,7 @@ run-test-deck-pfc-dbg:
      - build-pfc
    script:
      - apt-get -y update
+     - export DEBIAN_FRONTEND=noninteractive  # stop interactive prompts
      - apt-get -y install gfortran xz-utils python3 python3-pip gnuplot
      - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
      - export SMITER_DIR="$(pwd)"
