@@ -38,7 +38,10 @@ do_diff() {
 	elif [ "${file_extension}" = "hds" ]; then
 		"${SCRIPT_DIR}/compare_hds" "$1" "$2"
 	elif [ "${file_extension}" = "ps" ]; then
-		[ -f "$1" ] # just check the corresponding file exists
+		# For .ps files, just check the corresponding file is generated.
+		# The file content depends on the version of gnuplot being used, so
+		# diff-ing the files is not practical.
+		[ -f "$1" ] #
 	else
 		diff -bu "$1" "$2" >/dev/null
 	fi
