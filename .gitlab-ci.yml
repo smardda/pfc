@@ -10,21 +10,17 @@ build-pfc:
      GIT_SUBMODULE_STRATEGY: recursive
    stage: build
    script:
-     - apt-get -y update
      - export DEBIAN_FRONTEND=noninteractive  # stop interactive prompts
-     - apt-get -y install git gfortran make qt5-default
+     - apt-get -y update
+     - apt-get -y install git gfortran make gnuplot
+      # Discard symbol in libQt5Core that causes gnuplot to crash.
+      # The issue is apparently to do with Qt5 making a system call that's not
+      # available in some older kernel versions.
+      # See https://askubuntu.com/questions/1034313/ubuntu-18-4-libqt5core-so-5-cannot-open-shared-object-file-no-such-file-or-dir
      - strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
-     - apt-get -y install gnuplot # gnuplot for .ps files
-     - which gnuplot
-     - gnuplot --version
-     - git clean -dfx
-     - git -C smardda-lib clean -dfx
-     - git -C smiteraux clean -dfx
-     - git -C smiter-aux-results clean -dfx
      - export SMALIB_DIR="$(pwd)/smardda-lib"
      - export SMITER_DIR="$(pwd)"
      - export SMALIB="$(pwd)/smardda-lib"
-     - export SMALIB_DIR="$(pwd)/smardda-lib"
      - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
      - bash smardda-lib/exec/build gfortran_dbg N
      - bash exec/build gfortran_dbg N
@@ -46,11 +42,10 @@ run-test-deck-pfc-dbg:
    dependencies:
      - build-pfc
    script:
+     - export DEBIAN_FRONTEND=noninteractive  # prevent interactive prompts when running apt
      - apt-get -y update
-     - export DEBIAN_FRONTEND=noninteractive  # stop interactive prompts
-     - apt-get -y install gfortran xz-utils python3 python3-pip qt5-default
+     - apt-get -y install gfortran xz-utils python3 python3-pip gnuplot # gnuplot for .ps files
      - strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
-     - apt-get -y install gnuplot # gnuplot for .ps files
      - python3 -m pip install numpy  # numpy for fast array comparisons with tolerance
      - export SMITER_DIR="$(pwd)"
      - export SMALIB="$(pwd)/smardda-lib"
