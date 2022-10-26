@@ -30,12 +30,15 @@ if [ ! -d "${HSAOLD}" ]; then
 fi
 
 do_diff() {
-	if [ "${2##*.}" = "log" ]; then
+	file_extension="${2##*.}"
+	if [ "${file_extension}" = "log" ]; then
 		"${SCRIPT_DIR}/compare_logs" "$1" "$2"
-	elif [ "${2##*.}" = "out" ]; then
+	elif [ "${file_extension}" = "out" ]; then
 		"${SCRIPT_DIR}/compare_out" "$1" "$2"
-	elif [ "${2##*.}" = "hds" ]; then
+	elif [ "${file_extension}" = "hds" ]; then
 		"${SCRIPT_DIR}/compare_hds" "$1" "$2"
+	elif [ "${file_extension}" = "ps" ]; then
+		[ -f "$1" ] # just check the corresponding file exists
 	else
 		diff -bu "$1" "$2" >/dev/null
 	fi
