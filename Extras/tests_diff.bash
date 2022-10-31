@@ -1,8 +1,13 @@
 #! /bin/bash
 # diff all testdeck outputs from SMARDDA/PFC test-deck
-# tests.bash places latest in directory $HSAUX
-# compare with outputs in "$HSAUX"_old
 #
+# This scripts needs to know the location of two directories: the path to
+# 'smiteraux' (HSAUX; where the 'tests.bash' script has been run), and the path
+# to the test-deck reference outputs (HSAOLD).
+# The first argument to this script sets HSAUX, the second sets HSAOLD.
+# If no arguments are passed, HSAUX is set to '../smiteraux' (relative to this
+# script's directory), and HSAOLD is set to '../smiter-aux-results/smiter-aux'.
+
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 # Get the smiteraux test directory
