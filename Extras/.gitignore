@@ -88,3 +88,7 @@
 !alljwall.txt
 !mgeoqgnu
 !txt2vtk.bash
+!compare_hds
+!compare_logs
+!compare_out
+!tests_diff.bash

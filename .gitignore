@@ -1,6 +1,7 @@
 *
 !.gitignore
 !doc
+!docker
 !exec
 !f95
 !fortd
@@ -8,3 +9,8 @@
 !README
 !README_windows_bash
 !int
+!smardda-lib
+!smiteraux
+!smiter-aux-results
+!.gitmodule
+!.gitlab-ci.yml

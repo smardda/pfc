@@ -1,0 +1,61 @@
+image:
+  name: ubuntu:22.04
+
+stages:
+  - build
+  - test
+
+build-pfc:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  stage: build
+  script:
+    - export DEBIAN_FRONTEND=noninteractive # prevent interactive prompts when running apt
+    - apt-get -y update
+    - apt-get -y install gfortran make gnuplot
+      # Discard symbol in libQt5Core that causes gnuplot to crash.
+      # The issue is apparently to do with Qt5 making a system call that's not
+      # available in some older kernel versions.
+      # See https://askubuntu.com/questions/1034313/ubuntu-18-4-libqt5core-so-5-cannot-open-shared-object-file-no-such-file-or-dir
+    - strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+    - export SMALIB_DIR="$(pwd)/smardda-lib"
+    - export SMITER_DIR="$(pwd)"
+    - export SMALIB="$(pwd)/smardda-lib"
+    - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
+    - bash smardda-lib/exec/build gfortran_dbg N
+    - bash exec/build gfortran_dbg N
+  artifacts:
+    untracked: true
+    paths:
+      - smardda-lib/f95/
+      - smardda-lib/fortd/
+      - smardda-lib/exec/
+      - exec/
+  tags:
+    - lower-privacy
+    - ubuntu
+
+run-test-deck-pfc-dbg:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  stage: test
+  dependencies:
+    - build-pfc
+  script:
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get -y update
+    - apt-get -y install gfortran xz-utils python3 python3-pip gnuplot # gnuplot for .ps files
+    - strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+    - python3 -m pip install numpy # numpy for fast array comparisons with tolerance
+    - export SMITER_DIR="$(pwd)"
+    - export SMALIB="$(pwd)/smardda-lib"
+    - export SMALIB_DIR="$(pwd)/smardda-lib"
+    - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
+    - cd ./smiteraux # must be in smiteraux directory to run test deck
+    - bash ./tests.bash
+    - cd ..
+    - tar -xf smiter-aux-results/smiter-aux.tar.xz -C smiter-aux-results
+    - bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
+  tags:
+    - lower-privacy
+    - ubuntu
