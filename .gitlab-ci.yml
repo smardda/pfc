@@ -74,6 +74,4 @@ pages:
     paths:
     - public
   rules:
-    # This ref will eventually be '$CI_DEFAULT_BRANCH'
-    # Set to development branch for debugging
-    - if: $CI_COMMIT_REF_NAME == "set_up_gitlab_pages"
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
