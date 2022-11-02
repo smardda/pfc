@@ -69,7 +69,7 @@ pages:
   script:
     # Move built docs to 'public' folder for GitLab pages
     - mkdir -p public
-    - mv ./smardda-lib/doc/srcdoc/html/ public/
+    - cp -a smardda-lib/doc/srcdoc/html/. public
   artifacts:
     paths:
     - public
