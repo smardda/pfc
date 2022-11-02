@@ -61,6 +61,8 @@ run-test-deck-pfc-dbg:
   tags:
     - lower-privacy
     - ubuntu
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "y"
 
 pages:
   stage: pages
