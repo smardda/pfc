@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module smitermpi_m
-
+!> @}
   use smitermpi_h
   use log_m
   use powcal_h
@@ -38,10 +40,10 @@ module smitermpi_m
        bcast_hds, &        !> broadcasts hds values for powcal
        bcast_position, &   !> broadcasts position values for powcal and hdsgen
        bcast_skyl, &       !> broadcasts skylight_t values for powcal and hdsgen
-       smitermpi_barrier
+       smitermpi_barrier !>
 
   character(*), parameter :: m_name='smitermpi_m' !< module name
-  integer :: status
+  integer :: status !< .
 
 contains
 
@@ -52,21 +54,21 @@ contains
   !> calls mpi_init and defines decomp structure
   subroutine smitermpi_init(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !< .
+    logical :: init_flag !< .
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
 #ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
-    if(.not. init_flag) call MPI_Init(ierr)
+    if (.not. init_flag) call MPI_Init(ierr)
 
     ! Duplicate MPI_COMM_WORLD to future proof the code
     call MPI_Comm_dup(MPI_COMM_WORLD,self%commsmiter,ierr)
 
     call MPI_Comm_rank(self%commsmiter,self%myrank,ierr)
     call MPI_Comm_size(self%commsmiter,self%nproc,ierr)
-    if(self%myrank .eq. 0) print*, "Initialised MPI with", self%nproc ,"processes"
+    if (self%myrank==0) print*, "Initialised MPI with", self%nproc ,"processes"
 #else
     self%myrank=0
     self%nproc=1
@@ -82,19 +84,19 @@ contains
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
     ! Booleans to control running of individual steps
-    if(self%nproc > 6) then
+    if (self%nproc > 6) then
        self%procgeoqshad = 0
        self%procgeoqres = 1
        self%prochdsgen = 2
-       if(self%myrank > 2) self%powcal = .True.
-       self%bcastpowcal=.True.
-       self%bcasthdsgen=.True.
+       if (self%myrank > 2) self%powcal = .true.
+       self%bcastpowcal=.true.
+       self%bcasthdsgen=.true.
        call smitermpi_decomp(self)
     else
        self%procgeoqshad = 0
        self%procgeoqres = 0
        self%prochdsgen = 0
-       self%powcal = .True.
+       self%powcal = .true.
        self%commpowcal = self%commsmiter
        self%commgeoqshad = self%commsmiter
        self%commgeoqres = self%commsmiter
@@ -107,11 +109,11 @@ contains
        self%myrankgeoqres = self%myrank
        self%myrankhdsgen = self%myrank
        self%myrankpowcal = self%myrank
-       if(self%nproc > 1) self%procgeoqres=1
-       if(self%nproc > 2) then
+       if (self%nproc > 1) self%procgeoqres=1
+       if (self%nproc > 2) then
           self%prochdsgen=2
-          self%bcasthdsgen=.True.
-          call smitermpi_decomp(self,.True.)
+          self%bcasthdsgen=.true.
+          call smitermpi_decomp(self,.true.)
        endif
     endif
 
@@ -119,10 +121,10 @@ contains
     call powcalmpi_setio(self)
 
     ! Assign the global myrank_log and nproc_log
-    if(self%myrank == self%procgeoqshad) myrank_log = self%myrankgeoqshad
-    if(self%myrank == self%procgeoqres) myrank_log = self%myrankgeoqres
-    if(self%myrank == self%prochdsgen) myrank_log = self%myrankhdsgen
-    if(self%powcal) myrank_log = self%myrankpowcal
+    if (self%myrank == self%procgeoqshad) myrank_log = self%myrankgeoqshad
+    if (self%myrank == self%procgeoqres) myrank_log = self%myrankgeoqres
+    if (self%myrank == self%prochdsgen) myrank_log = self%myrankhdsgen
+    if (self%powcal) myrank_log = self%myrankpowcal
 
     ! This is for log ordering in the serial version
     nproc_log = self%nproc
@@ -133,12 +135,12 @@ contains
 
     !! Arguments
     type(decomp_t), intent(inout) :: self !< decomp data structure
-    logical, optional :: hdsonly
+    logical, optional :: hdsonly !< .
 
-    integer(ki4) :: ierr
-    integer(ki4) :: groupsmiter,groupgeoqshad,groupgeoqres,grouphdsgen,grouppowcal
-    integer(ki4) :: grouppg,groupps,groupph,groupsh
-    integer(ki4) :: excl(3),incl(1)
+    integer(ki4) :: ierr !< .
+    integer(ki4) :: groupsmiter,groupgeoqshad,groupgeoqres,grouphdsgen,grouppowcal !< .
+    integer(ki4) :: grouppg,groupps,groupph,groupsh !< .
+    integer(ki4) :: excl(3),incl(1) !< .
 
 #ifdef WITH_MPI
     excl(1) = 0
@@ -165,7 +167,7 @@ contains
     call MPI_Group_rank(groupsh,self%myrankshadhds,ierr)
     call MPI_Group_size(groupsh,self%nprocshadhds,ierr)
 
-    if(present(hdsonly)) return
+    if (present(hdsonly)) return
 
     ! Now the rest of the unions
     ! powcal
@@ -196,14 +198,14 @@ contains
   !> calls mpi_init and defines decomp structure
   subroutine powcalmpi_init(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !< .
+    logical :: init_flag !< .
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
 #ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
-    if(.not. init_flag) call MPI_Init(ierr)
+    if (.not. init_flag) call MPI_Init(ierr)
 
     ! Duplicate MPI_COMM_WORLD to future proof the code
     call MPI_Comm_dup(MPI_COMM_WORLD,self%commpowcal,ierr)
@@ -214,7 +216,7 @@ contains
 
     call MPI_Comm_rank(self%commpowcal,self%myrank,ierr)
     call MPI_Comm_size(self%commpowcal,self%nproc,ierr)
-    if(self%myrank .eq. 0) print*, "Initialised MPI with", self%nproc ,"processes"
+    if (self%myrank==0) print*, "Initialised MPI with", self%nproc ,"processes"
 #else
     self%myrank = 0
     self%nproc = 1
@@ -232,7 +234,7 @@ contains
     myrank_log = self%myrank
 
     ! now set the read and broadcast behaviour for powcal
-    self%bcastpowcal = .False. ! This init is for standalone smiter
+    self%bcastpowcal = .false. ! This init is for standalone smiter
     call powcalmpi_setio(self)
 
   end subroutine powcalmpi_init
@@ -240,18 +242,18 @@ contains
   !> calls mpi_finalize and cleans up decomp structure
   subroutine smitermpi_finish(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !< .
+    logical :: init_flag !< .
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
-    if(allocated(self%localsize)) deallocate(self%localsize)
-    if(allocated(self%localdisp)) deallocate(self%localdisp)
+    if (allocated(self%localsize)) deallocate(self%localsize)
+    if (allocated(self%localdisp)) deallocate(self%localdisp)
 
 #ifdef WITH_MPI
-    if(self%myrank .eq. 0) print*, "Finalizing MPI"
+    if (self%myrank==0) print*, "Finalizing MPI"
 
     call MPI_Initialized(init_flag,ierr)
-    if(init_flag) call MPI_Finalize(ierr)
+    if (init_flag) call MPI_Finalize(ierr)
 #endif
 
   end subroutine smitermpi_finish
@@ -259,17 +261,17 @@ contains
   !> calls mpi_finalize and cleans up decomp structure
   subroutine powcalmpi_finish(self)
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !< .
+    logical :: init_flag !< .
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
-    if(allocated(self%localsize)) deallocate(self%localsize)
-    if(allocated(self%localdisp)) deallocate(self%localdisp)
+    if (allocated(self%localsize)) deallocate(self%localsize)
+    if (allocated(self%localdisp)) deallocate(self%localdisp)
 #ifdef WITH_MPI
-    if(self%myrank .eq. 0) print*, "Finalizing MPI"
+    if (self%myrank==0) print*, "Finalizing MPI"
 
     call MPI_Initialized(init_flag,ierr)
-    if(init_flag) call MPI_Finalize(ierr)
+    if (init_flag) call MPI_Finalize(ierr)
 #endif
 
   end subroutine powcalmpi_finish
@@ -277,34 +279,34 @@ contains
   !> initialises mpi for "serial" codes that run on single processes during mpi execution
   function serialmpi_init()
 
-    integer :: ierr, myrank, commserial
-    logical :: init_flag, serialmpi_init
+    integer :: ierr, myrank, commserial !< .
+    logical :: init_flag, serialmpi_init !< .
 
-    serialmpi_init = .False.
+    serialmpi_init = .false.
     myrank = 0
 
 #ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
-    if(.not. init_flag) call MPI_Init(ierr)
+    if (.not. init_flag) call MPI_Init(ierr)
     ! Duplicate MPI_COMM_WORLD to future proof the code
     call MPI_Comm_dup(MPI_COMM_WORLD,commserial,ierr)
 
     call MPI_Comm_rank(commserial,myrank,ierr)
 #endif
 
-    if(myrank == 0) serialmpi_init = .True.
+    if (myrank == 0) serialmpi_init = .true.
 
   end function serialmpi_init
 
   !> calls mpi_finalize for "serial" codes that run on single processes during mpi execution
   subroutine serialmpi_finish()
 
-    integer :: ierr
-    logical :: init_flag
+    integer :: ierr !< .
+    logical :: init_flag !< .
 
 #ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
-    if(init_flag) call MPI_Finalize(ierr)
+    if (init_flag) call MPI_Finalize(ierr)
 #endif
 
   end subroutine serialmpi_finish
@@ -312,37 +314,42 @@ contains
   !> sets reading and broadcast flags for powcal
   subroutine powcalmpi_setio(self)
 
-    integer :: ierr
+    integer :: ierr !< .
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
-    self%bcastflag = .True.
+    self%bcastflag = .true.
 
-    if(self%bcastflag) then  ! broadcasts are allowed in powcal
-       if(self%myrank == 0) print*,"Powcal data will be broadcasted."
-       if(self%nprocpowcal > 1) then  ! If there is more than one powcal process bcasts are required
-          self%bcastpowcalcontrol = .True.
-          self%bcastpowcaldata = .True.
+    if (self%bcastflag) then 
+       ! broadcasts are allowed in powcal
+       if (self%myrank == 0) print*,"Powcal data will be broadcasted."
+       if (self%nprocpowcal > 1) then 
+          ! If there is more than one powcal process bcasts are required
+          self%bcastpowcalcontrol = .true.
+          self%bcastpowcaldata = .true.
        else                             ! Otherwise they aren't
-          self%bcastpowcalcontrol = .False.
-          self%bcastpowcaldata = .False.
+          self%bcastpowcalcontrol = .false.
+          self%bcastpowcaldata = .false.
        endif
-       if(self%myrankpowcal == 0) then  ! powcal process 0 always reads the control data
-          self%readpowcalcontrol = .True.
+       if (self%myrankpowcal == 0) then 
+          ! powcal process 0 always reads the control data
+          self%readpowcalcontrol = .true.
        else
-          self%readpowcalcontrol = .False.
+          self%readpowcalcontrol = .false.
        endif
-       if(self%myrankpowcal == 0 .and. .not. self%bcastpowcal) then  ! When non combined broadcasts are used only powcal process 0 reads data
-          self%readpowcaldata = .True.
+       if (self%myrankpowcal == 0 .and. .not. self%bcastpowcal) then 
+          ! When non combined broadcasts are used only powcal process 0 reads data
+          self%readpowcaldata = .true.
        else
-          self%readpowcaldata = .False.
+          self%readpowcaldata = .false.
        endif
-    else  ! broadcasts are turned off and every process must read all data
-       if(self%myrank == 0) print*,"Powcal data will NOT be broadcasted - all processes will read from disk"
-       self%bcastpowcalcontrol = .False.
-       self%bcastpowcaldata = .False.
-       self%readpowcalcontrol = .True.
-       self%readpowcaldata = .True.
+    else 
+       ! broadcasts are turned off and every process must read all data
+       if (self%myrank == 0) print*,"Powcal data will NOT be broadcasted - all processes will read from disk"
+       self%bcastpowcalcontrol = .false.
+       self%bcastpowcaldata = .false.
+       self%readpowcalcontrol = .true.
+       self%readpowcaldata = .true.
     endif
 
 !    print*, "Proc ",self%myrank, self%bcastpowcalcontrol, self%bcastpowcaldata, self%readpowcalcontrol, self%readpowcaldata
@@ -354,12 +361,12 @@ contains
   !> assigns a set of starting points to each process
   subroutine powcalmpi_decomp(self,npowe,ng)
 
-    integer :: ierr
-    integer, intent(in) :: npowe,ng
+    integer :: ierr !< .
+    integer, intent(in) :: npowe,ng !< .
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
-!    if(self%myrankpowcal .eq. 0) print*, "Distributing", npowe ,"trajectories"
-!    if(self%myrankpowcal .eq. 0) &
+!    if(self%myrankpowcal==0) print*, "Distributing", npowe ,"trajectories"
+!    if(self%myrankpowcal==0) &
 !         print*, "Powcal distributing trajectories over",self%nprocpowcal,"processes"
 
     ! Allocate the array containing the number of trajectories for each process
@@ -386,11 +393,11 @@ contains
   !> stores it in an array for use by the collect step
   subroutine powcalmpi_localsize(self,npowe)
 
-    integer, intent(in) :: npowe
+    integer, intent(in) :: npowe !< .
     type(decomp_t), intent(inout) :: self !< decomp data structure
-    integer :: i, proc
+    integer :: i, proc !< .
 
-    if(self%nprocpowcal .eq. 1) then
+    if (self%nprocpowcal==1) then
        self%localsize(0) = npowe
        return
     end if
@@ -398,7 +405,7 @@ contains
     proc = 0
     i = 1
     do while(i .le. npowe)
-       if(proc == self%nprocpowcal) proc = 0
+       if (proc == self%nprocpowcal) proc = 0
        self%localsize(proc) = self%localsize(proc) + 1
        self%localdisp(proc+1:self%nprocpowcal-1) = self%localdisp(proc+1:self%nprocpowcal-1) + 1
        proc = proc + 1
@@ -410,9 +417,9 @@ contains
 
   subroutine smitermpi_barrier(comm)
 
-    integer, intent(in) :: comm
+    integer, intent(in) :: comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 #ifdef WITH_MPI
     call MPI_Barrier(comm,ierr)
 #endif
@@ -427,7 +434,7 @@ contains
   !> Collects data from all processes for writing to disk
   subroutine powcalmpi_collect(self)
 
-    integer :: ierr
+    integer :: ierr !< .
     type(powcal_t), intent(inout) :: self   !< object data structure
 
 #ifdef WITH_MPI
@@ -435,7 +442,7 @@ contains
     ! but saves a little memory and time. It only works if root and
     ! the other processes have different calls.
 
-    if(self%decomp%myrankpowcal .eq. 0) then
+    if (self%decomp%myrankpowcal==0) then
        call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
             self%powres%pows,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
             0,self%decomp%commpowcal,ierr)
@@ -542,7 +549,7 @@ contains
 
     endif
 #endif
-  end subroutine powcalmpi_collect
+end subroutine powcalmpi_collect
 
 
   !!----------------------------------------------------------------------------------
@@ -559,7 +566,7 @@ contains
     type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
     type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
     type(pplots_t), intent(out) :: plot !< vtk plot selectors
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     call bcast_pnumerics(numerics,rank,comm)
 
@@ -578,9 +585,9 @@ contains
 
     !! Arguments
     type(pnumerics_t), intent(inout) :: self !< input numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
@@ -597,8 +604,8 @@ contains
     ! Added during conversion to LIB/PFC structure
     call MPI_Bcast(self%usepsista,1,MPI_LOGICAL,0,comm,ierr)
 
-    if(self%ntrack > 0) then
-       if(rank .gt. 0) allocate(self%trackno(self%ntrack))
+    if (self%ntrack > 0) then
+       if (rank>0) allocate(self%trackno(self%ntrack))
        call MPI_Bcast(self%trackno,self%ntrack,MPI_INTEGER,0,comm,ierr)
     endif
 
@@ -615,7 +622,7 @@ contains
     call MPI_Bcast(self%tolin,3,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%lskylpfr,1,MPI_LOGICAL,0,comm,ierr)
 
-    if(self%ltermplane) then
+    if (self%ltermplane) then
        call bcast_termplanes(self%termp,rank,comm)
     else
        self%termp%ntermplane=0
@@ -634,8 +641,8 @@ contains
 #ifdef WITH_MPI
     call MPI_Bcast(self%ntermplane,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%ntermactive,1,MPI_INTEGER,0,comm,ierr)
-    if(self%ntermactive > 0) then
-       if(rank .gt. 0) then
+    if (self%ntermactive > 0) then
+       if (rank>0) then
           allocate(self%termplanedir(self%ntermactive+1,5),stat=status)
           allocate(self%termplane(self%ntermactive+1,2),stat=status)
           allocate(self%termstore(self%ntermactive+1,3),stat=status)
@@ -652,7 +659,7 @@ contains
 
     !! Arguments
     type(edgprof_t), intent(inout) :: self !< input ODE numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     integer :: ierr
 #ifdef WITH_MPI
@@ -701,9 +708,9 @@ contains
 
     !! Arguments
     type(onumerics_t), intent(inout) :: self !< input ODE numerical parameters
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%npdim,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%nstartcon,1,MPI_INTEGER,0,comm,ierr)
@@ -723,7 +730,7 @@ contains
 
     !! Arguments
     type(pfiles_t), intent(inout) :: self !< file names
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     integer :: ierr
 #ifdef WITH_MPI
@@ -740,9 +747,9 @@ contains
 
     !! Arguments
     type(pplots_t), intent(inout) :: self !< vtk plot selectors
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 #ifdef WITH_MPI
     ! Bcast the plot structure which contains 15 logicals that are commented 
     call MPI_Bcast(self%cartv,15,MPI_LOGICAL,0,comm,ierr) 
@@ -772,8 +779,8 @@ contains
 
     !! Arguments
     type(beq_t), intent(inout) :: self   !< object data structure
-    integer(ki4) , intent(in) :: rank,comm
-    integer :: ierr
+    integer(ki4) , intent(in) :: rank,comm !< .
+    integer :: ierr !< .
 
 #ifdef WITH_MPI
     ! Quite a few variables are missing from this routine however
@@ -802,41 +809,41 @@ contains
     ! btotbdry - need to check if
     call MPI_Bcast(self%btotbdry,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
       call MPI_Bcast(self%nzets,1,MPI_INTEGER,0,comm,ierr)
-    if(rank .gt. 0) allocate(self%f(self%mr+1), stat=status)
+    if (rank>0) allocate(self%f(self%mr+1), stat=status)
     call MPI_Bcast(self%f,self%mr+1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
     ! Splines
     fld_iter: select case (self%n%fldspec)
     case(1)         ! ITER case
        call bcast_spl2d(self%r,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%r)
+       if (rank>0 ) call spl2d_initpart(self%r)
        call bcast_spl2d(self%z,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%z)
+       if (rank>0 ) call spl2d_initpart(self%z)
        call bcast_spl2d(self%rjac,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%rjac)
+       if (rank>0 ) call spl2d_initpart(self%rjac)
     case default
        call bcast_spl2d(self%psi,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%psi)
+       if (rank>0 ) call spl2d_initpart(self%psi)
        call bcast_spl2d(self%dpsidr,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%dpsidr)
+       if (rank>0 ) call spl2d_initpart(self%dpsidr)
        call bcast_spl2d(self%dpsidz,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart(self%dpsidz)
+       if (rank>0 ) call spl2d_initpart(self%dpsidz)
     end select fld_iter
 
     fld_specn: select case (self%n%fldspec)
     case(3)
        call bcast_spl2d( self%rispldr,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart( self%rispldr )
+       if (rank>0 ) call spl2d_initpart( self%rispldr )
        call bcast_spl2d( self%rispldz,rank,comm)
-       if(rank .gt. 0 ) call spl2d_initpart( self%rispldz )
+       if (rank>0 ) call spl2d_initpart( self%rispldz )
     end select fld_specn
 
     ! ripple field data
     call MPI_Bcast(self%ivac,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
     call MPI_Bcast(self%nctrack,1,MPI_INTEGER,0,comm,ierr)
-    if(self%nctrack > 0) then
-       if(rank .gt. 0) allocate(self%ctrackrz(self%nctrack,2), stat=status)
+    if (self%nctrack > 0) then
+       if (rank>0) allocate(self%ctrackrz(self%nctrack,2), stat=status)
        call MPI_Bcast(self%ctrackrz,self%nctrack*2,MPI_DOUBLE_PRECISION,0,comm,ierr)
     endif
 
@@ -850,9 +857,9 @@ contains
 
     !! Arguments
     type(bnumerics_t), intent(inout) :: self   !< object data structure
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 #ifdef WITH_MPI
     ! Vac field type, fieldspec and centres
     call MPI_Bcast(self%vactype,3,MPI_CHARACTER,0,comm,ierr)
@@ -890,11 +897,11 @@ contains
 
     !! Arguments
     type(spl2d_t), intent(inout) :: self !< Spline struct
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     !! Variables
     character(*), parameter :: s_name='bcast_spl2d' !< subroutine name
-    integer :: splsize,ierr
+    integer :: splsize,ierr !< .
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%lunif,1,MPI_INTEGER,0,comm,ierr)
@@ -914,22 +921,22 @@ contains
 
     ! Allocate and bcast 2D spline coeffs
     splsize = self%n1p*self%n2p
-    if(rank .gt. 0) allocate(self%sampl(self%n1p,self%n2p), stat=status)
+    if (rank>0) allocate(self%sampl(self%n1p,self%n2p), stat=status)
     call log_alloc_check(m_name,s_name,40,status)
     call MPI_Bcast(self%sampl,splsize,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
-    if(rank .gt. 0) allocate(self%coeff(self%n1p,self%n2p), stat=status)
+    if (rank>0) allocate(self%coeff(self%n1p,self%n2p), stat=status)
     call MPI_Bcast(self%coeff,splsize,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
     ! Allocate and bcast 1D spline data
-    if(rank .gt. 0) allocate(self%pos1(self%n1p), stat=status)
+    if (rank>0) allocate(self%pos1(self%n1p), stat=status)
     call MPI_Bcast(self%pos1,self%n1p,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    if(rank .gt. 0) allocate(self%pos2(self%n2p), stat=status)
+    if (rank>0) allocate(self%pos2(self%n2p), stat=status)
     call MPI_Bcast(self%pos2,self%n2p,MPI_DOUBLE_PRECISION,0,comm,ierr)
     ! Knots
-    if(rank .gt. 0) allocate(self%knot1(self%n1p+self%nord), stat=status)
+    if (rank>0) allocate(self%knot1(self%n1p+self%nord), stat=status)
     call MPI_Bcast(self%knot1,self%n1p+self%nord,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    if(rank .gt. 0) allocate(self%knot2(self%n2p+self%nord), stat=status)
+    if (rank>0) allocate(self%knot2(self%n2p+self%nord), stat=status)
     call MPI_Bcast(self%knot2,self%n2p+self%nord,MPI_DOUBLE_PRECISION,0,comm,ierr)
 #endif
   end subroutine bcast_spl2d
@@ -942,8 +949,8 @@ contains
 
     !! Arguments
     type(geobjlist_t), intent(inout) :: self   !< object data structure
-    type(posveclis_t), intent(inout) :: vecx,vecb
-    integer(ki4) , intent(in) :: rank,comm
+    type(posveclis_t), intent(inout) :: vecx,vecb !< .
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     call bcast_geobjlist(self,rank,comm)
 
@@ -959,10 +966,10 @@ contains
 
     !! Arguments
     type(geobjlist_t), intent(inout) :: self   !< data structure
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     !! Variables
-    integer(ki4) :: ierr, size, num
+    integer(ki4) :: ierr, size, num !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%ngtype,1,MPI_INTEGER,0,comm,ierr)
 
@@ -972,7 +979,7 @@ contains
     ! list of nodes
     call MPI_Bcast(self%nnod,1,MPI_INTEGER,0,comm,ierr)
     if (self%nnod .gt. 0) then
-       if(rank .gt.0) allocate(self%nodl(self%nnod), stat=status)
+       if (rank .gt.0) allocate(self%nodl(self%nnod), stat=status)
        call MPI_Bcast(self%nodl,self%nnod,MPI_INTEGER,0,comm,ierr)
     endif
     call MPI_Bcast(self%np,1,MPI_INTEGER,0,comm,ierr)
@@ -981,13 +988,13 @@ contains
 
     ! obj
     if (self%ngtype==1.OR.self%nwset/=0) then
-       if(rank .gt.0) allocate(self%obj(self%ng), stat=status)
+       if (rank .gt.0) allocate(self%obj(self%ng), stat=status)
        ! obj contains only 4 byte real weight
        call MPI_Bcast(self%obj%weight,self%ng,MPI_REAL,0,comm,ierr) ! alloc?
     endif
     ! nodl and obj2
     if (self%ngtype/=1) then
-       if(rank .gt.0) allocate(self%obj2(self%ng), stat=status)
+       if (rank .gt.0) allocate(self%obj2(self%ng), stat=status)
        ! In previous versions an MPI_TYPE was created here however this is simpler
        size = sizeof(self%obj2(1)) ! HJL !*WARNING*! NOT Fortran standard
        call MPI_Bcast(self%obj2,size*self%ng,MPI_CHARACTER,0,comm,ierr)
@@ -1008,22 +1015,22 @@ contains
     ! Several broadcasts for the powcal code broadcasts were removed from here
     ! as they break the hdsgen broadcasts in the single exe version and appear unnecessary for powcal
 
-    if(rank .gt. 0) call geobjlist_addcube(self)
+    if (rank>0) call geobjlist_addcube(self)
 #endif
   end subroutine bcast_geobjlist
 
   subroutine bcast_position(self,rank,comm)
 
     type(posveclis_t), intent(inout) :: self !< position list data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer(ki4) :: ierr, i, num
+    integer(ki4) :: ierr, i, num !< .
 #ifdef WITH_MPI
     ! posvec is an array of 3 element 4 byte reals
     ! the position structure contains this an integer from position_h
     ! and since the addition of skylights some other info
     call MPI_Bcast(self%np,1,MPI_INTEGER,0,comm,ierr)
-    if(rank .gt. 0 .and. .not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)
+    if (rank>0 .and. .not. allocated(self%pos)) allocate(self%pos(self%np), stat=status)
     call MPI_Bcast(self%pos(1)%posvec(1),3*self%np,MPI_REAL,0,comm,ierr)
     ! Other bits
     ! These 3 broadcasts are declared ki2par which is a 2 byte intege
@@ -1042,10 +1049,10 @@ contains
     type(geobjlist_t), intent(inout) :: geobjl !< point data
     type(numerics_t), intent(inout) :: numerics !< geobjlist controls
     type(btree_t), intent(inout) :: btree !< btree data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     !! Variables
-    integer :: ierr
+    integer :: ierr !< .
 
     call bcast_numerics(numerics,geobjl,rank,comm)
 
@@ -1057,10 +1064,10 @@ contains
 
     !! Arguments
     type(btree_t), intent(inout) :: self !< btree data
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !< .
 
     !! Variables
-    integer :: ierr
+    integer :: ierr !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%nt,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%npter,1,MPI_INTEGER,0,comm,ierr)
@@ -1071,10 +1078,10 @@ contains
     ! These three are declared ki2 which is a 4 byte integer
     call MPI_Bcast(self%nxyz,3,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%hxyz,3,MPI_REAL,0,comm,ierr)
-    if(self%nt>0.and.self%npter>0.and.rank>0) then
+    if (self%nt>0.and.self%npter>0.and.rank>0) then
        allocate(self%pter(self%npter,self%nt),stat=status)
     endif
-    if(self%nt>0.and.rank>0) then
+    if (self%nt>0.and.rank>0) then
        allocate(self%desc(2,self%nt),self%corner(3,self%nt),stat=status)
     endif
     call MPI_Bcast(self%pter,self%nt * self%npter,MPI_INTEGER,0,comm,ierr)
@@ -1082,8 +1089,8 @@ contains
     call MPI_Bcast(self%desc,2*self%nt,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%corner,3*self%nt,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%nexten,1,MPI_INTEGER,0,comm,ierr)
-    if(self%nexten>0) then
-       if(rank>0) then
+    if (self%nexten>0) then
+       if (rank>0) then
           allocate(self%exten(3,self%nexten),stat=status)
        endif
        call MPI_Bcast(self%exten,3*self%nexten,MPI_INTEGER,0,comm,ierr)
@@ -1099,23 +1106,23 @@ contains
 
     !! arguments
     type(ls_t), intent(inout) :: self   !< ls data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
     !! Variables
-    integer :: ierr,ilist,isizel,isizeh
+    integer :: ierr,ilist,isizel,isizeh !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%nlist,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%n2,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%listype,1,MPI_INTEGER,0,comm,ierr)
 
-    if(rank > 0) then
+    if (rank > 0) then
        ilist = self%nlist
        isizel = ilist
        isizeh = self%n2
        call ls_init(self,isizeh,isizel)
        self%nlist = ilist
     endif
-    if(self%nlist>0) then
+    if (self%nlist>0) then
        call MPI_Bcast(self%list(1,2),self%nlist,MPI_INTEGER,0,comm,ierr)
     endif
 #endif
@@ -1127,10 +1134,10 @@ contains
     !! Arguments
     type(numerics_t), intent(inout) :: self !< local variable
     type(geobjlist_t), intent(inout) :: geobjl !< point data
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer :: ierr
-    integer :: type
+    integer :: ierr !< .
+    integer :: type !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%nsize,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%nsizep,1,MPI_INTEGER,0,comm,ierr)
@@ -1162,14 +1169,14 @@ contains
     call MPI_Bcast(self%position_coord_tfm%offset,3,MPI_REAL,0,comm,ierr)
     call MPI_Bcast(self%position_coord_tfm%matrix,9,MPI_REAL,0,comm,ierr)
     call MPI_Bcast(self%position_coord_tfm%ntfm,1,MPI_INTEGER,0,comm,ierr)
-    if(rank > 0) geobjl%tfmdata=self%position_coord_tfm
+    if (rank > 0) geobjl%tfmdata=self%position_coord_tfm
 
     ! quantfm data
     call MPI_Bcast(self%geobj_coord_tfm%hmin,3,MPI_REAL,0,comm,ierr)
     call MPI_Bcast(self%geobj_coord_tfm%rhmin,3,MPI_REAL,0,comm,ierr)
     call MPI_Bcast(self%geobj_coord_tfm%offvec,3,MPI_REAL,0,comm,ierr)
     call MPI_Bcast(self%geobj_coord_tfm%nqtfm,1,MPI_INTEGER,0,comm,ierr)
-    if(rank > 0) geobjl%quantfm=self%geobj_coord_tfm
+    if (rank > 0) geobjl%quantfm=self%geobj_coord_tfm
 
     ! boubo
     call MPI_Bcast(geobjl%coordbb,6,MPI_REAL,0,comm,ierr)
@@ -1182,9 +1189,9 @@ contains
 
     !! Arguments
     type(skyl_t), intent(inout) :: self !< local variable
-    integer(ki4) , intent(in) :: rank,comm
+    integer(ki4) , intent(in) :: rank,comm !< .
 
-    integer(ki4) :: ierr,ibdim,indbox(2)
+    integer(ki4) :: ierr,ibdim,indbox(2) !< .
 
 #ifdef WITH_MPI
     ! numerics structure
@@ -1210,9 +1217,9 @@ contains
        indbox=self%dimbox(:,1)
     end if
 
-    if(any(indbox < 1) .or. ibdim < 1) return
+    if (any(indbox < 1) .or. ibdim < 1) return
 
-    if(rank > 0) then
+    if (rank > 0) then
        allocate(self%inboxr(indbox(1),ibdim),self%inboxz(indbox(1),ibdim), &
             self%ouboxr(indbox(2),ibdim),self%ouboxz(indbox(2),ibdim),&
             stat=status)
@@ -1229,9 +1236,9 @@ contains
 
     !! Arguments
     type(sknumerics_t), intent(inout) :: self !< local variable
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !< .
 
-    integer(ki4) :: ierr
+    integer(ki4) :: ierr !< .
 #ifdef WITH_MPI
     call MPI_Bcast(self%psiexts,4,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%extsopt,4,MPI_INTEGER,0,comm,ierr)
@@ -1257,14 +1264,14 @@ contains
 
     !! Arguments
     type(dnumerics_t), intent(inout) :: self !< local variable
-    integer(ki4), intent(in) :: rank,comm
+    integer(ki4), intent(in) :: rank,comm !< .
 
-    integer :: ierr
+    integer :: ierr !< .
 
 #ifdef WITH_MPI
     call MPI_Bcast(self%tfm,80,MPI_CHARACTER,0,comm,ierr)
     call MPI_Bcast(self%npos,1,MPI_INTEGER,0,comm,ierr)
-    if(rank .gt. 0) then
+    if (rank>0) then
        allocate(self%r(self%npos),self%z(self%npos),stat=status)
     endif
     call MPI_Bcast(self%r,self%npos,MPI_DOUBLE_PRECISION,0,comm,ierr)

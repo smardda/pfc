@@ -1,5 +1,7 @@
+!> @addtogroup groupname7
+!> @{
 module skyl_h
-
+!> @}
   use const_kind_m
   use dcontrol_h
 

@@ -1,5 +1,7 @@
+!> @addtogroup groupname7
+!> @{
 module powcal_h
-
+!> @}
   use const_kind_m
   use geobjlist_h
   use geobj_m

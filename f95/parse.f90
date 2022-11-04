@@ -1,4 +1,7 @@
+!> @addtogroup groupname9
+!> @{
 program parse
+!> @}
   implicit none
 
   character(len=20) :: typetest !< type of test

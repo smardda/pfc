@@ -1,5 +1,7 @@
+!> @addtogroup groupname9
+!> @{
 program datvtk_p
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use date_time_m
