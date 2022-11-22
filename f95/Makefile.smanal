@@ -21,7 +21,7 @@ MODULES=$(SOURCES:.f90=.mod)
 
 OBJECTS=$(SOURCES:.f90=.o)
 
-$(PROG) : lib $(OBJECTS)
+$(PROG) : $(OBJECTS) lib
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
 
 $(OBJECTS):$(MODULES)

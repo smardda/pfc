@@ -1,0 +1,18 @@
+!>
+!!
+!! Open and read file containing data for equilibrium magnetic field.
+!!
+!! \Bold{Type}
+!!
+!! Magnetic field processing; Object-oriented module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}, \Tt{powcal}.
+!!
+!! \Bold{Function}
+!!
+!! Open and read file containing data for equilibrium magnetic field.
+!!
+!!
+!<

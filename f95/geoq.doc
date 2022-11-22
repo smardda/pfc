@@ -1,0 +1,18 @@
+!>
+!!
+!! This code manipulates geometry and equilibrium data.
+!!
+!! \Bold{Type}
+!!
+!! Geometrical processing, magnetic field processing; Main program unit.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}.
+!!
+!! \Bold{Function}
+!!
+!! This code manipulates geometry and equilibrium data.
+!!
+!!
+!<

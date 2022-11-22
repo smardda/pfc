@@ -1,7 +1,5 @@
-!> @addtogroup groupname8
-!> @{
 module soutfile_m
-!> @}
+
   use const_kind_m
   use const_numphys_h
   use log_m

@@ -1,0 +1,18 @@
+!>
+!!
+!! This module manipulates geoq objects, viz. geobjlist and \Tt{beq} data structure.
+!!
+!! \Bold{Type}
+!!
+!! Geometrical processing, magnetic field processing; Object-oriented module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}.
+!!
+!! \Bold{Function}
+!!
+!! This module manipulates geoq objects, viz. geobjlist and \Tt{beq} data structure.
+!!
+!!
+!<

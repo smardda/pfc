@@ -1,7 +1,4 @@
-!> @addtogroup groupname9
-!> @{
 program smiter
-!> @}
 #ifdef WITH_MPI
   use mpi
 #endif

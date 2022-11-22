@@ -1,7 +1,5 @@
-!> @addtogroup groupname8
-!> @{
-module geoq_p 
-!> @}
+module geoq_p
+
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -469,10 +467,8 @@ contains
 end module geoq_p
 
 #ifndef COMBINED
-!> @addtogroup groupname9
-!> @{
 program geoq
-!> @}
+
   use geoq_p
 
   type(decomp_t) :: decomp

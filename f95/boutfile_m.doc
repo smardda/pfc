@@ -1,0 +1,18 @@
+!>
+!!
+!! This module writes the output \Tt{out} files for \Tt{beq}.
+!!
+!! \Bold{Type}
+!!
+!! File handling, magnetic field processing; Object-oriented module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}.
+!!
+!! \Bold{Function}
+!!
+!! This module writes the output \Tt{out} files for \Tt{beq}.
+!!
+!!
+!<

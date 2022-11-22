@@ -1,0 +1,18 @@
+!>
+!!
+!! Definition of two types, beqan_t and eqparms_t, which is a subset of beqan_t.
+!!
+!! \Bold{Type}
+!!
+!! Magnetic field processing; Data module.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{geoq}, \Tt{powcal}.
+!!
+!! \Bold{Function}
+!!
+!! Definition of two types, beqan_t and eqparms_t, which is a subset of beqan_t.
+!!
+!!
+!<

@@ -1,7 +1,5 @@
-!> @addtogroup groupname8
-!> @{
 module geoq_m
-!> @}
+
   use const_kind_m
   use log_m
   use clock_m
@@ -231,7 +229,7 @@ subroutine geoq_init(self)
      else
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
-  case (4,8,16,17)
+  case (4,8)
      ! boundary from X-point
      call beq_psix(self%beq)
      !B     if (beq_rsig()>0) then

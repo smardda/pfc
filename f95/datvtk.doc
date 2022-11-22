@@ -1,0 +1,18 @@
+!>
+!!
+!! This code processes a \Tt{dat} file to give a \Tt{vtk} file.
+!!
+!! \Bold{Type}
+!!
+!! Geometrical processing; Main program unit.
+!!
+!! \Bold{Purpose}
+!!
+!! Used by codes \Tt{datvtk}.
+!!
+!! \Bold{Function}
+!!
+!! This code processes a \Tt{dat} file to give a \Tt{vtk} file.
+!!
+!!
+!<
