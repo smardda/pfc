@@ -308,6 +308,10 @@ module namelist
    logical :: equil_mastequ !<  default true, MAST-U equ file has right helicity even if equil_helicity_ok=.false.
    !> Specifies file containing spl3d format vacuum field
      character(len=80) :: beq_vacuum_field_file !<  .
+   !> Defines the number of regions the code should be using. Currenly the options are 1 (default value)
+   !! and 4 (to use 2 regions, the option 4 must be used). In the case where n_regions>1 the code 
+   !! expects that beq_bdryopt should be set to 4 currently.
+    integer(ki4) ::       n_regions=4 !< 
   end type beqparameters
 
 !---------------------------------------------------------------------
@@ -497,66 +501,96 @@ module namelist
 !! - Maximum number of parameters which may used to define fuction,
 !! MAX_NUMBER_OF_PARAMETERS=100
   type, public :: edgprofparameters
-   !> power deposition formula to be used, for each of                                                                                                              
-   !! of the 4 regions outlined in the double null case.
-   !! In the case of a single null, you can use
-   !! profile_formula(1) for inboard, and profile_formula(4) for outboard.
-   !! - 'unset' standard exponential profile
+   !> power deposition formula to be used for each region. In the case where 
+   !! multi_region=.false. (default value), the profile_formula used for 
+   !! each region is set to profile_formula(1) for all 4 regions, regardless of
+   !! input for profile_formula.
+   !! - 'unset' standard exponential profile (default)
    !! - 'exp' standard exponential profile
    !! - 'expdouble' as two exponentials
    !! - 'eich' as defined by T. Eich
-   !! - 'samples' as a set set of samples at specified positions.
+   !! - 'samples' as a set set of samples at specified positions. 
    !! N.B. it is up to the user to arrange normalisation.
    !! - 'userdefined' as special f95 subroutine coded by user, called
    !! edgprof_userdefined in file edgprof_m.f90.
    !! N.B. it is up to the user to arrange normalisation.
-     character(len=80) :: profile_formula(4) !<.
-   !> \f$ F \f$ power split ion to electron direction,
-   !! must lie between 0 and 1, default 0.5
-     real(kr8) :: power_split !<.
-   !> \f$ \lambda_m \f$ power decay length at midplane (m), for each of
-   !! of the 4 regions outlined in the double null case. In the case of a single
-   !! null, you can use decay_length(1) for inboard, and decay_length(4) for outboard.
-   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$
-   !! if Eich formula used, default 0.012 (12mm)
-     real(kr8) :: decay_length(4) !<.
-   !> \f$ P_{loss} \f$ power crossing the separatrix (W),
-   !! default 7.5e+06 (7.5MW)
-     real(kr8) :: power_loss !<.
-   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm).
-   !! Default -1, if negative, ignored
-     real(kr8) :: q_parallel0 !<.
-   !>  \f$ \sigma \f$ Eich formula length (m), for each of                                                                                                              
-   !! of the 4 regions outlined in the double null case. In the case of a single                                                                                                   
-   !! null, you can use diffusion_length(1) for inboard, and diffusion_length(4) for outboard.    
-     real(kr8) :: diffusion_length(4) !<.
+     character(len=80) :: profile_formula(4) !<
+   !> \f$ F \f$ power split ion to electron direction. \n
+   !! Must lie between 0 and 1 \n
+   !! Default = 0.5
+     real(kr8) :: power_split !<
+   !> \f$ \lambda_m \f$ power decay length at midplane (m) to be used for \n
+   !! each region. In the case where multi_region=.false. 
+   !! (default value), the decay_length used for 
+   !! each region is set to decay_length(1) for all 4 regions, regardless of
+   !! input for decay_length.
+   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$ \n
+   !! if Eich formula used \n
+   !! Default = 0.012 (units m)
+     real(kr8) :: decay_length(4) !<
+   !> \f$ P_{loss} \f$ power crossing the separatrix (W) for \n
+   !! each one of the 4 regions. In the case where multi_region=.false. 
+   !! (default value), the power_loss used for 
+   !! each region is set to power_loss(1) for all 4 regions, regardless of
+   !! input for power_loss.
+   !! Default = 7.5e+06 (Units Watts)
+     real(kr8) :: power_loss(4) !<
+   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm). \n
+   !! Default = -1 (if negative it is ignored)
+     real(kr8) :: q_parallel0 !<
+   !>  \f$ \sigma \f$ Eich formula length (m) for each one of the 4 regions.
+   !! In the case where multi_region=.false. 
+   !! (default value), the diffusion_length used for 
+   !! each region is set to diffusion_length(1) for all 4 regions, regardless of
+   !! input for diffusion_length .
+   !! Default = 0
+     real(kr8) :: diffusion_length(4) !<
    !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
-   !! for expdouble formula
-     real(kr8) :: ratio_of_q_parallel0_near !<.
+   !! for expdouble formula \n
+   !! Default = 0
+     real(kr8) :: ratio_of_q_parallel0_near !<
    !> \f$ \lambda_{q,near} \f$ near-SOL power decay length at midplane (m)
-   !! for expdouble formula
-     real(kr8) :: decay_length_near !<.
-   !> Define profile as samples at these positions
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<.
-   !> Profile determined as samples
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<.
+   !! for expdouble formula for each one of the 4 regions.  \n
+   !! In the case where multi_region=.false. 
+   !! (default value), the decay_length_near used for 
+   !! each region is set to decay_length_near(1) for all 4 regions, regardless of
+   !! input for decay_length_near.
+   !! Default = 0
+     real(kr8) :: decay_length_near(4) !<
+   !> Define profile as samples at these positions \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<
+   !> Profile determined as samples \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<
    !> whether positions in distance or flux from SOL
    !! - 'radius'
-   !! - 'flux'
-     character(len=80) :: coord_of_positions !<.
-   !> Number of positions actually used. If sampling,
-   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS
-     integer(ki4) :: number_of_positions  !<.
-   !> Parameters which may be used in user-defined function
-     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<.
-   !> Parameters which may be used in user-defined function
-     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<.
-   !> Number of real parameters actually used. If defining function,
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS
-     integer(ki4) :: number_of_real_parameters  !<.
-   !> Number of integer parameters actually used. If defining function,
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS
-     integer(ki4) :: number_of_integer_parameters  !<.
+   !! - 'flux' \n
+   !! Default = radius
+     character(len=80) :: coord_of_positions !<
+   !> Number of positions actually used. If sampling, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS \n
+   !! Default = 0
+     integer(ki4) :: number_of_positions  !<
+   !> Parameters which may be used in user-defined function \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<
+   !> Parameters which may be used in user-defined function \n
+   !! Default = 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<
+   !> Number of real parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
+   !! Default = 0
+     integer(ki4) :: number_of_real_parameters  !<
+   !> Number of integer parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
+   !! Default = 0
+     integer(ki4) :: number_of_integer_parameters  !<
+   !> Choice of calculation of lambda_q 
+   !! Default='Default'
+       character(len=80) :: lambda_q_choice(4) !<  
+    !> To allow for multiple regions, set this to true (default=.false.)
+       logical :: multi_region=.true. !<
   end type edgprofparameters
 
 !---------------------------------------------------------------------
