@@ -254,6 +254,7 @@ subroutine geoq_init(self)
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psixpt)
      end if
   case (11,12)
+     call beq_psix(self%beq)
      ! boundary from EQDSK regardless
      self%beq%psibdry=self%beq%psiqbdry
   case (13,14,15)
