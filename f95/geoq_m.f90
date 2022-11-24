@@ -200,6 +200,7 @@ subroutine geoq_init(self)
   ! psi boundary definition
   boundary_type: select case (self%beq%n%bdryopt)
   case (1,5,9)
+       call beq_psix(self%beq)
      ! user defined
      self%beq%psibdry=self%beq%n%psiref
      self%beq%psiltr=self%beq%n%psiref
@@ -226,6 +227,7 @@ subroutine geoq_init(self)
   case (6)
      ! boundary based on geometry sampled at rate given by parameter deltal
      call geoq_psisilh(self)
+     call beq_psix(self%beq)
      if (beq_rsig()>0) then
         self%beq%psibdry=min(self%beq%psiqbdry,self%beq%psiltr)
      else
