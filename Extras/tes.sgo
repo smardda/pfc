@@ -47,7 +47,7 @@ equil=$HSAUX/Data/Equilibrium
 ### 0+1 = continue execution
 ### 2+2 = force overwrite of mag and all execution outputs
 sw=2+2
-## set beq_fldspec (see namelist beqparameters documentation)
+## set ctl file character id, may correspond to beq_fldspec (see namelist beqparameters documentation)
 flds=3
 ## g for global, l for local calculation
 cal=g

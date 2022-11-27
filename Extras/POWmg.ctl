@@ -29,12 +29,12 @@
       power_loss=POWe+06,
 /
 &odesparameters
-      initial_dt=0.01,
+      initial_dt=0.0001,
       abs_error=0.0001,
       rel_error=0.0001,
       termination_parameters(1)=1.,
       termination_parameters(2)=0.1,
       termination_parameters(3)=0.,
-      max_numsteps=10000,
+      max_numsteps=100000,
       max_zeta=2000.,
 /
