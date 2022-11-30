@@ -57,6 +57,7 @@ eqfile=EQX40.eqdsk
 eqid=EQX40
 ## default no vacuum field file
 vfld=null
+rbt=0.64
 ## B. geometry files
 gres=resf14r
 gshad=shado14r
@@ -83,6 +84,7 @@ case "$key" in
   gwall) gwall=${arg//+/ };;
   bdry) bdry=${arg//+/ };;
   vfld) vfld=${arg//+/ };;
+  rbt) rbt=${arg};;
   decl) decl=${arg};;
   pow) pow=${arg};;
   ?) echo "unknown key";exit;;
@@ -104,6 +106,7 @@ echo "cal = " $cal
 echo "eqfile = " $eqfile
 echo "eqid = " $eqid
 echo "vacf = " $vacf
+echo "rbt = " $rbt
 echo "gres = " $gres
 echo "gshad = " $gshad
 echo "gwall = " $gwall
@@ -122,7 +125,7 @@ if [ ! -d $rundir ] ; then rm -f $rundir;mkdir $rundir;fi;cd $rundir
 if [ ! -d M ] ; then rm -f M;mkdir M;fi;cd M
     if [ ${swa[0]} == 2 ] || [ ! -e "$vacf".sp3  ] ; then
       ln -sf $equil/$vacf.txt
-      sed -e "s/MLF/$vacf/" < $extra/MAG.ctl > $vacf.ctl
+      sed -e "s/MLF/$vacf/" -e "s/RBT/$rbt/" < $extra/MAGm.ctl > $vacf.ctl
       $INT/cmdwrap $tempdir magtfm $vacf
       if [ $? -ne 0 ] ; then exit 1 ;fi
     fi
