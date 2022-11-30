@@ -4,6 +4,7 @@ image:
 stages:
   - build
   - test
+  - pages
 
 build-pfc:
   variables:
@@ -12,7 +13,7 @@ build-pfc:
   script:
     - export DEBIAN_FRONTEND=noninteractive # prevent interactive prompts when running apt
     - apt-get -y update
-    - apt-get -y install gfortran make gnuplot
+    - apt-get -y install gfortran make gnuplot graphviz texlive-font-utils doxygen
       # Discard symbol in libQt5Core that causes gnuplot to crash.
       # The issue is apparently to do with Qt5 making a system call that's not
       # available in some older kernel versions.
@@ -22,8 +23,8 @@ build-pfc:
     - export SMITER_DIR="$(pwd)"
     - export SMALIB="$(pwd)/smardda-lib"
     - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
-    - bash smardda-lib/exec/build gfortran_dbg N
-    - bash exec/build gfortran_dbg N
+    - bash smardda-lib/exec/build gfortran_dbg
+    - bash exec/build gfortran_dbg
   artifacts:
     untracked: true
     paths:
@@ -31,6 +32,7 @@ build-pfc:
       - smardda-lib/fortd/
       - smardda-lib/exec/
       - exec/
+      - smardda-lib/doc/srcdoc/html/
   tags:
     - lower-privacy
     - ubuntu
@@ -59,3 +61,17 @@ run-test-deck-pfc-dbg:
   tags:
     - lower-privacy
     - ubuntu
+
+pages:
+  stage: pages
+  dependencies:
+    - build-pfc
+  script:
+    # Move built docs to 'public' folder for GitLab pages
+    - mkdir -p public
+    - cp -a smardda-lib/doc/srcdoc/html/. public
+  artifacts:
+    paths:
+    - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
