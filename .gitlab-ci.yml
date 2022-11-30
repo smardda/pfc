@@ -56,7 +56,7 @@ run-test-deck-pfc-dbg:
     - cd ./smiteraux # must be in smiteraux directory to run test deck
     - bash ./tests.bash
     - cd ..
-    - tar -xf smiter-aux-results/smiter-aux.tar.xz -C smiter-aux-results
+    - tar -xf smiter-aux-results/smiteraux.tar.xz -C smiter-aux-results
     - bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
   tags:
     - lower-privacy
