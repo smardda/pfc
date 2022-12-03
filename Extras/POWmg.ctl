@@ -22,7 +22,7 @@
 &termplaneparameters
       termplane_intersection=0
       termplane_direction=2
-      termplane_position=-1.29
+      termplane_position=0.
 /
 &edgprofparameters
       decay_length=DECL,
