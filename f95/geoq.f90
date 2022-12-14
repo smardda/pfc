@@ -145,6 +145,16 @@ contains
     ifldspec=numerics%fldspec
     ! default flag for external code generating file defining axisymmetric field
     numerics%fiesta=0
+    if(len(numerics%eqtype) .ge.  5 ) then
+        if(numerics%eqtype(1:5) == 'eqdsk' ) then
+            if(len(TRIM(numerics%eqtype)) == 5 ) then
+            
+            else 
+                call misc_getfileunit(numerics%fiesta)
+                read(numerics%eqtype(6:),*) numerics%fiesta
+            end if
+        end if
+    end if
     select case (numerics%eqtype)
     case ('ana')
        ! need additional data to specify field analytically
