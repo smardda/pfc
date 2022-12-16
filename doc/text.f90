@@ -156,7 +156,9 @@
 !! 4. Outboard of both singular flux surfaces
 !!
 !! The behaviour in each may be separately specified as exponential,
-!! double-exponential, Eich etc.
+!! double-exponential, Eich etc. The power deposition profiles will be
+!! assumed continuous, so it is only possible to specify separately
+!! the total inboard and total outboard power.
 !! 
 !! To determine which profile is appropriate for a given fieldline
 !! (supposed to correspond to flux surface value \f$ \psi \f$),
@@ -200,25 +202,38 @@
 !! \f$ R=R_i \f$ on the midplane.
 !! 
 !! Following Arter et al, the power density must be normalised by the
-!! total loss, let this be \f$ P_{li} \f$ in part \f$ i \f$, then
+!! total loss, let this be \f$ P_{in} \f$ summed over parts \f$ 1 \f$ and \f$ 2 \f$,
+!! and \f$ P_{ou} \f$ summed over parts \f$ 3 \f$ and \f$ 4 \f$, then
 !! approximating an element of midplane area by 
 !! \f{equation}{
 !! dA = d\phi R_i d (\Delta R_i)
 !! \f}
-!! it follows from axisymmetry that for \f$ i=3,4 \f$ (with obvious
-!! index changes for \f$ i=1,2 \f$)
+!! it follows from axisymmetry that for the outer part \f$ i=3,4 \f$ (with obvious
+!! index changes for the inner part \f$ i=1,2 \f$)
 !! \f{equation}{
-!! 2\pi R_i Q_i \int^{R=R_{i+1}}_{R=R_i} d (\Delta R_i)
-!! f_i(\Delta R_i) = P_{li}
+!! 2\pi R_3 Q_3 \int^{R=R_4}_{R=R_3} d (\Delta R_3)
+!! f_3(\Delta R_3) 
+!! + 2\pi R_4 Q_4 \int^{R=R_5}_{R=R_4} d (\Delta R_4)
+!! f_4(\Delta R_4) = P_{ou}
 !! \f}
 !! where \f$ R_5=\infty \f$, or in practice the major radius of the PFC
-!! at outer midplane,
-!! \f{equation}{
-!! Q_i = \frac{P_{li}}{ 2\pi R_i \int^{|R_{i+1}-R_i|}_0 dx f_i(x)}
+!! at outer midplane.
+!! In the case of four regions, continuity of !! the power deposition profile
+!! implies that 
+!! \f{equation}
+!! Q_2 = \frac{F_1 Q_1 f_1(0)}{F_2f_2(R_2-R_1)}\\
+!! Q_3 = \frac{F_4 Q_4 f_4(0)}{F_3f_3(R_4-R_3)}
 !! \f}
-!! Similarly for \f$ i=1,2 \f$
+!! Thus substituting for \f$ Q_3 \f$ in terms of  \f$ Q_4 \f$ gives
 !! \f{equation}{
-!! Q_i = \frac{P_{li}}{ 2\pi R_i \int^{|R_{i-1}-R_i|}_0 dx f_i(x)}
+!! Q_4 = \frac{P_{ou}}{ 2\pi \frac{F_4 f_4(0)}{F_3f_3(R_4-R_3)} 
+!! R_3 \int^{R_4-R_3}_0 dx f_3(x)}
+!! + 2\pi R_4 \int^{R_5-R_4}_0 dx f_4(x)}
+!! \f}
+!! Similarly for the inner region
+!! \f{equation}{
+!! Q_1 = \frac{P_{in}}{ 2\pi R_1 \int^{R_1-R_0}_0 dx f_1(x)}
+!! 2\pi \frac{F_1 f_1(0)}{F_2f_2(R_2-R_1)} R_2 \int^{R_2-R_1}_0 dx f_2(x)}
 !! \f}
 !! where \f$ R_0=0 \f$ or in practice the major radius of the PFC
 !! at inner midplane. For Eich the situation is slightly different as there is a
@@ -252,14 +267,6 @@
 !! \f}
 !! from which the normalisation follows by substituting \f$ x=R' \f$.
 !!
-!! One issue when there is more than one region is lack of continuity of 
-!! the power deposition profile. In the case of four regions, this
-!! implies that 
-!! \f{equation}
-!! Q_2 = \frac{F_1 Q_1 f_1(0)}{F_2f_2(R_2-R_1)}\\
-!! Q_3 = \frac{F_4 Q_4 f_4(0)}{F_3f_3(R_4-R_3)}
-!! \f}
-!! 
 !! \subsection sec1alg SMARDDA Algorithm
 !! Reduces number of triangles to test by:
 !! \arg Recursive division of 3-D space into cuboidal boxes, aka octree.
