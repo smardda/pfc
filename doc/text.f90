@@ -227,12 +227,12 @@
 !! Thus substituting for \f$ Q_3 \f$ in terms of  \f$ Q_4 \f$ gives
 !! \f{equation}{
 !! Q_4 = \frac{P_{ou}}{ 2\pi \frac{F_4 f_4(0)}{F_3f_3(R_4-R_3)} 
-!! R_3 \int^{R_4-R_3}_0 dx f_3(x)}
+!! R_3 \int^{R_4-R_3}_0 dx f_3(x)
 !! + 2\pi R_4 \int^{R_5-R_4}_0 dx f_4(x)}
 !! \f}
 !! Similarly for the inner region
 !! \f{equation}{
-!! Q_1 = \frac{P_{in}}{ 2\pi R_1 \int^{R_1-R_0}_0 dx f_1(x)}
+!! Q_1 = \frac{P_{in}}{ 2\pi R_1 \int^{R_1-R_0}_0 dx f_1(x)+
 !! 2\pi \frac{F_1 f_1(0)}{F_2f_2(R_2-R_1)} R_2 \int^{R_2-R_1}_0 dx f_2(x)}
 !! \f}
 !! where \f$ R_0=0 \f$ or in practice the major radius of the PFC
