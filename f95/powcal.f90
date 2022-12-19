@@ -158,7 +158,7 @@ contains
        call pcontrol_init(fileroot)
        ! Initialise fint to 1.0. It is used in userdefined formula
        powcal%edgprof%fint = 1.0
-       call pcontrol_read(file,numerics,onumerics,powcal%edgprof,plot,combined)
+       call pcontrol_read(file,numerics,onumerics,powcal%edgprof,plot,combined,powcal%powres%beq%number_regions)
        call clock_stop(2)
     endif
     if(powcal%decomp%bcastpowcalcontrol) then

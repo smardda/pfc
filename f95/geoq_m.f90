@@ -205,6 +205,7 @@ subroutine geoq_init(self)
      self%beq%psibdry=self%beq%n%psiref
      self%beq%psiltr=self%beq%n%psiref
   case (2)
+     call beq_psix(self%beq)
      ! boundary based on nodes of geometry only unless value in eqdsk over-rides
      if (beq_rsig()>0) then
         self%beq%psibdry=min(self%beq%psiqbdry,self%beq%psiltr)
@@ -212,6 +213,7 @@ subroutine geoq_init(self)
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
   case (3)
+     call beq_psix(self%beq)
      ! boundary based on geometry sampled at rate given by parameter deltal
      call geoq_psisilh(self)
      !B     if (beq_rsig()>0) then
@@ -225,9 +227,9 @@ subroutine geoq_init(self)
      self%beq%psibdry=self%beq%psiltr
      !B     end if
   case (6)
+     call beq_psix(self%beq)
      ! boundary based on geometry sampled at rate given by parameter deltal
      call geoq_psisilh(self)
-     call beq_psix(self%beq)
      if (beq_rsig()>0) then
         self%beq%psibdry=min(self%beq%psiqbdry,self%beq%psiltr)
      else
@@ -260,6 +262,7 @@ subroutine geoq_init(self)
      ! boundary from EQDSK regardless
      self%beq%psibdry=self%beq%psiqbdry
   case (13,14,15)
+     call beq_psix(self%beq)
      ! boundary based on nodes of geometry only
      self%beq%psibdry=self%beq%psiltr
   end select boundary_type
@@ -267,7 +270,16 @@ subroutine geoq_init(self)
   if (beq_rsig()*(self%beq%psiqbdry-self%beq%psibdry)<0) then
      call log_error(m_name,s_name,1,error_warning,'boundary psi outside separatrix')
   end if
-
+  !*********************************************************************
+  !Stores to array for boundaries which don't use beq_bdryrb_dn
+  !*********************************************************************
+  boundary_set_dn: select case (self%beq%n%bdryopt)
+    case (1,2,3,13)
+        self%beq%rbdryarr=self%beq%rbdryarr(0)
+        self%beq%btotbdryarr=self%beq%btotbdryarr(0)
+        self%beq%bpbdryarr=self%beq%bpbdryarr(0)
+  end select boundary_set_dn
+  
   call log_error(m_name,s_name,80,log_info,'boundary psi value set')
   call log_value("psi boundary reference",self%beq%psibdry)
   call log_value("psi limiter or X-point",self%beq%psiltr)

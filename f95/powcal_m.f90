@@ -158,10 +158,20 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   endif
   psixpt=self%powres%beq%psixptarr
   zsign=beq_rsig()
-  call edgprof_factors(self%edgprof,&
-       &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
-       self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
-       self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
+  if(self%powres%beq%number_regions==1) then
+    call edgprof_factors(self%edgprof,&
+       &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign)
+  else if(self%powres%beq%number_regions==2) then
+     call edgprof_factors_2_region(self%edgprof,&
+          &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
+          self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
+          self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
+  else if(self%powres%beq%number_regions==4) then
+     call edgprof_factors_4_region(self%edgprof,&
+          &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
+          self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
+          self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
+  end if
   ! track controls
   self%powres%flinx=plot%flinx
   self%powres%flinends=plot%flinends

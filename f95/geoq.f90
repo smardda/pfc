@@ -207,14 +207,22 @@ contains
     case (2)
        call beq_centre(geoq%beq)
        call geoq_init(geoq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
        call beq_xilt(geoq%beq)
        call geoq_objaddcon(geoq)
     case (3)
        call beq_centre(geoq%beq)
        call geoq_init(geoq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
        call beq_rispld(geoq%beq)
        call beq_xilt(geoq%beq)
@@ -230,7 +238,11 @@ contains
        call beq_rextrema(geoq%beq)
        call beq_rpsi(geoq%beq)
        call beq_rjpsi(geoq%beq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
     end select
     call clock_stop(6)

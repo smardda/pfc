@@ -74,7 +74,7 @@ subroutine pcontrol_init(fileroot)
 end  subroutine pcontrol_init
 !---------------------------------------------------------------------
 !> read data for this run
-subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
+subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined,number_of_regions)
 
   !! arguments
   type(pfiles_t), intent(out) :: file !< file names
@@ -83,7 +83,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   type(edgprof_t), intent(out) :: edgprof !< input ODE numerical parameters
   type(pplots_t), intent(out) :: plot !< vtk plot selectors
   logical,intent(in) :: combined !< is the code running as a single executable
-
+  integer(ki4) :: number_of_regions !< number of regions 
+  
   !!local
   character(*), parameter :: s_name='pcontrol_read' !< subroutine name
   character(len=80) :: vtk_input_file  !< vtk format geometry data input file
@@ -316,7 +317,7 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
 
   call powcal_readcon(numerics,nin)
 
-  call edgprof_readcon(edgprof,numerics,nin)
+  call edgprof_readcon(edgprof,numerics,nin,number_of_regions)
 
   call odes_readcon(onumerics,nin)
 
