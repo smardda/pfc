@@ -47,7 +47,7 @@ equil=$HSAUX/Data/Equilibrium
 ### 0+1 = continue execution
 ### 2+2 = force overwrite of mag and all execution outputs
 sw=2+2
-## set ctl file character id, may correspond to beq_fldspec (see namelist beqparameters documentation)
+## set beq_fldspec (see namelist beqparameters documentation)
 flds=3
 ## g for global, l for local calculation
 cal=g
@@ -57,7 +57,6 @@ eqfile=EQX40.eqdsk
 eqid=EQX40
 ## default no vacuum field file
 vfld=null
-rbt=0.64
 ## B. geometry files
 gres=resf14r
 gshad=shado14r
@@ -84,7 +83,6 @@ case "$key" in
   gwall) gwall=${arg//+/ };;
   bdry) bdry=${arg//+/ };;
   vfld) vfld=${arg//+/ };;
-  rbt) rbt=${arg};;
   decl) decl=${arg};;
   pow) pow=${arg};;
   ?) echo "unknown key";exit;;
@@ -106,7 +104,6 @@ echo "cal = " $cal
 echo "eqfile = " $eqfile
 echo "eqid = " $eqid
 echo "vacf = " $vacf
-echo "rbt = " $rbt
 echo "gres = " $gres
 echo "gshad = " $gshad
 echo "gwall = " $gwall
@@ -125,7 +122,7 @@ if [ ! -d $rundir ] ; then rm -f $rundir;mkdir $rundir;fi;cd $rundir
 if [ ! -d M ] ; then rm -f M;mkdir M;fi;cd M
     if [ ${swa[0]} == 2 ] || [ ! -e "$vacf".sp3  ] ; then
       ln -sf $equil/$vacf.txt
-      sed -e "s/MLF/$vacf/" -e "s/RBT/$rbt/" < $extra/MAGm.ctl > $vacf.ctl
+      sed -e "s/MLF/$vacf/" < $extra/MAG.ctl > $vacf.ctl
       $INT/cmdwrap $tempdir magtfm $vacf
       if [ $? -ne 0 ] ; then exit 1 ;fi
     fi
