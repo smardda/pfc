@@ -25,6 +25,7 @@ module pcontrol_m
   public :: &
  &pcontrol_init, &
  &pcontrol_read, &
+  &pcontrol_readcon, &
  &pcontrol_fix  !< create consistent controls
 
 
@@ -74,7 +75,7 @@ subroutine pcontrol_init(fileroot)
 end  subroutine pcontrol_init
 !---------------------------------------------------------------------
 !> read data for this run
-subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined,number_of_regions)
+subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
 
   !! arguments
   type(pfiles_t), intent(out) :: file !< file names
@@ -314,14 +315,25 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined,number_of
      plot%flinm = plot_flinptz
      call log_error(m_name,s_name,31,error_warning,'Obsolete file handling feature activated')
   end if
-
+  
   call powcal_readcon(numerics,nin)
+  
+end  subroutine pcontrol_read
+!---------------------------------------------------------------------
+!> read data for this run
+subroutine pcontrol_readcon(numerics,onumerics,edgprof,number_of_regions)
+
+  !! arguments
+  type(pnumerics_t), intent(inout) :: numerics !< input numerical parameters
+  type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
+  type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
+  integer(ki4) :: number_of_regions !< number of regions 
 
   call edgprof_readcon(edgprof,numerics,nin,number_of_regions)
-
+  
   call odes_readcon(onumerics,nin)
 
-end  subroutine pcontrol_read
+end  subroutine pcontrol_readcon
 !---------------------------------------------------------------------
 !> create consistent controls
 subroutine pcontrol_fix(numerics,onumerics,ifldspec)

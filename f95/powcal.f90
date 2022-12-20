@@ -158,7 +158,7 @@ contains
        call pcontrol_init(fileroot)
        ! Initialise fint to 1.0. It is used in userdefined formula
        powcal%edgprof%fint = 1.0
-       call pcontrol_read(file,numerics,onumerics,powcal%edgprof,plot,combined,powcal%powres%beq%number_regions)
+       call pcontrol_read(file,numerics,onumerics,powcal%edgprof,plot,combined)
        call clock_stop(2)
     endif
     if(powcal%decomp%bcastpowcalcontrol) then
@@ -185,6 +185,7 @@ contains
        end select fld_specn
        if (iextra==2) call skyl_read(powcal%powres%skyl,file%geoq)
     endif
+    call pcontrol_readcon(numerics,onumerics,powcal%edgprof,powcal%powres%beq%number_regions)
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(3)
     if(powcal%decomp%bcastpowcaldata) then
        if(powcal%decomp%myrankpowcal == 0) call clock_start(31,'beq broadcast')
@@ -194,10 +195,8 @@ contains
        endif
        if(powcal%decomp%myrankpowcal == 0) call clock_stop(31)
     endif
-
     ifldspec=powcal%powres%beq%n%fldspec
     call pcontrol_fix(numerics,onumerics,ifldspec)
-
     !--------------------------------------------------------------------------
     !! special vacuum field file
     if(powcal%decomp%myrankpowcal == 0) call clock_start(9,'vacfld_init time')
