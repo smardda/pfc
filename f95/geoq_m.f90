@@ -275,9 +275,9 @@ subroutine geoq_init(self)
   !*********************************************************************
   boundary_set_dn: select case (self%beq%n%bdryopt)
     case (1,2,3,13)
-        self%beq%rbdryarr=self%beq%rbdryarr(0)
-        self%beq%btotbdryarr=self%beq%btotbdryarr(0)
-        self%beq%bpbdryarr=self%beq%bpbdryarr(0)
+        self%beq%rbdryarr=self%beq%rbdry
+        self%beq%btotbdryarr=self%beq%btotbdry
+        self%beq%bpbdryarr=self%beq%bpbdry
   end select boundary_set_dn
   
   call log_error(m_name,s_name,80,log_info,'boundary psi value set')
