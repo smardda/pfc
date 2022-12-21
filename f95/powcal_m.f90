@@ -599,19 +599,19 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
 end subroutine powcal_quant
 !---------------------------------------------------------------------
 !> namelist input of controls
-subroutine powcal_readcon(selfn,kin)
+subroutine powcal_readcon(selfn,kin,number_of_regions)
 
   !! arguments
   type(pnumerics_t), intent(inout) :: selfn   !< object control data structure
   integer, intent(in) :: kin   !< input channel for object data structure
-
+  integer(ki4) :: number_of_regions !< number of regions 
 
   !! local
   character(*), parameter :: s_name='powcal_readcon' !< subroutine name
   real(kr8) :: power_split !< power split ion to electron direction
-  real(kr8) :: decay_length !< power decay length at outer midplane (m)
-  real(kr8) :: power_loss !< power crossing the separatrix (W)
-  real(kr8) :: diffusion_length !< (m)
+  real(kr8), dimension(:), allocatable :: decay_length !< power decay length at outer midplane (m)
+  real(kr8) , dimension(:), allocatable:: power_loss !< power crossing the separatrix (W)
+  real(kr8) , dimension(:), allocatable:: diffusion_length !< (m)
   real(kr8) :: q_parallel0 !< parallel reference flux (W/sqm)
   integer(ki4) :: refine_level   !< level of refinement to be used
   logical :: use_pfc_flux   !< default .FALSE., if true, use value of psi on PFC to evaluate Q
@@ -651,6 +651,8 @@ subroutine powcal_readcon(selfn,kin)
  &skylight_tolerance, double_null, &
  &analytic_launch_type, power_on_launch_geo, power_on_shadow_geo
 
+
+  allocate(decay_length(number_of_regions),power_loss(number_of_regions),diffusion_length(number_of_regions))
   !! set default powcal parameters
   power_split=0.5_kr8
   decay_length=.012_kr8
@@ -703,12 +705,14 @@ subroutine powcal_readcon(selfn,kin)
   end select calcn_type
   if(power_split<0.OR.power_split>1) &
  &call log_error(m_name,s_name,11,error_fatal,'power_split must be >=0 and <=1')
-  if(decay_length<=0) &
+ do l=1,number_of_regions
+  if(decay_length(l)<=0) &
  &call log_error(m_name,s_name,12,error_fatal,'decay_length (m) must be >0')
-  if(diffusion_length<0) &
+  if(diffusion_length(l)<0) &
  &call log_error(m_name,s_name,13,error_fatal,'diffusion_length (m) must be >=0')
-  if(q_parallel0<=0.AND.power_loss<=0) &
+  if(q_parallel0<=0.AND.power_loss(l)<=0) &
  &call log_error(m_name,s_name,14,error_fatal,'power_loss (W) must be >0')
+ end do
   ! need to check against value in input file
   if(refine_level<1.OR.refine_level>3) &
  &call log_error(m_name,s_name,15,error_fatal,'refine_level must be 1, 2 or 3')
@@ -726,8 +730,8 @@ subroutine powcal_readcon(selfn,kin)
 
   !! store values
   selfn%f=power_split
-  selfn%lmid=decay_length
-  selfn%ploss=power_loss
+!  selfn%lmid=decay_length
+!  selfn%ploss=power_loss
   selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
   selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc
