@@ -270,16 +270,17 @@ subroutine geoq_init(self)
   if (beq_rsig()*(self%beq%psiqbdry-self%beq%psibdry)<0) then
      call log_error(m_name,s_name,1,error_warning,'boundary psi outside separatrix')
   end if
-  !*********************************************************************
-  !Stores to array for boundaries which don't use beq_bdryrb_dn
-  !*********************************************************************
-  boundary_set_dn: select case (self%beq%n%bdryopt)
-    case (1,2,3,13)
-        self%beq%rbdryarr=self%beq%rbdry
-        self%beq%btotbdryarr=self%beq%btotbdry
-        self%beq%bpbdryarr=self%beq%bpbdry
-  end select boundary_set_dn
-  
+  if(self%beq%number_xpoints>1) then
+     !*********************************************************************
+     !Stores to array for boundaries which don't use beq_bdryrb_dn
+     !*********************************************************************
+     boundary_set_dn: select case (self%beq%n%bdryopt)
+        case (1,2,3,13)
+           self%beq%rbdryarr=self%beq%rbdry
+           self%beq%btotbdryarr=self%beq%btotbdry
+           self%beq%bpbdryarr=self%beq%bpbdry
+     end select boundary_set_dn
+  end if
   call log_error(m_name,s_name,80,log_info,'boundary psi value set')
   call log_value("psi boundary reference",self%beq%psibdry)
   call log_value("psi limiter or X-point",self%beq%psiltr)
