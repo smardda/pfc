@@ -732,7 +732,7 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   selfn%f=power_split
 !  selfn%lmid=decay_length
 !  selfn%ploss=power_loss
-  selfn%sigma=diffusion_length
+!  selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
   selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc
   selfn%shadow=shadow_control
