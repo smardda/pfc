@@ -26,8 +26,8 @@ module powcal_m
   use pcontrol_h
   use termplane_h
   use termplane_m
-  use edgprof_h
   use edgprof_m
+  use edgprof_h
   use smitermpi_h
   use smitermpi_m
   
@@ -653,6 +653,7 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
 
 
   allocate(decay_length(number_of_regions),power_loss(number_of_regions),diffusion_length(number_of_regions))
+  allocate(selfn%lmid(number_of_regions),selfn%ploss(number_of_regions),selfn%sigma(number_of_regions))
   !! set default powcal parameters
   power_split=0.5_kr8
   decay_length=.012_kr8
@@ -730,9 +731,9 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
 
   !! store values
   selfn%f=power_split
-!  selfn%lmid=decay_length
-!  selfn%ploss=power_loss
-!  selfn%sigma=diffusion_length
+  selfn%lmid=decay_length
+  selfn%ploss=power_loss
+  selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
   selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc
   selfn%shadow=shadow_control
