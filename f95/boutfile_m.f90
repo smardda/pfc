@@ -84,7 +84,7 @@ subroutine boutfile_write(beq,timestamp)
      call beq_writeplus(beq,nout)
   end select fld_specn
   ! next is for debugging
-  !dbg     call beq_write(beq,nout)
+  !    call beq_write(beq,nout)
 
 end  subroutine boutfile_write
 !---------------------------------------------------------------------

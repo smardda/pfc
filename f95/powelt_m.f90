@@ -303,7 +303,7 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
      calcn_type: select case (powcal%n%caltype)
      case('afws','local','msus','global')
         ! evaluate B.n from element
-        call powelt_vec(self,powcal,zb)
+        call powelt_vec(self,powcal,zb)           
         call powelt_normal(self,powcal,znormal)
         zbdotn=dot_product(zb,znormal)
      case('msum','middle')
@@ -371,11 +371,11 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
         end if
         powcal%powres%geobjl%obj(inpow)%weight=iflag
      end select calcn_type2
-
      ! psibdry is not quantised
      zpsid=zpsi-powcal%powres%beq%psibdry
      zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,REAL(zpos1%posvec(1),kr8),REAL(zpos1%posvec(2),kr8),cenz,rxpt,psixpt,&
 							powcal%powres%beq%number_regions,powcal%powres%beq%outer_xpoint)
+	! WRITE(*,*) zpsi,powcal%powres%beq%psibdry,zpsid,zpow
      powcal%powres%pow(inpow)=zpow
      powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
@@ -1199,7 +1199,7 @@ subroutine powelt_move1(self,powcal,gshadl,btree)
   if (.NOT.powcal%n%lpfpower) then
      ! if no power in private flux region, return if in private flux region
      call spl2d_eval(powcal%powres%beq%psi,zposd(1),zposd(2),zpsi)
-     linpfr= ( beq_rsig()*(powcal%powres%beq%psibdry-zpsi)>0 )
+     linpfr= (beq_rsig()*(powcal%powres%beq%psibdry-zpsi)>0 )
      if (linpfr) then
         powcal%powres%pow(inpow)=0
         return

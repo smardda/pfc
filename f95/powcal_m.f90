@@ -114,6 +114,10 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   !! local
   character(*), parameter :: s_name='powcal_init' !< subroutine name
   real(kr8) :: zsign !< sign factor
+  real(kr8) :: r0 !< inner wall R position at z=zcen
+  real(kr8) :: r5 !< outer wall R position at z=zcen
+  real(kr4), dimension(3) :: pos !< output position vector
+  type(powelt_t) :: elt   !< element
 
   ! initialise control structure
   self%n=numerics
@@ -146,6 +150,22 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   else
      allocate(self%powres%pow(self%decomp%firstng:self%decomp%lastng), stat=status)
   endif
+  
+  do i=self%decomp%firstpowe,self%decomp%lastpowe
+     elt%ie=i
+     do j=imlevel,inlevel
+        elt%je=j
+        call powelt_pos(elt,self,pos)
+        !look for inner wall R position at z=zcen
+        if(pos(1)<self%powres%beq%n%rcen) then
+           if(ABS(pos(2)-self%powres%beq%n%zcen)<1E-2) R0=pos(1)
+        !look for outer wall R position at z=zcen
+        else  
+           if(ABS(pos(2)-self%powres%beq%n%zcen)<1E-2) R5=pos(1)    
+        end if
+     end do
+  end do
+  WRITE(*,*) 'R0 = ',R0,' R5 = ',R5
   ! set size of power statistics arrays
   if(self%decomp%myrankpowcal.eq.0) then
      allocate(self%powres%pows(self%powres%npowe), stat=status)
@@ -170,7 +190,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
      call edgprof_factors_4_region(self%edgprof,&
           &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
           self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
-          self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
+          self%powres%beq%bpbdryarr,r0,r5)
   end if
   ! track controls
   self%powres%flinx=plot%flinx

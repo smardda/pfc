@@ -183,6 +183,7 @@ contains
        case default
           call beq_readplus(powcal%powres%beq,file%geoq)
        end select fld_specn
+       !call beq_read(powcal%powres%beq,file%geoq)
        if (iextra==2) call skyl_read(powcal%powres%skyl,file%geoq)
     endif
     call pcontrol_readcon(numerics,onumerics,powcal%edgprof,powcal%powres%beq%number_regions)
