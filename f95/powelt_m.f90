@@ -261,7 +261,7 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
 
   !! local
   character(*), parameter :: s_name='powelt_dep' !< subroutine name
-  real(kr4) :: zpow !< power deposited
+  real(kr8) :: zpow !< power deposited
   real(kr4), dimension(3) :: zpos !< position vector
   type(posvecl_t) :: zpos1   !< one position data
   type(posvecl_t) :: zpos2   !< position data dequantised
@@ -303,7 +303,7 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
      calcn_type: select case (powcal%n%caltype)
      case('afws','local','msus','global')
         ! evaluate B.n from element
-        call powelt_vec(self,powcal,zb)           
+		call powelt_vec(self,powcal,zb) 
         call powelt_normal(self,powcal,znormal)
         zbdotn=dot_product(zb,znormal)
      case('msum','middle')
@@ -375,9 +375,11 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
      zpsid=zpsi-powcal%powres%beq%psibdry
      zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,REAL(zpos1%posvec(1),kr8),REAL(zpos1%posvec(2),kr8),cenz,rxpt,psixpt,&
 							powcal%powres%beq%number_regions,powcal%powres%beq%outer_xpoint)
-	! WRITE(*,*) zpsi,powcal%powres%beq%psibdry,zpsid,zpow
+	! WRITE(*,*) zpsi,powcal%powres%beq%psibdry,zpsid,zpow,zb,znormal,zbdotn
      powcal%powres%pow(inpow)=zpow
-     powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
+   !  WRITE(*,*) zpsi, edgprof_fn(powcal%edgprof,zpsi,zpsid,REAL(zpos1%posvec(1),kr8),REAL(zpos1%posvec(2),kr8),cenz,rxpt,psixpt,&
+	!						powcal%powres%beq%number_regions,powcal%powres%beq%outer_xpoint),zbdotn,powcal%powres%pow(inpow)
+     powcal%powres%pmask(inpow)=nint(sign(1._kr8,zpow))
      powcal%powres%psista(inpow)=zpsi
      powcal%powres%zbdotn(inpow)=zbdotn
      powcal%powres%bfield(:, inpow)=zb(:)

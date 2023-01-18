@@ -150,7 +150,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   else
      allocate(self%powres%pow(self%decomp%firstng:self%decomp%lastng), stat=status)
   endif
-  
+  !calculate R0 and R5, needed for 4 region case
   do i=self%decomp%firstpowe,self%decomp%lastpowe
      elt%ie=i
      do j=imlevel,inlevel
@@ -768,7 +768,6 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
         selfn%trackno(j)=element_numbers(j)+1
      end do
   end if
-
   selfn%ltermplane=termination_planes
   selfn%ledgprof=more_profiles
   selfn%lpfpower=power_in_pfr
@@ -779,7 +778,6 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   selfn%nanalau=analytic_launch_type
   selfn%nlaupow=power_on_launch_geo
   selfn%nshapow=power_on_shadow_geo
-
   if (selfn%ltermplane) then
      call termplane_readcon(selfn%termp,kin)
   else
