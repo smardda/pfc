@@ -9,13 +9,13 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 function install_file {
     local src="$1"
     local dest="$2"
+    local permissions="$3"
 
     if [ ! -f "${src}" ]; then
         echo "no such file '${src}'"
         exit 1
     fi
-    echo "${src} -> ${dest}"
-    install -Dm644 "${src}" "${dest}"
+    install -Dm"${permissions}" "${src}" "${dest}"
 }
 
 SMITER_DIR="$(realpath "${SCRIPT_DIR}/..")"
@@ -35,7 +35,6 @@ while [[ $# -gt 0 ]]; do
         *) echo "smardda-install: unrecognised argument '$key'"; exit 1 ;;
     esac
 done
-
 
 LIBS=(
     "${SMALIB_DIR}/f95/libsmardda.a"
@@ -64,7 +63,6 @@ if [ ! -d "${INSTALL_PREFIX}" ]; then
     exit 1
 fi
 
-
 LIB_DIR="${INSTALL_PREFIX}/lib/"
 if [ ! -d "${LIB_DIR}" ]; then
     mkdir "${LIB_DIR}"
@@ -79,11 +77,11 @@ if [ ! -d "${DOC_DIR}" ]; then
 fi
 
 for lib in "${LIBS[@]}"; do
-    install_file "${lib}" "${LIB_DIR}"
+    install_file "${lib}" "${LIB_DIR}" "644"
 done
 for exe in "${EXES[@]}"; do
-    install_file "${exe}" "${BIN_DIR}"
+    install_file "${exe}" "${BIN_DIR}" "755"
 done
 for doc in "${DOCS[@]}"; do
-    install_file "${doc}" "${DOC_DIR}"
+    install_file "${doc}" "${DOC_DIR}" "644"
 done
