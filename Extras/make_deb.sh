@@ -16,7 +16,7 @@ while getopts "o:v:" opt; do
       ;;
     v) VERSION="${OPTARG}"
       ;;
-    *) echo "make-deb: vnvalid flag '${opt}'."; exit 1
+    *) echo "make-deb: invalid flag '${opt}'."; exit 1
   esac
 done
 
