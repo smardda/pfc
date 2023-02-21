@@ -198,7 +198,7 @@ subroutine geoq_init(self)
   self%beq%psixpt=0
   !calculates psimin and psimax from geometry if requested when dealing
   !with case that has more than 1 x-point
-  if(self%beq%n%psiopt==2 .and. self%beq%number_xpoints>1) then
+  if(self%beq%n%psiopt==2) then
 	call beq_psilt(self%beq)
   end if
   ! psi boundary definition
