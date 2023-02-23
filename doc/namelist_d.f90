@@ -105,6 +105,10 @@ module namelist
    !! used for \f$ R_m, B_{pm}, B_m \f$
    !! 15. \f$  \psi_m=\psi_{ltr} \f$  boundary based on nodes of geometry only, outboard values
    !! used for \f$ R_m, B_{pm}, B_m \f$
+   !! 16. \f$ \psi_m=\psi_X \f$ is used (top xpoint value).
+   !! Inboard values used for \f$ R_m, B_{pm}, B_m \f$ (only useful for double null calculation)
+   !! 17. \f$ \psi_m=\psi_X \f$ is used (top xpoint value).
+   !! Outboard values used for \f$ R_m, B_{pm}, B_m \f$ (only useful for double null calculation)
      integer(ki4) :: beq_bdryopt !< .
    !> \f$ N_{opt}=1 \f$ (default). Set numbers of points  \f$ N_{\psi}, N_{\theta} \f$ to be used in flux mapping
    !! 1. User input of \f$ N_{\psi}\f$ and \f$ N_{\theta}\f$  or defaults
@@ -308,10 +312,12 @@ module namelist
    logical :: equil_mastequ !<  default true, MAST-U equ file has right helicity even if equil_helicity_ok=.false.
    !> Specifies file containing spl3d format vacuum field
      character(len=80) :: beq_vacuum_field_file !<  .
-   !> Defines the number of regions the code should be using. Currenly the options are 1 (default value)
-   !! and 4 (to use 2 regions, the option 4 must be used). In the case where n_regions>1 the code 
-   !! expects that beq_bdryopt should be set to 4 currently.
-    integer(ki4) ::       n_regions=4 !< 
+   !> Defines the number of active x-points in the flux. Currenly the options are 1 (default value)
+   !! and 2 (double null case)
+    integer(ki4) ::       n_xpoints !< 
+   !> If set to 1 then all values of R_i are set to the same value as defined by beq_bdryopt 
+   !! Default value=0 
+    integer(ki4) ::  same_rmbpmbm
   end type beqparameters
 
 !---------------------------------------------------------------------
@@ -501,10 +507,8 @@ module namelist
 !! - Maximum number of parameters which may used to define fuction,
 !! MAX_NUMBER_OF_PARAMETERS=100
   type, public :: edgprofparameters
-   !> power deposition formula to be used for each region. In the case where 
-   !! multi_region=.false. (default value), the profile_formula used for 
-   !! each region is set to profile_formula(1) for all 4 regions, regardless of
-   !! input for profile_formula.
+   !> power deposition formula to be used for each region. profile_formula is an array of size
+   !! n_regions which is given by the geoq output file. The available profiles are
    !! - 'unset' standard exponential profile (default)
    !! - 'exp' standard exponential profile
    !! - 'expdouble' as two exponentials
@@ -514,49 +518,41 @@ module namelist
    !! - 'userdefined' as special f95 subroutine coded by user, called
    !! edgprof_userdefined in file edgprof_m.f90.
    !! N.B. it is up to the user to arrange normalisation.
-     character(len=80) :: profile_formula(4) !<
+     character(len=80) :: profile_formula !<
    !> \f$ F \f$ power split ion to electron direction. \n
    !! Must lie between 0 and 1 \n
    !! Default = 0.5
      real(kr8) :: power_split !<
    !> \f$ \lambda_m \f$ power decay length at midplane (m) to be used for \n
-   !! each region. In the case where multi_region=.false. 
-   !! (default value), the decay_length used for 
-   !! each region is set to decay_length(1) for all 4 regions, regardless of
-   !! input for decay_length.
+   !! each region. decay_length is an array of size
+   !! n_regions which is given by the geoq output file.
    !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$ \n
    !! if Eich formula used \n
    !! Default = 0.012 (units m)
-     real(kr8) :: decay_length(4) !<
+     real(kr8) :: decay_length !<
    !> \f$ P_{loss} \f$ power crossing the separatrix (W) for \n
-   !! each one of the 4 regions. In the case where multi_region=.false. 
-   !! (default value), the power_loss used for 
-   !! each region is set to power_loss(1) for all 4 regions, regardless of
-   !! input for power_loss.
+   !! each one of the 4 regions. power_loss is an array of size
+   !! n_regions which is given by the geoq output file. In the case
+   !! of n_regions=4, the first 2 values should be set the same, and 
+   !! the last 2 values should be the same.
    !! Default = 7.5e+06 (Units Watts)
-     real(kr8) :: power_loss(4) !<
+     real(kr8) :: power_loss !<
    !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm). \n
    !! Default = -1 (if negative it is ignored)
      real(kr8) :: q_parallel0 !<
-   !>  \f$ \sigma \f$ Eich formula length (m) for each one of the 4 regions.
-   !! In the case where multi_region=.false. 
-   !! (default value), the diffusion_length used for 
-   !! each region is set to diffusion_length(1) for all 4 regions, regardless of
-   !! input for diffusion_length .
+   !>  \f$ \sigma \f$ Eich formula length (m) for each region. sigma is an array of size
+   !! n_regions which is given by the geoq output file.
    !! Default = 0
-     real(kr8) :: diffusion_length(4) !<
+     real(kr8) :: diffusion_length !<
    !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
    !! for expdouble formula \n
    !! Default = 0
      real(kr8) :: ratio_of_q_parallel0_near !<
    !> \f$ \lambda_{q,near} \f$ near-SOL power decay length at midplane (m)
-   !! for expdouble formula for each one of the 4 regions.  \n
-   !! In the case where multi_region=.false. 
-   !! (default value), the decay_length_near used for 
-   !! each region is set to decay_length_near(1) for all 4 regions, regardless of
-   !! input for decay_length_near.
+   !! for expdouble formula for each region. decay_length_near is an array of size
+   !! n_regions which is given by the geoq output file. \n
    !! Default = 0
-     real(kr8) :: decay_length_near(4) !<
+     real(kr8) :: decay_length_near !<
    !> Define profile as samples at these positions \n
    !! Default = 0
      real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<
@@ -588,9 +584,7 @@ module namelist
      integer(ki4) :: number_of_integer_parameters  !<
    !> Choice of calculation of lambda_q 
    !! Default='Default'
-       character(len=80) :: lambda_q_choice(4) !<  
-    !> To allow for multiple regions, set this to true (default=.false.)
-       logical :: multi_region=.true. !<
+       character(len=80) :: lambda_q_choice !<  
   end type edgprofparameters
 
 !---------------------------------------------------------------------

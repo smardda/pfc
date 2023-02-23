@@ -165,7 +165,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
         end if
      end do
   end do
-  WRITE(*,*) 'R0 = ',R0,' R5 = ',R5
+  !write(*,*) 'R0 = ',R0,' R5 = ',R5
   ! set size of power statistics arrays
   if(self%decomp%myrankpowcal.eq.0) then
      allocate(self%powres%pows(self%powres%npowe), stat=status)
