@@ -315,7 +315,7 @@ module namelist
    !> Defines the number of active x-points in the flux. Currenly the options are 1 (default value)
    !! and 2 (double null case)
     integer(ki4) ::       n_xpoints !< 
-   !> If set to 1 then all values of R_i are set to the same value as defined by beq_bdryopt 
+   !> If set to 1 then all values of \f$ R_m, B_{pm}, B_m \f$ are set to the same value as defined by beq_bdryopt 
    !! Default value=0 
     integer(ki4) ::  same_rmbpmbm
   end type beqparameters
