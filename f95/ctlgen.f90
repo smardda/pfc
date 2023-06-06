@@ -1,5 +1,7 @@
+!> @addtogroup groupname9
+!> @{
 program ctlgen
-
+!> @}
   use const_kind_m
   use date_time_m
   use log_m

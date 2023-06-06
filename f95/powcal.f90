@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module powcal_p
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -105,6 +107,10 @@ contains
     real(kr8):: zfac !< ratio of I in different field files
     integer(ki4) :: iextra=0 !< extra info in file
     integer(ki4) :: ierr
+    real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+    real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+    real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
+
 
     !--------------------------------------------------------------------------
 
@@ -177,8 +183,10 @@ contains
        case default
           call beq_readplus(powcal%powres%beq,file%geoq)
        end select fld_specn
+       !call beq_read(powcal%powres%beq,file%geoq)
        if (iextra==2) call skyl_read(powcal%powres%skyl,file%geoq)
     endif
+    call pcontrol_readcon(numerics,onumerics,powcal%edgprof,powcal%powres%beq%number_regions)
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(3)
     if(powcal%decomp%bcastpowcaldata) then
        if(powcal%decomp%myrankpowcal == 0) call clock_start(31,'beq broadcast')
@@ -188,10 +196,8 @@ contains
        endif
        if(powcal%decomp%myrankpowcal == 0) call clock_stop(31)
     endif
-
     ifldspec=powcal%powres%beq%n%fldspec
     call pcontrol_fix(numerics,onumerics,ifldspec)
-
     !--------------------------------------------------------------------------
     !! special vacuum field file
     if(powcal%decomp%myrankpowcal == 0) call clock_start(9,'vacfld_init time')
@@ -297,7 +303,7 @@ contains
     !! initialise powcal and odes
     if(powcal%decomp%myrankpowcal == 0) call clock_start(7,'initialise powcal time')
     call odes_init(powcal%odes,onumerics)
-    call powcal_init(powcal,numerics,plot,gnumerics)
+    call powcal_init(powcal,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
 
     if (powcal%powres%flinends .and. powcal%decomp%myrankpowcal .eq. 0) then
          call gfile_init(trim(file%flinends),'ends',powcal%powres%nflends)
@@ -307,7 +313,7 @@ contains
     !--------------------------------------------------------------------------
     !! do the main work
     if(powcal%decomp%myrankpowcal == 0) call clock_start(8,'powcal evaluation time')
-    call powcal_refine(powcal,gshadl,btree)
+    call powcal_refine(powcal,gshadl,btree,rxpt,zxpt,psixpt)
     if(powcal%decomp%myrankpowcal == 0) call clock_stop(8)
 
     !--------------------------------------------------------------------------
@@ -390,7 +396,10 @@ contains
 end module powcal_p
 
 #ifndef COMBINED
+!> @addtogroup groupname9
+!> @{
 program powcal
+!> @}
 
   use powcal_p
 

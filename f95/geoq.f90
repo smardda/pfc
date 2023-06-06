@@ -1,5 +1,7 @@
-module geoq_p
-
+!> @addtogroup groupname8
+!> @{
+module geoq_p 
+!> @}
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -143,6 +145,16 @@ contains
     ifldspec=numerics%fldspec
     ! default flag for external code generating file defining axisymmetric field
     numerics%fiesta=0
+    if(len(numerics%eqtype) .ge.  5 ) then
+        if(numerics%eqtype(1:5) == 'eqdsk' ) then
+            if(len(TRIM(numerics%eqtype)) == 5 ) then
+            
+            else 
+                call misc_getfileunit(numerics%fiesta)
+                read(numerics%eqtype(6:),*) numerics%fiesta
+            end if
+        end if
+    end if
     select case (numerics%eqtype)
     case ('ana')
        ! need additional data to specify field analytically
@@ -195,14 +207,22 @@ contains
     case (2)
        call beq_centre(geoq%beq)
        call geoq_init(geoq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
        call beq_xilt(geoq%beq)
        call geoq_objaddcon(geoq)
     case (3)
        call beq_centre(geoq%beq)
        call geoq_init(geoq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
        call beq_rispld(geoq%beq)
        call beq_xilt(geoq%beq)
@@ -218,7 +238,11 @@ contains
        call beq_rextrema(geoq%beq)
        call beq_rpsi(geoq%beq)
        call beq_rjpsi(geoq%beq)
-       call beq_bdryrb(geoq%beq)
+       if(geoq%beq%number_xpoints==1) then
+          call beq_bdryrb(geoq%beq)
+       else if(geoq%beq%number_xpoints==2) then
+          call beq_bdryrb_dn(geoq%beq)
+       end if
        call beq_ipsi(geoq%beq)
     end select
     call clock_stop(6)
@@ -467,8 +491,10 @@ contains
 end module geoq_p
 
 #ifndef COMBINED
+!> @addtogroup groupname9
+!> @{
 program geoq
-
+!> @}
   use geoq_p
 
   type(decomp_t) :: decomp

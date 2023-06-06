@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module geoq_m
-
+!> @}
   use const_kind_m
   use log_m
   use clock_m
@@ -194,14 +196,20 @@ subroutine geoq_init(self)
   self%beq%rxpt=0
   self%beq%zxpt=0
   self%beq%psixpt=0
-
+  !calculates psimin and psimax from geometry if requested when dealing
+  !with case that has more than 1 x-point
+  if(self%beq%n%psiopt==2) then
+	call beq_psilt(self%beq)
+  end if
   ! psi boundary definition
   boundary_type: select case (self%beq%n%bdryopt)
   case (1,5,9)
+       call beq_psix(self%beq)
      ! user defined
      self%beq%psibdry=self%beq%n%psiref
      self%beq%psiltr=self%beq%n%psiref
   case (2)
+     call beq_psix(self%beq)
      ! boundary based on nodes of geometry only unless value in eqdsk over-rides
      if (beq_rsig()>0) then
         self%beq%psibdry=min(self%beq%psiqbdry,self%beq%psiltr)
@@ -209,6 +217,7 @@ subroutine geoq_init(self)
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
   case (3)
+     call beq_psix(self%beq)
      ! boundary based on geometry sampled at rate given by parameter deltal
      call geoq_psisilh(self)
      !B     if (beq_rsig()>0) then
@@ -222,6 +231,7 @@ subroutine geoq_init(self)
      self%beq%psibdry=self%beq%psiltr
      !B     end if
   case (6)
+     call beq_psix(self%beq)
      ! boundary based on geometry sampled at rate given by parameter deltal
      call geoq_psisilh(self)
      if (beq_rsig()>0) then
@@ -229,7 +239,7 @@ subroutine geoq_init(self)
      else
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psiltr)
      end if
-  case (4,8)
+  case (4,8,16,17)
      ! boundary from X-point
      call beq_psix(self%beq)
      !B     if (beq_rsig()>0) then
@@ -252,9 +262,11 @@ subroutine geoq_init(self)
         self%beq%psibdry=max(self%beq%psiqbdry,self%beq%psixpt)
      end if
   case (11,12)
+     call beq_psix(self%beq)
      ! boundary from EQDSK regardless
      self%beq%psibdry=self%beq%psiqbdry
   case (13,14,15)
+     call beq_psix(self%beq)
      ! boundary based on nodes of geometry only
      self%beq%psibdry=self%beq%psiltr
   end select boundary_type
@@ -262,7 +274,17 @@ subroutine geoq_init(self)
   if (beq_rsig()*(self%beq%psiqbdry-self%beq%psibdry)<0) then
      call log_error(m_name,s_name,1,error_warning,'boundary psi outside separatrix')
   end if
-
+  if(self%beq%number_xpoints>1) then
+     !*********************************************************************
+     !Stores to array for boundaries which don't use beq_bdryrb_dn
+     !*********************************************************************
+     boundary_set_dn: select case (self%beq%n%bdryopt)
+        case (1,2,3,13)
+           self%beq%rbdryarr=self%beq%rbdry
+           self%beq%btotbdryarr=self%beq%btotbdry
+           self%beq%bpbdryarr=self%beq%bpbdry
+     end select boundary_set_dn
+  end if
   call log_error(m_name,s_name,80,log_info,'boundary psi value set')
   call log_value("psi boundary reference",self%beq%psibdry)
   call log_value("psi limiter or X-point",self%beq%psiltr)

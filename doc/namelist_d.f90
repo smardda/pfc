@@ -105,6 +105,10 @@ module namelist
    !! used for \f$ R_m, B_{pm}, B_m \f$
    !! 15. \f$  \psi_m=\psi_{ltr} \f$  boundary based on nodes of geometry only, outboard values
    !! used for \f$ R_m, B_{pm}, B_m \f$
+   !! 16. \f$ \psi_m=\psi_X \f$ is used (top xpoint value).
+   !! Inboard values used for \f$ R_m, B_{pm}, B_m \f$ (only useful for double null calculation)
+   !! 17. \f$ \psi_m=\psi_X \f$ is used (top xpoint value).
+   !! Outboard values used for \f$ R_m, B_{pm}, B_m \f$ (only useful for double null calculation)
      integer(ki4) :: beq_bdryopt !< .
    !> \f$ N_{opt}=1 \f$ (default). Set numbers of points  \f$ N_{\psi}, N_{\theta} \f$ to be used in flux mapping
    !! 1. User input of \f$ N_{\psi}\f$ and \f$ N_{\theta}\f$  or defaults
@@ -308,6 +312,12 @@ module namelist
    logical :: equil_mastequ !<  default true, MAST-U equ file has right helicity even if equil_helicity_ok=.false.
    !> Specifies file containing spl3d format vacuum field
      character(len=80) :: beq_vacuum_field_file !<  .
+   !> Defines the number of active x-points in the flux. Currenly the options are 1 (default value)
+   !! and 2 (double null case)
+    integer(ki4) ::       n_xpoints !< 
+   !> If set to 1 then all values of \f$ R_m, B_{pm}, B_m \f$ are set to the same value as defined by beq_bdryopt 
+   !! Default value=0 
+    integer(ki4) ::  same_rmbpmbm
   end type beqparameters
 
 !---------------------------------------------------------------------
@@ -497,59 +507,84 @@ module namelist
 !! - Maximum number of parameters which may used to define fuction,
 !! MAX_NUMBER_OF_PARAMETERS=100
   type, public :: edgprofparameters
-   !> power deposition formula to be used.
-   !! - 'unset' standard exponential profile
+   !> power deposition formula to be used for each region. profile_formula is an array of size
+   !! n_regions which is given by the geoq output file. The available profiles are
+   !! - 'unset' standard exponential profile (default)
    !! - 'exp' standard exponential profile
    !! - 'expdouble' as two exponentials
    !! - 'eich' as defined by T. Eich
-   !! - 'samples' as a set set of samples at specified positions.
+   !! - 'samples' as a set set of samples at specified positions. 
    !! N.B. it is up to the user to arrange normalisation.
    !! - 'userdefined' as special f95 subroutine coded by user, called
    !! edgprof_userdefined in file edgprof_m.f90.
    !! N.B. it is up to the user to arrange normalisation.
-     character(len=80) :: profile_formula !<.
-   !> \f$ F \f$ power split ion to electron direction,
-   !! must lie between 0 and 1, default 0.5
-     real(kr8) :: power_split !<.
-   !> \f$ \lambda_m \f$ power decay length at midplane (m),
-   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$
-   !! if Eich formula used, default 0.012 (12mm)
-     real(kr8) :: decay_length !<.
-   !> \f$ P_{loss} \f$ power crossing the separatrix (W),
-   !! default 7.5e+06 (7.5MW)
-     real(kr8) :: power_loss !<.
-   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm).
-   !! Default -1, if negative, ignored
-     real(kr8) :: q_parallel0 !<.
-   !>  \f$ \sigma \f$ Eich formula length (m)
-     real(kr8) :: diffusion_length !<.
+     character(len=80) :: profile_formula !<
+   !> \f$ F \f$ power split ion to electron direction. \n
+   !! Must lie between 0 and 1 \n
+   !! Default = 0.5
+     real(kr8) :: power_split !<
+   !> \f$ \lambda_m \f$ power decay length at midplane (m) to be used for \n
+   !! each region. decay_length is an array of size
+   !! n_regions which is given by the geoq output file.
+   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$ \n
+   !! if Eich formula used \n
+   !! Default = 0.012 (units m)
+     real(kr8) :: decay_length !<
+   !> \f$ P_{loss} \f$ power crossing the separatrix (W) for \n
+   !! each one of the 4 regions. power_loss is an array of size
+   !! n_regions which is given by the geoq output file. In the case
+   !! of n_regions=4, the first 2 values should be set the same, and 
+   !! the last 2 values should be the same.
+   !! Default = 7.5e+06 (Units Watts)
+     real(kr8) :: power_loss !<
+   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm). \n
+   !! Default = -1 (if negative it is ignored)
+     real(kr8) :: q_parallel0 !<
+   !>  \f$ \sigma \f$ Eich formula length (m) for each region. sigma is an array of size
+   !! n_regions which is given by the geoq output file.
+   !! Default = 0
+     real(kr8) :: diffusion_length !<
    !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
-   !! for expdouble formula
-     real(kr8) :: ratio_of_q_parallel0_near !<.
+   !! for expdouble formula \n
+   !! Default = 0
+     real(kr8) :: ratio_of_q_parallel0_near !<
    !> \f$ \lambda_{q,near} \f$ near-SOL power decay length at midplane (m)
-   !! for expdouble formula
-     real(kr8) :: decay_length_near !<.
-   !> Define profile as samples at these positions
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<.
-   !> Profile determined as samples
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<.
+   !! for expdouble formula for each region. decay_length_near is an array of size
+   !! n_regions which is given by the geoq output file. \n
+   !! Default = 0
+     real(kr8) :: decay_length_near !<
+   !> Define profile as samples at these positions \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<
+   !> Profile determined as samples \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<
    !> whether positions in distance or flux from SOL
    !! - 'radius'
-   !! - 'flux'
-     character(len=80) :: coord_of_positions !<.
-   !> Number of positions actually used. If sampling,
-   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS
-     integer(ki4) :: number_of_positions  !<.
-   !> Parameters which may be used in user-defined function
-     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<.
-   !> Parameters which may be used in user-defined function
-     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<.
-   !> Number of real parameters actually used. If defining function,
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS
-     integer(ki4) :: number_of_real_parameters  !<.
-   !> Number of integer parameters actually used. If defining function,
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS
-     integer(ki4) :: number_of_integer_parameters  !<.
+   !! - 'flux' \n
+   !! Default = radius
+     character(len=80) :: coord_of_positions !<
+   !> Number of positions actually used. If sampling, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS \n
+   !! Default = 0
+     integer(ki4) :: number_of_positions  !<
+   !> Parameters which may be used in user-defined function \n
+   !! Default = 0
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<
+   !> Parameters which may be used in user-defined function \n
+   !! Default = 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<
+   !> Number of real parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
+   !! Default = 0
+     integer(ki4) :: number_of_real_parameters  !<
+   !> Number of integer parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
+   !! Default = 0
+     integer(ki4) :: number_of_integer_parameters  !<
+   !> Choice of calculation of lambda_q 
+   !! Default='Default'
+       character(len=80) :: lambda_q_choice !<  
   end type edgprofparameters
 
 !---------------------------------------------------------------------

@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module pcontrol_m
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use log_m
@@ -23,6 +25,7 @@ module pcontrol_m
   public :: &
  &pcontrol_init, &
  &pcontrol_read, &
+  &pcontrol_readcon, &
  &pcontrol_fix  !< create consistent controls
 
 
@@ -81,7 +84,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   type(edgprof_t), intent(out) :: edgprof !< input ODE numerical parameters
   type(pplots_t), intent(out) :: plot !< vtk plot selectors
   logical,intent(in) :: combined !< is the code running as a single executable
-
+  integer(ki4) :: number_of_regions !< number of regions 
+  
   !!local
   character(*), parameter :: s_name='pcontrol_read' !< subroutine name
   character(len=80) :: vtk_input_file  !< vtk format geometry data input file
@@ -311,14 +315,25 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
      plot%flinm = plot_flinptz
      call log_error(m_name,s_name,31,error_warning,'Obsolete file handling feature activated')
   end if
+  
+end  subroutine pcontrol_read
+!---------------------------------------------------------------------
+!> read data for this run
+subroutine pcontrol_readcon(numerics,onumerics,edgprof,number_of_regions)
 
-  call powcal_readcon(numerics,nin)
+  !! arguments
+  type(pnumerics_t), intent(inout) :: numerics !< input numerical parameters
+  type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
+  type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
+  integer(ki4) :: number_of_regions !< number of regions 
 
-  call edgprof_readcon(edgprof,numerics,nin)
+  call powcal_readcon(numerics,nin,number_of_regions)
 
+  call edgprof_readcon(edgprof,numerics,nin,number_of_regions)
+  
   call odes_readcon(onumerics,nin)
 
-end  subroutine pcontrol_read
+end  subroutine pcontrol_readcon
 !---------------------------------------------------------------------
 !> create consistent controls
 subroutine pcontrol_fix(numerics,onumerics,ifldspec)

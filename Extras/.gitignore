@@ -85,3 +85,16 @@
 !mm.ctl
 !mmrot.ctl
 !tidyext.ed
+!alljwall.txt
+!mgeoqgnu
+!txt2vtk.bash
+!compare_hds
+!compare_logs
+!compare_out
+!tests_diff.bash
+!RESmx.ctl
+!SHADmx.ctl
+!HDSm.ctl
+!POWmg.ctl
+!brt_pvcalc.txt
+!make_deb.sh

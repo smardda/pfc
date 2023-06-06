@@ -79,13 +79,13 @@
 !! \image html circ.png
 !! \image latex circ.eps "Toroidal coordinates" width=5cm
 !! Toroidal coordinates \f$ r\theta\zeta \f$, angles in radians. Angle
-!! measured from vertical through X-point. Also \f$ r\theta\xi \f$.
+!! measured from vertical through bottom X-point. Also \f$ r\theta\xi \f$.
 !!
 !>
 !! \image html fcirc.png
 !! \image latex fcirc.eps "Flux coordinates" width=5cm
 !! Flux coordinates \f$ \psi\theta\zeta \f$, angles in radians. Angle 
-!! measured from vertical through X-point. Also \f$ \psi\theta\xi \f$.
+!! measured from vertical through bottom X-point. Also \f$ \psi\theta\xi \f$.
 !! 
 !! Angle \f$ \xi \f$ is \f$ \zeta \f$ scaled so that \f$ \xi \f$ runs from 
 !! \f$ -\pi \f$  to \f$ +\pi \f$ in a toroidal segment, which is a
@@ -106,6 +106,167 @@
 !! Lots of triangles to test for intersection with fieldline
 !! segments, unless you get SMARDDA.
 !! 
+!! \subsection sec1dnull Single and Double Null Equilibria
+!! Many magnetic equilibria with divertors are single null (SN),
+!! meaning the plasma region is restricted by an X-point
+!! assumed to lie below at the bottom of the plasma, as sketched.
+!!>
+!! \image html BtopoSN.png
+!! \image latex BtopoSN.eps "Single Null Equilibrium" width=5cm
+!! Sketch of single null (SN) equilibrium. 
+!! The appearance of the X-point in the contours
+!! of flux in the symmetry plane implies that the restrictive
+!! flux surface is singular.
+!!
+!! A double-null (DN) equilibrium is one where the plasma region is not
+!! only restricted by a bottom X-point, but also by a second X-point above.
+!! These will typically correspond to separatrices that are close in space,
+!! and it will be assumed that no PFCs lie in the region between them.
+!!>
+!! \image html Btopo1.png 
+!! \image latex Btopo1.eps "Double Null Equilibrium" width=5cm
+!! Sketch of double null (DN) equilibrium. X-point "1" always
+!! lies at the bottom, even if the flux surface through the upper X-point
+!! contains a smaller region of plasma.
+!!
+!! It is expected that plasma is always confined to the
+!! smaller region restricted by an X-point, so that to maximise
+!! region size, equilibria are sought where both bottom
+!! and top X-points lie on the same (singular) flux surface. Such equilibria
+!! are described as symmetric double null (SDN).
+!!>
+!! \image html BtopoSDN.png
+!! \image latex BtopoSDN.eps "Symmetric Double Null Equilibrium" width=5cm
+!! Sketch of symmetric double null (SDN) equilibrium. X-point "1" always
+!! lies at the bottom.
+!!
+!! The different flux surface topologies indicated by the sketches
+!! make possible different physical behaviour, eg. in the SDN, the
+!! scrape-off layer (SOL) is split into two disconnected parts
+!! inboard and outboard of the X-points' common major radius.
+!! Since it is generally agreed that plasma escapes more easily
+!! on the low field side (LFS) of the tokamak, it is likely that not only
+!! that more of the lost power will go outboard, but that the
+!! loss profile across the SOL will be different in the two parts.
+!! In fact, referring to the sketch of DN, there may be up to four distinct
+!! profiles characterising the loss at the midplane, viz.
+!! 1. Inboard of both singular flux surfaces
+!! 2. Inboard, between the two singular flux surfaces
+!! 3. Outboard, between the two singular flux surfaces
+!! 4. Outboard of both singular flux surfaces
+!!
+!! The behaviour in each may be separately specified as exponential,
+!! double-exponential, Eich etc. The power deposition profiles will be
+!! assumed continuous, so it is only possible to specify separately
+!! the total inboard and total outboard power.
+!! 
+!! To determine which profile is appropriate for a given fieldline
+!! (supposed to correspond to flux surface value \f$ \psi \f$),
+!! values of flux \f$ \psi_{x1} \f$ and \f$ \psi_{x2} \f$ corresponding
+!! respectively to the two X-point values are first computed in the
+!! preprocessing stage. To determine the power deposited,
+!! the fieldline \f$ \psi \f$ is then compared with
+!! \f$ \psi_{x1} \f$ and \f$ \psi_{x2} \f$, enabling its midpoint intersection
+!! to be determined as lying either in SOL parts 1 and 4, or in parts 2 and 3.
+!! To determine whether the intersection is inboard or outboard, the
+!! coordinates of the position
+!! of the fieldline intersection \f$ (R,Z) \f$  with the first wall
+!! are then examined. If the point is below the plasma centre,
+!! ie. \f$ Z<Z_{cen} \f$, then \f$ R \f$ is compared with \f$ R_{x1} \f$,
+!! else \f$ R \f$ is compared with \f$ R_{x2} \f$.
+!! In each case, should \f$ R \f$ be smaller, it is supposed to lie inboard.
+!!
+!! In part \f$ i \f$ of the SOL, the power density is assumed to have power
+!! dependence
+!! \f{equation}{
+!! F_i Q_i f_i(\Delta R_i)
+!! \f}
+!! Where \f$ Q_i  \f$ is a normalisation constant, \f$ f_i \f$ is the profile
+!! function, \f$ F_i=1/2 \f$ is the fraction of power directed up or down
+!! (except that in the DN case \f$ F_2=F_3= 1 \f$), and generalising
+!! Appendix A of Arter et al (corrected (p)reprint at http://arxiv.org/abs/1403.7142)
+!! \f{equation}{
+!! \Delta R_i= R_i-R, \;\;i=1,2 \\
+!! \Delta R_i= R-R_i, \;\;i=3,4 \\
+!! \f}
+!! For coding purposes it is convenient to write \f$ \Delta R_i \f$
+!! in terms of the value of the flux \f$ \psi \f$ on the 
+!! surface and the value \f$ \psi_i \f$ at \f$ R=R_i \f$
+!! on the midplane.  Following Arter et al (with further typo correction)
+!! \f{equation}{
+!! \Delta R_i= \frac{\Delta \psi_i}{|\partial \psi/\partial R|_{R=R_i}}
+!! = \frac{\Delta \psi_i}{R_{i}B_{pmi}}
+!! \f}
+!! where \f$ \Delta \psi_i= \psi-\psi_i \f$, and \f$ B_{pmi} \f$
+!! is the absolute value of the poloidal magnetic field at
+!! \f$ R=R_i \f$ on the midplane.
+!! 
+!! Following Arter et al, the power density must be normalised by the
+!! total loss, let this be \f$ P_{in} \f$ summed over parts \f$ 1 \f$ and \f$ 2 \f$,
+!! and \f$ P_{ou} \f$ summed over parts \f$ 3 \f$ and \f$ 4 \f$, then
+!! approximating an element of midplane area by 
+!! \f{equation}{
+!! dA = d\phi R_i d (\Delta R_i)
+!! \f}
+!! it follows from axisymmetry that for the outer part \f$ i=3,4 \f$ (with obvious
+!! index changes for the inner part \f$ i=1,2 \f$)
+!! \f{equation}{
+!! 2\pi R_3 Q_3 \int^{R=R_4}_{R=R_3} d (\Delta R_3)
+!! f_3(\Delta R_3) 
+!! + 2\pi R_4 Q_4 \int^{R=R_5}_{R=R_4} d (\Delta R_4)
+!! f_4(\Delta R_4) = P_{ou}
+!! \f}
+!! where \f$ R_5=\infty \f$, or in practice the major radius of the PFC
+!! at outer midplane.
+!! In the case of four regions, continuity of !! the power deposition profile
+!! implies that 
+!! \f{equation}
+!! Q_2 = \frac{F_1 Q_1 f_1(0)}{F_2f_2(R_2-R_1)}\\
+!! Q_3 = \frac{F_4 Q_4 f_4(0)}{F_3f_3(R_4-R_3)}
+!! \f}
+!! Thus substituting for \f$ Q_3 \f$ in terms of  \f$ Q_4 \f$ gives
+!! \f{equation}{
+!! Q_4 = \frac{P_{ou}}{ 2\pi \frac{F_4 f_4(0)}{F_3f_3(R_4-R_3)} 
+!! R_3 \int^{R_4-R_3}_0 dx f_3(x)
+!! + 2\pi R_4 \int^{R_5-R_4}_0 dx f_4(x)}
+!! \f}
+!! Similarly for the inner region
+!! \f{equation}{
+!! Q_1 = \frac{P_{in}}{ 2\pi R_1 \int^{R_1-R_0}_0 dx f_1(x)+
+!! 2\pi \frac{F_1 f_1(0)}{F_2f_2(R_2-R_1)} R_2 \int^{R_2-R_1}_0 dx f_2(x)}
+!! \f}
+!! where \f$ R_0=0 \f$ or in practice the major radius of the PFC
+!! at inner midplane. For Eich the situation is slightly different as there is a
+!! contribution from inside the PFR which may be accounted for by 
+!! changing the lower limit of integration from \f$ 0 \f$ to \f$ -\infty \f$.
+!!
+!! For the exponential profile, \f$ f_i(x) = \exp{(-x/\lambda_q)}\f$,
+!! and its integral may be recovered as a special case \f$ \rho=0 \f$ of the double
+!! exponential \f$ f_i(x) = \exp{(-x/\lambda_q)} + \rho \exp{(-x/\lambda_n)}\f$,
+!! which has integral
+!! \f{equation}{
+!! \lambda_q (1 - \exp{(-R'/\lambda_q)} + \rho \lambda_n (1-\exp{(-R'/\lambda_n)}
+!! \f}
+!! where \f$ R'=|R_{i+1}-R_i| \f$ or \f$ R'=|R_{i-1}-R_i| \f$.
+!! The Eich profile is
+!! \f{equation}
+!! f_i(x)=\exp \left(s^2 -\frac{x}{\lambda_q} \right)
+!! \text{erfc} \left( s-\frac{x}{2 \lambda_q s} \right)
+!! \f}
+!! where \f$ s=\frac{\sigma }{2\lambda_q } \f$,
+!! and \f$ x=\frac{\Delta \psi }{R_m B_{pm}} \f$,
+!! and the erfc function is defined as
+!! \f{equation}
+!! \text{erfc}(z) = 1- \frac{2}{\sqrt{\pi}} \int^z_0 \exp{-x^2}dx
+!! \f}
+!! The indefinite integral of the Eich profile is
+!! \f{equation}
+!! -\lambda_q \exp \left(s^2 -\frac{x}{\lambda_q} \right)
+!! \text{erfc} \left( s-\frac{x}{2 \lambda_q s} \right)
+!! +\lambda_q \text{erfc} \left( -\frac{x}{2 \lambda_q s} \right)
+!! \f}
+!! from which the normalisation follows by substituting \f$ x=R' \f$.
+!!
 !! \subsection sec1alg SMARDDA Algorithm
 !! Reduces number of triangles to test by:
 !! \arg Recursive division of 3-D space into cuboidal boxes, aka octree.
@@ -115,7 +276,7 @@
 !! \arg Track segment from box to box by binary tricks, thanks to use of
 !! quantised coordinates. The quantum lengths \f$ h_i \f$ are chosen so
 !! that \f$ L_i=1024h_i \f$ or similar power of two. (The biggest box has
-!! size \f$ L_1L_2L_3 \f$. There is a single precision restriction \f$ 3\times 10<32 \f$)
+!! size \f$ L_1L_2L_3 \f$. There is a single precision restriction to exponent \f$ <32 \f$.)
 !! \arg Jargon -  an octree is an example of an Hierarchical Data
 !! Structure (HDS), designed to Help Do Surfaces quickly.
 !! 

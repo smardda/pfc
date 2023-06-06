@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module powcal_m
-
+!> @}
   use const_kind_m
   use const_numphys_h
   use control_h
@@ -24,8 +26,8 @@ module powcal_m
   use pcontrol_h
   use termplane_h
   use termplane_m
-  use edgprof_h
   use edgprof_m
+  use edgprof_h
   use smitermpi_h
   use smitermpi_m
   
@@ -50,6 +52,7 @@ module powcal_m
 ! private types
 
 ! private variables
+  logical :: double_null=.FALSE. !<  if .TRUE., read in values required for double null
   character(*), parameter :: m_name='powcal_m' !< module name
   integer   :: status   !< error status
   character(len=80) :: ibuf1 !< buffer for input/output
@@ -97,17 +100,24 @@ subroutine powcal_readv(self,vtkfile)
 end subroutine powcal_readv
 !---------------------------------------------------------------------
 !> initialise  powcal data structure
-subroutine powcal_init(self,numerics,plot,gnumerics)
+subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
   type(pnumerics_t), intent(in) :: numerics   !< object control data structure
   type(pplots_t), intent(in) :: plot   !< vtk plot selectors
   type(numerics_t), intent(inout), optional :: gnumerics   !< object control data structure
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
 
   !! local
   character(*), parameter :: s_name='powcal_init' !< subroutine name
   real(kr8) :: zsign !< sign factor
+  real(kr8) :: r0 !< inner wall R position at z=zcen
+  real(kr8) :: r5 !< outer wall R position at z=zcen
+  real(kr4), dimension(3) :: pos !< output position vector
+  type(powelt_t) :: elt   !< element
 
   ! initialise control structure
   self%n=numerics
@@ -140,6 +150,22 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
   else
      allocate(self%powres%pow(self%decomp%firstng:self%decomp%lastng), stat=status)
   endif
+  !calculate R0 and R5, needed for 4 region case
+  do i=self%decomp%firstpowe,self%decomp%lastpowe
+     elt%ie=i
+     do j=imlevel,inlevel
+        elt%je=j
+        call powelt_pos(elt,self,pos)
+        !look for inner wall R position at z=zcen
+        if(pos(1)<self%powres%beq%n%rcen) then
+           if(ABS(pos(2)-self%powres%beq%n%zcen)<1E-2) R0=pos(1)
+        !look for outer wall R position at z=zcen
+        else  
+           if(ABS(pos(2)-self%powres%beq%n%zcen)<1E-2) R5=pos(1)    
+        end if
+     end do
+  end do
+  !write(*,*) 'R0 = ',R0,' R5 = ',R5
   ! set size of power statistics arrays
   if(self%decomp%myrankpowcal.eq.0) then
      allocate(self%powres%pows(self%powres%npowe), stat=status)
@@ -150,10 +176,22 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
      allocate(self%powres%pows(self%decomp%firstpowe:self%decomp%lastpowe), stat=status)
      allocate(self%powres%powa(self%decomp%firstpowe:self%decomp%lastpowe), stat=status)
   endif
-
+  psixpt=self%powres%beq%psixptarr
   zsign=beq_rsig()
-  call edgprof_factors(self%edgprof,&
+  if(self%powres%beq%number_regions==1) then
+    call edgprof_factors(self%edgprof,&
        &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign)
+  else if(self%powres%beq%number_regions==2) then
+     call edgprof_factors_2_region(self%edgprof,&
+          &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
+          self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
+          self%powres%beq%bpbdryarr,self%powres%beq%n%rcen)
+  else if(self%powres%beq%number_regions==4) then
+     call edgprof_factors_4_region(self%edgprof,&
+          &self%powres%beq%rbdry,self%powres%beq%bpbdry,self%powres%beq%btotbdry,zsign,&
+          self%powres%beq%btotbdryarr,self%powres%beq%rbdryarr,&
+          self%powres%beq%bpbdryarr,r0,r5)
+  end if
   ! track controls
   self%powres%flinx=plot%flinx
   self%powres%flinends=plot%flinends
@@ -223,18 +261,21 @@ subroutine powcal_init(self,numerics,plot,gnumerics)
         gnumerics%position_coord_tfm%ntfm=1
      end if
      ! quantise relevant quantities
-     call powcal_quant(self,gnumerics)
+     call powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
   end if
 
 end subroutine powcal_init
 !---------------------------------------------------------------------
 !> quantise relevant quantities
-subroutine powcal_quant(self,gnumerics)
+subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
   type(numerics_t), intent(in) :: gnumerics   !< object control data structure
-
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_quant' !< subroutine name
   type(posveclis_t) :: zposl !< local variable
@@ -260,7 +301,11 @@ subroutine powcal_quant(self,gnumerics)
   integer(ki4) :: ibdim !<  second dimension of boxr,z arrays
   integer(ki4) :: ntyps !<  upper or lower skylight type
   integer(ki4) :: interm   !< index of dynamical entry in termplane
-
+  integer(ki4) :: lc   !< used in line count of double null case
+    
+  rxpt=self%powres%beq%rxptarr
+  zxpt=self%powres%beq%zxptarr
+     
   zpar=0
   self%powres%beq%domlen=0
 
@@ -269,6 +314,18 @@ subroutine powcal_quant(self,gnumerics)
   ! rotate and quantise results geometry positions
   call position_tfmlis(self%powres%geobjl%posl,self%powres%geobjl%tfmdata)
   call position_qtfmlis(self%powres%geobjl%posl,self%powres%geobjl%quantfm)
+
+     allocate(zposl%pos(2),stat=status)
+     zposl%pos(1)%posvec=(/rxpt(1), zxpt(1), 0._kr8/)
+     zposl%pos(2)%posvec=(/rxpt(2), zxpt(2), 0._kr8/)
+     zposl%np=2
+     call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
+     rxpt(1)=zposl%pos(1)%posvec(1)
+     rxpt(2)=zposl%pos(2)%posvec(1)
+     zxpt(1)=zposl%pos(1)%posvec(2)
+     zxpt(2)=zposl%pos(2)%posvec(2)
+     ! domain control
+     deallocate(zposl%pos)
 
   field_type: select case (self%powres%beq%n%fldspec)
   case (1)
@@ -351,7 +408,7 @@ subroutine powcal_quant(self,gnumerics)
         call spl2d_ptscale(self%powres%beq%rispldr,self%powres%geobjl%quantfm)
         call spl2d_ptscale(self%powres%beq%rispldz,self%powres%geobjl%quantfm)
      end select field_typeinr
-
+     
      ! domain control
      allocate(zposl%pos(6),stat=status)
      call log_alloc_check(m_name,s_name,30,status)
@@ -531,17 +588,14 @@ subroutine powcal_quant(self,gnumerics)
               call log_error(m_name,s_name,60,error_fatal,'termplane(s) must be defined for flux-based  skylight(s)')
            end if
            ! quantise positions
-           allocate(zposl%pos(3),stat=status)
+           allocate(zposl%pos(2),stat=status)
            call log_alloc_check(m_name,s_name,30,status)
            zposl%pos(1)%posvec=(/0._kr8, self%powres%beq%zmin, 0._kr8/)
            zposl%pos(2)%posvec=(/0._kr8, self%powres%beq%zmax, 0._kr8/)
-           zposl%pos(3)%posvec=(/self%powres%beq%rxpt, self%powres%beq%zxpt, 0._kr8 /)
-           zposl%np=3
+           zposl%np=2
            call position_qtfmlis(zposl,self%powres%geobjl%quantfm)
            self%powres%beq%zmin=zposl%pos(1)%posvec(2)
            self%powres%beq%zmax=zposl%pos(2)%posvec(2)
-           self%powres%beq%rxpt=zposl%pos(3)%posvec(1)
-           self%powres%beq%zxpt=zposl%pos(3)%posvec(2)
            deallocate(zposl%pos)
            allocate(zposl%pos(1),stat=status)
            ! only scale
@@ -560,25 +614,24 @@ subroutine powcal_quant(self,gnumerics)
         ! prevent application of flux skylight
         self%powres%beq%n%skylpsi=.FALSE.
      end if
-
   end select field_type
 
 end subroutine powcal_quant
 !---------------------------------------------------------------------
 !> namelist input of controls
-subroutine powcal_readcon(selfn,kin)
+subroutine powcal_readcon(selfn,kin,number_of_regions)
 
   !! arguments
   type(pnumerics_t), intent(inout) :: selfn   !< object control data structure
   integer, intent(in) :: kin   !< input channel for object data structure
-
+  integer(ki4) :: number_of_regions !< number of regions 
 
   !! local
   character(*), parameter :: s_name='powcal_readcon' !< subroutine name
   real(kr8) :: power_split !< power split ion to electron direction
-  real(kr8) :: decay_length !< power decay length at outer midplane (m)
-  real(kr8) :: power_loss !< power crossing the separatrix (W)
-  real(kr8) :: diffusion_length !< (m)
+  real(kr8), dimension(:), allocatable :: decay_length !< power decay length at outer midplane (m)
+  real(kr8) , dimension(:), allocatable:: power_loss !< power crossing the separatrix (W)
+  real(kr8) , dimension(:), allocatable:: diffusion_length !< (m)
   real(kr8) :: q_parallel0 !< parallel reference flux (W/sqm)
   integer(ki4) :: refine_level   !< level of refinement to be used
   logical :: use_pfc_flux   !< default .FALSE., if true, use value of psi on PFC to evaluate Q
@@ -615,9 +668,12 @@ subroutine powcal_readcon(selfn,kin)
  &power_in_pfr, &
  &employ_skyl_pfr, &
  &skylight, &
- &skylight_tolerance, &
+ &skylight_tolerance, double_null, &
  &analytic_launch_type, power_on_launch_geo, power_on_shadow_geo
 
+
+  allocate(decay_length(number_of_regions),power_loss(number_of_regions),diffusion_length(number_of_regions))
+  allocate(selfn%lmid(number_of_regions),selfn%ploss(number_of_regions),selfn%sigma(number_of_regions))
   !! set default powcal parameters
   power_split=0.5_kr8
   decay_length=.012_kr8
@@ -670,12 +726,14 @@ subroutine powcal_readcon(selfn,kin)
   end select calcn_type
   if(power_split<0.OR.power_split>1) &
  &call log_error(m_name,s_name,11,error_fatal,'power_split must be >=0 and <=1')
-  if(decay_length<=0) &
+ do l=1,number_of_regions
+  if(decay_length(l)<=0) &
  &call log_error(m_name,s_name,12,error_fatal,'decay_length (m) must be >0')
-  if(diffusion_length<0) &
+  if(diffusion_length(l)<0) &
  &call log_error(m_name,s_name,13,error_fatal,'diffusion_length (m) must be >=0')
-  if(q_parallel0<=0.AND.power_loss<=0) &
+  if(q_parallel0<=0.AND.power_loss(l)<=0) &
  &call log_error(m_name,s_name,14,error_fatal,'power_loss (W) must be >0')
+ end do
   ! need to check against value in input file
   if(refine_level<1.OR.refine_level>3) &
  &call log_error(m_name,s_name,15,error_fatal,'refine_level must be 1, 2 or 3')
@@ -710,7 +768,6 @@ subroutine powcal_readcon(selfn,kin)
         selfn%trackno(j)=element_numbers(j)+1
      end do
   end if
-
   selfn%ltermplane=termination_planes
   selfn%ledgprof=more_profiles
   selfn%lpfpower=power_in_pfr
@@ -721,7 +778,6 @@ subroutine powcal_readcon(selfn,kin)
   selfn%nanalau=analytic_launch_type
   selfn%nlaupow=power_on_launch_geo
   selfn%nshapow=power_on_shadow_geo
-
   if (selfn%ltermplane) then
      call termplane_readcon(selfn%termp,kin)
   else
@@ -732,16 +788,16 @@ subroutine powcal_readcon(selfn,kin)
 end subroutine powcal_readcon
 !---------------------------------------------------------------------
 !> loop over entries in results
-subroutine powcal_move(self,gshadl,btree)
+subroutine powcal_move(self,zelt,gshadl,btree)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
+  type(powelt_t) :: zelt   !< power element
   type(geobjlist_t), intent(inout) :: gshadl   !< shadow data structure
   type(btree_t), intent(inout) :: btree !< btree data
 
   !! local
   character(*), parameter :: s_name='powcal_move' !< subroutine name
-  type(powelt_t) :: zelt   !< power element
 
   ! check for axisymmetric !mpi1!
   vac_type: select case (self%powres%beq%n%vactype(1:3))
@@ -852,22 +908,25 @@ subroutine powcal_move(self,gshadl,btree)
 end subroutine powcal_move
 !---------------------------------------------------------------------
 !> coordinate calculation of power deposition (=powres_XX)
-subroutine powcal_calc(self,gshadl)
+subroutine powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
+  type(powelt_t), intent(inout) :: post   !< powelt data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
-
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_calc' !< subroutine name
-  type(powelt_t) :: zelt   !< powelt data instance
 
   ! calculate power deposition
   do i=self%decomp%firstpowe,self%decomp%lastpowe
-     zelt%ie=i
+     post%ie=i
      do j=imlevel,inlevel
-        zelt%je=j
-        call powelt_dep(zelt,self,gshadl)
+        post%je=j
+        call powelt_dep(post,self,gshadl,self%powres%beq%rcenq,self%powres%beq%zcenq,rxpt,zxpt,psixpt)
      end do
   end do
 
@@ -1047,16 +1106,20 @@ subroutine powcal_writev(self,kchar,kplot)
 end subroutine powcal_writev
 !---------------------------------------------------------------------
 !> set refinement level
-subroutine powcal_refine(self,gshadl,btree)
+subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout), optional :: btree !< btree data
-
+  real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
+  real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
+  real(kr8) :: psixpt(2) !<  \f$ \psi \f$ at x point
+    
   !! local
   character(*), parameter :: s_name='powcal_refine' !< subroutine name
-
+  type(powelt_t) :: post   !< powelt data structure
+  
   calcn_type: select case (self%n%caltype)
   case('afws','local')
   case('msum','middle')
@@ -1072,14 +1135,13 @@ subroutine powcal_refine(self,gshadl,btree)
      call log_alloc_check(m_name,s_name,2,status)
      self%powres%geobjl%nwset=2
   end select calcn_type
-
   imlevel=1
   do level=1,self%n%nlevel
      inlevel=powelt_table(level,2)
      if (self%n%shadow/=0) then
-        call powcal_move(self,gshadl,btree)
+        call powcal_move(self,post,gshadl,btree)
      end if
-     call powcal_calc(self,gshadl)
+     call powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
      imlevel=inlevel+1
   end do
 

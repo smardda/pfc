@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module goutfile_m
-
+!> @}
   use const_kind_m
   use log_m
   use misc_m
@@ -105,6 +107,7 @@ subroutine goutfile_write(geoq,timestamp)
   case default
      call beq_writeplus(geoq%beq,nout)
   end select fld_specn
+  !dbg call beq_write(geoq%beq,nout)
 
   if (geoq%beq%n%skyl) call skyl_write(geoq%skyl,nout)
 

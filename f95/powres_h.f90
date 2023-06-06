@@ -1,5 +1,7 @@
+!> @addtogroup groupname7
+!> @{
 module powres_h
-
+!> @}
   use const_kind_m
   use geobjlist_h
   use geobj_m
@@ -15,8 +17,8 @@ module powres_h
 !> numerical control parameters for all power calculation
   type, public :: prnumerics_t
      real(kr8) :: f !< power split ion to electron direction
-     real(kr8) :: lmid !< power decay length at outer midplane (m)
-     real(kr8) :: ploss !< power crossing the separatrix (W)
+     real(kr8), dimension(:), allocatable :: lmid !< power decay length at outer midplane (m)
+     real(kr8), dimension(:), allocatable :: ploss !< power crossing the separatrix (W)
      integer(ki4)  :: nlevel !< refinement level
      integer(ki4)  :: shadow !< shadowing calculation if positive
      real(kr8) :: qpara0 !< parallel reference flux (W/sqm)
@@ -32,9 +34,9 @@ module powres_h
      integer(ki4)  :: npowe !< number of powelts (ie. level 1 triangles)
      integer(ki4)  :: npow !< number of entries in pow
      integer(ki4)  :: npows !< number of entries in pows (normally use npowe)
-     real(kr8) :: rblfac !< Lomas' factor \f$ \frac{1}{2 \pi \lambda_{mid} R_m B_{pm}} \f$
-     real(kr8) :: fpfac !< Lomas' factor \f$ \frac{F P_{loss}}}{2 \pi \lambda_{mid} R_m B_{pm}} \f$
-     real(kr8) :: slfac !< factor \f$ \frac{\sigma}{2 \lambda_{mid}} \f$
+     real(kr8), dimension(:), allocatable  :: rblfac !< Lomas' factor \f$ \frac{1}{2 \pi \lambda_{mid} R_m B_{pm}} \f$
+     real(kr8), dimension(:), allocatable  :: fpfac !< Lomas' factor \f$ \frac{F P_{loss}}}{2 \pi \lambda_{mid} R_m B_{pm}} \f$
+     real(kr8), dimension(:), allocatable  :: slfac !< factor \f$ \frac{\sigma}{2 \lambda_{mid}} \f$
      real(kr8) :: qfac !< quantising factor
      real(kr8), dimension(3) :: qfaca !< quantising factors
      real(kr4), dimension(:), allocatable :: pow !< power

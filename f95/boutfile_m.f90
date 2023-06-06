@@ -1,5 +1,7 @@
+!> @addtogroup groupname8
+!> @{
 module boutfile_m
-
+!> @}
   use const_kind_m
   use log_m
   use misc_m
@@ -82,7 +84,7 @@ subroutine boutfile_write(beq,timestamp)
      call beq_writeplus(beq,nout)
   end select fld_specn
   ! next is for debugging
-  !dbg     call beq_write(beq,nout)
+  !    call beq_write(beq,nout)
 
 end  subroutine boutfile_write
 !---------------------------------------------------------------------

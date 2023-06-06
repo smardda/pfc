@@ -1,0 +1,3 @@
+BR=(-coordsX*Bcell_X-coordsY*Bcell_Y)/sqrt(coordsX*coordsX+coordsY*coordsY)
+Bze=(-coordsY*Bcell_X+coordsX*Bcell_Y)/sqrt(coordsX*coordsX+coordsY*coordsY)
+ang= atan(Bcell_Z*sqrt(coordsX*coordsX+coordsY*coordsY)/(-coordsY*Bcell_X+coordsX*Bcell_Y))

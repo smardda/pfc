@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""
+Read through the given files and compare them line by line.
+
+This script ignores any lines that match the timestamp pattern:
+'HH:mm:ss dd <month> YYYY', e.g. '10:05:54 1 January 2022'.
+
+If there are any differences in the files, return a non-zero exit code.
+"""
+
+import re
+import sys
+
+TIMESTAMP_PATTERN = r"[0-9]{2}:[0-9]{2}:[0-9]{2} +[0-9][0-9]? +\S+ +[0-9]{4}"
+
+if __name__ == "__main__":
+    p1 = sys.argv[1]
+    p2 = sys.argv[2]
+
+    ok = True
+    with open(p1, "r") as f1:
+        with open(p2, "r") as f2:
+            for line1, line2 in zip(f1, f2):
+                if re.search(TIMESTAMP_PATTERN, line1):
+                    # ignore lines with a timestamp on them
+                    continue
+                if line1 != line2:
+                    ok = False
+            ok &= bool(next(f2, True))  # check for extra lines in second file
+
+    sys.exit(not ok)
