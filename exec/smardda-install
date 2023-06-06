@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# Install smardda. Use the '--prefix' flag to set the install directory.
+
+set -o errexit  # exit early on any error
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
+function install_file {
+    local src="$1"
+    local dest="$2"
+    local permissions="$3"
+
+    if [ ! -f "${src}" ]; then
+        echo "no such file '${src}'"
+        exit 1
+    fi
+    install -Dm"${permissions}" "${src}" "${dest}"
+}
+
+SMITER_DIR="$(realpath "${SCRIPT_DIR}/..")"
+if [ -z "${SMALIB_DIR}" ]; then
+    SMALIB_DIR="$(realpath "${SCRIPT_DIR}"/../smardda-lib)"
+fi
+if [ ! -d "${SMALIB_DIR}" ]; then
+    echo "cannot locate smardda-lib; please set 'SMALIB_DIR' variable"
+    exit 1
+fi
+
+INSTALL_PREFIX="/usr/local/"
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        -p|--prefix) INSTALL_PREFIX="$(realpath "$2")"; shift; shift ;;
+        *) echo "smardda-install: unrecognised argument '$key'"; exit 1 ;;
+    esac
+done
+
+LIBS=(
+    "${SMALIB_DIR}/f95/libsmardda.a"
+    "${SMALIB_DIR}/fortd/libsmarddalib.a"
+)
+EXES=(
+    "${SMITER_DIR}/exec/ctlgen"
+    "${SMITER_DIR}/exec/datvtk"
+    "${SMITER_DIR}/exec/geoq"
+    "${SMITER_DIR}/exec/hdsgen"
+    "${SMITER_DIR}/exec/magtfm"
+    "${SMITER_DIR}/exec/parse"
+    "${SMITER_DIR}/exec/powcal"
+    "${SMITER_DIR}/exec/smanal"
+    "${SMITER_DIR}/exec/smiter"
+    "${SMITER_DIR}/exec/vtktfm"
+)
+DOCS=(
+    "${SMALIB_DIR}/lgpl-3.0.txt"
+    "${SMALIB_DIR}/LICENCE.txt"
+    "${SMITER_DIR}/README"
+)
+
+if [ ! -d "${INSTALL_PREFIX}" ]; then
+    echo "no such directory '${INSTALL_PREFIX}'"
+    exit 1
+fi
+
+LIB_DIR="${INSTALL_PREFIX}/lib/"
+if [ ! -d "${LIB_DIR}" ]; then
+    mkdir "${LIB_DIR}"
+fi
+BIN_DIR="${INSTALL_PREFIX}/bin"
+if [ ! -d "${BIN_DIR}" ]; then
+    mkdir "${BIN_DIR}"
+fi
+DOC_DIR="${INSTALL_PREFIX}/share/doc/smiter"
+if [ ! -d "${DOC_DIR}" ]; then
+    mkdir -p "${DOC_DIR}"
+fi
+
+for lib in "${LIBS[@]}"; do
+    install_file "${lib}" "${LIB_DIR}" "644"
+done
+for exe in "${EXES[@]}"; do
+    install_file "${exe}" "${BIN_DIR}" "755"
+done
+for doc in "${DOCS[@]}"; do
+    install_file "${doc}" "${DOC_DIR}" "644"
+done
