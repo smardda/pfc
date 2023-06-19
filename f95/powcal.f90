@@ -1,7 +1,5 @@
-!> @addtogroup groupname8
-!> @{
 module powcal_p
-!> @}
+
   use const_kind_m
   use const_numphys_h
   use date_time_m
