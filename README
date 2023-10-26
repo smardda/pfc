@@ -5,11 +5,12 @@ for a description of the SMARDDA ray-tracing algorithm applied to fieldlines
 see http://dx.doi.org/10.1109/TPS.2014.2320904 (also http://arxiv.org/abs/1403.7142 ).
 SMARDDA-PFC uses SMARDDA-LIB which contains the SMARDDA ray-tracing kernel
 see  http://dx.doi.org/10.1109/TPS.2015.2458897 (also http://arxiv.org/abs/1403.6750 ).
-The SMARDDA modules have been tested on CentOS 7.0, Ubuntu 18.04 and Red Hat 4.4 (Scientific Linux)
-and are known to run on MacOS and WSL 1.
+The SMARDDA modules have been tested on CentOS 7.0, Ubuntu 22.04 and Red Hat 4.4 (Scientific Linux)
+and are known to run on MacOS and WSL 1 and 2.
 Try to use the latest stable fortran compiler version available.
 
-*NOTE* you must first install the ray-tracing kernel SMARDDA-LIB
+*NOTE* you must first install the ray-tracing kernel SMARDDA-LIB,
+which may be facilitated by download of git@github.com:smardda/bootstrap.git
 
 To proceed to build from here (and only from here), type
 export SMITER_DIR=$PWD
@@ -74,8 +75,9 @@ file://$SMITER_DIR/doc/srcdoc/html/classes.html
 (assuming that doxygen doxyfile has been executed correctly in  $SMITER_DIR/doc).
 
 Developers should notice that the SMARDDA modules were developed according to the principles and
-conventions set out in http://www.ccfe.ac.uk/assets/Documents/CCFE-R%20(15)34.pdf
+conventions set out in http://dx.doi.org/10.13140/RG.2.2.27018.41922} mirroring
+https://scientific-publications.ukaea.uk/wp-content/uploads/CCFE-R-1534.pdf
 Production of support files and scripts for developers has been initiated.
-Users with CCFE account may access these from 
-git@git.ccfe.ac.uk:smardda/develop.git
+These may be accessed  from 
+git@github.com:smardda/develop.git
 
