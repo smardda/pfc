@@ -71,7 +71,9 @@ if [ $? -eq 0 ] ; then
 mcfound=y
 fi
 if [ $mcfound == n ] ; then
-  echo "No additional modules loaded - if needed, edit $SMITER_DIR/Extras/setup"
+  ## WA comment out warning
+  #echo "No additional modules loaded - if needed, edit $SMITER_DIR/Extras/setup"
+  echo ""
 fi
 echo Environment variable SMITER_DIR = $SMITER_DIR
 echo Environment variable SMALIB_DIR = $SMALIB_DIR
