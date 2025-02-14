@@ -74,7 +74,7 @@ file://$SMITER_DIR/doc/srcdoc/html/classes.html
 (assuming that doxygen doxyfile has been executed correctly in  $SMITER_DIR/doc).
 
 Developers should notice that the SMARDDA modules were developed according to the principles and
-conventions set out in http://www.ccfe.ac.uk/assets/Documents/CCFE-R%20(15)34.pdf
+conventions set out in https://scientific-publications.ukaea.uk/wp-content/uploads/CCFE-R-1534.pdf
 Production of support files and scripts for developers has been initiated.
 Users with CCFE account may access these from 
 git@git.ccfe.ac.uk:smardda/develop.git
