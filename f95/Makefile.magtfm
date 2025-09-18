@@ -32,7 +32,7 @@ $(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
-	rm -f $(OBJECTS) *$(MOD) $(EXTRA_CLEAN_FILES)
+	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
 	rm -f $(PROG)
