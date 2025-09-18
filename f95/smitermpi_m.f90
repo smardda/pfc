@@ -1,7 +1,5 @@
-!> @addtogroup groupname8
-!> @{
 module smitermpi_m
-!> @}
+
   use smitermpi_h
   use log_m
   use powcal_h

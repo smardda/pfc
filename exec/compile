@@ -11,6 +11,8 @@ fi
 #(cd fortd;make)
 cd f95
 ln -sf ../fortd LIB
+#extra make helps with file syncing
+make -f Makefile.geoq
 for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
 for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
 make -f Makefile.smiter
