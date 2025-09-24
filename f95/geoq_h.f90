@@ -1,6 +1,5 @@
 module geoq_h
 
-
   use const_kind_m
   use position_h
   use geobjlist_h
