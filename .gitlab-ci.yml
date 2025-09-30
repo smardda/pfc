@@ -23,8 +23,8 @@ build-pfc:
     - export SMITER_DIR="$(pwd)"
     - export SMALIB="$(pwd)/smardda-lib"
     - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
-    - bash smardda-lib/exec/build gfortran_dbg
-    - bash exec/build gfortran_dbg
+    - bash smardda-lib/exec/build gfortran
+    - bash exec/build gfortran
   artifacts:
     untracked: true
     paths:
