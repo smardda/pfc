@@ -10,7 +10,9 @@ if [[ -z "$SMALIB_DIR" ]] ; then
 fi
 #(cd fortd;make)
 cd f95
+# next line unnecessary - following line meant?
 ln -sf ../fortd LIB
+(cd $SMALIB_DIR/f95;ln -sf ../fortd LIB)
 #extra make helps with file syncing
 make -f Makefile.geoq
 for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
