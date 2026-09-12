@@ -1,5 +1,4 @@
 module powres_h
-
   use const_kind_m
   use geobjlist_h
   use geobj_m
@@ -41,6 +40,7 @@ module powres_h
      integer(ki4), dimension(:), allocatable :: pmask !< power mask
      real(kr4), dimension(:), allocatable :: pows !< power statistic
      real(kr4), dimension(:), allocatable :: powa !< power average statistic
+     real(kr4), dimension(:), allocatable :: powr !< radiation power
      real(kr4), dimension(:), allocatable :: psista !< \f$ \psi \f$ at start of fieldline
      !-----------------
      real(kr4), dimension(:), allocatable :: angle !< Angle between normal and fieldline in degrees

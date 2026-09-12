@@ -1,5 +1,4 @@
 module geoq_m
-
   use const_kind_m
   use log_m
   use clock_m
@@ -194,6 +193,12 @@ subroutine geoq_init(self)
   self%beq%rxpt=0
   self%beq%zxpt=0
   self%beq%psixpt=0
+
+  self%beq%rxptarr = 0.0_kr8
+  self%beq%zxptarr = 0.0_kr8
+  self%beq%psixptarr = 0.0_kr8
+  self%beq%outer_xpoint = 0_ki4
+
   !calculates psimin and psimax from geometry if requested when dealing
   !with case that has more than 1 x-point
   if(self%beq%n%psiopt==2) then
@@ -334,7 +339,7 @@ subroutine geoq_objaddcon(self)
            if (filedata) then
               call dcontrol_readprogfiles(file,iin)
               call dcontrol_readatfile(file,numerics)
-              call dcontrol_lines2d(numerics)
+              call dcontrol_lines2d(numerics,igcode)
            end if
            numerics%stang=zetamin
            numerics%finang=zetamax
@@ -347,7 +352,7 @@ subroutine geoq_objaddcon(self)
            if (filedata) then
               call dcontrol_readprogfiles(file,iin)
               call dcontrol_readatfile(file,numerics)
-              call dcontrol_lines2d(numerics)
+              call dcontrol_lines2d(numerics,igcode)
            end if
            numerics%stang=zetamin
            numerics%finang=zetamax
@@ -1286,6 +1291,8 @@ subroutine geoq_writev(self,kchar,kplot)
   real(kr4) :: dot_aa, dot_ab
   real(kr4) :: angle !< Angle
   real(kr4) :: zmag !< magnitude of normal vector
+  real(kr4) :: zacosarg !< argument of acos
+  real(kr4), parameter :: zacostol = 2.0_kr4*epsilon(1.0_kr4) !< tolerance for round-off outside the acos domain
   type(geobj_t) :: iobj !< object
   logical, parameter :: output_cartv=.TRUE. !< local variable
   type(posvecl_t) :: zpos !< local variable
@@ -1571,20 +1578,28 @@ subroutine geoq_writev(self,kchar,kplot)
         call beq_b(self%beq,posang,0)
         ! Calculate Normal
 
-        dot_aa = dot_product(posang%vec, posang%vec)
+        dot_aa = real(dot_product(posang%vec, posang%vec), kind=kr4)
 
-        if (abs(dot_aa) < 1e-4) then
-          angle = 0._kr4
+        if (abs(dot_aa) < 1.0e-4_kr4) then
+          angle = 0.0_kr4
         else
-          dot_ab = dot_product(posang%vec, znormal)
-          angle = acos(dot_ab / sqrt(dot_aa)) * 180._kr4 / const_pi
+          dot_ab = real(dot_product(posang%vec, znormal), kind=kr4)
+          zacosarg = dot_ab/sqrt(dot_aa)
+
+          if (abs(zacosarg) > 1.0_kr4 + zacostol) then
+            call log_error(m_name,s_name,1,error_warning, &
+               "acos argument outside round-off tolerance")
+          end if
+
+          zacosarg = max(-1.0_kr4, min(1.0_kr4, zacosarg))
+          angle = acos(zacosarg) * 180.0_kr4 / const_pi
         end if
 
         ! We subtract with/from 90 because of the tilted apex of Panel.
-        if (angle > 90._kr4) then
-          angle = angle - 90._kr4
+        if (angle > 90.0_kr4) then
+          angle = angle - 90.0_kr4
         else
-          angle = 90._kr4 - angle
+          angle = 90.0_kr4 - angle
         end if
 
         write(kplot, *) angle
@@ -1755,7 +1770,7 @@ subroutine geoq_bcast(self,decomp)
 
   ! Broadcast results geometry to powcal
   if (decomp%myrank == decomp%procgeoqres .and. decomp%bcastpowcal) then
-     call clock_start(31,"results to powcal broadcast time")
+     call clock_start(31,'results to powcal broadcast CPU-time')
      call geoq_makebcart(bcast_vecb,self)
      call bcast_powcal(self%objl,self%objl%posl,bcast_vecb,decomp%myrankgeoqres,decomp%commgeoqres)
      call geoq_makeveclis(bcast_veclis,self)
@@ -1764,20 +1779,21 @@ subroutine geoq_bcast(self,decomp)
      call clock_stop(31)
   endif
 
+
   ! Broadcast beq to powcal and shadow data to hdsgen and powcal
   if (decomp%myrank == decomp%procgeoqshad) then
      ! Make a veclis in the proper units for broadcast to hds and powcal
      call geoq_makeveclis(bcast_veclis,self)
      ! First broadcast geoq to hdsgen as it needs to get going
      if(decomp%bcasthdsgen) then
-        call clock_start(31,"shadow to hdsgen broadcast time")
+        call clock_start(31,'shadow to hdsgen broadcast CPU-time')
         call bcast_geobjlist(self%objl,decomp%myrankshadhds,decomp%commshadhds)
         call bcast_position(bcast_veclis,decomp%myrankshadhds,decomp%commshadhds)
         call clock_stop(31)
      endif
      ! Then beq to powcal
      if(decomp%bcastpowcal) then
-        call clock_start(32,"shadow to powcal beq broadcast time")
+        call clock_start(32,'shadow to powcal beq broadcast CPU-time')
         call bcast_beq(self%beq,decomp%myrankgeoqshad,decomp%commgeoqshad)
         ! skylights if needed
         if(self%beq%n%skyl) then

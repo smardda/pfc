@@ -121,12 +121,28 @@ for dir in "${DIRS[@]}"; do
 done
 
 diff_count=0
+VTK_FILES=()
+
 for file in "${FILES[@]}"; do
 	echo "${file}"
+
+	if [[ "${file}" == *.vtk ]]; then
+		VTK_FILES+=("${file}")
+	fi
+
 	if ! do_diff "${HSAUX}/${file}" "${HSAOLD}/${file}"; then
 		diff_count=$((diff_count + 1))
-		diff -bu "${HSAUX}/${file}" "${HSAOLD}/${file}"
+		diff -q "${HSAUX}/${file}" "${HSAOLD}/${file}"
 	fi
 done
 echo "Compared ${#FILES[@]} files. Found ${diff_count} with differences."
+
+if [ "${diff_count}" -ne 0 ]; then
+	echo
+	echo "Detailed VTK comparison report:"
+	python3 "$(dirname "${SCRIPT_DIR}")/tools/vtk_folder_compare.py" \
+	"${HSAOLD}" "${HSAUX}" \
+	--files "${VTK_FILES[@]}"
+fi
+
 exit ${diff_count}

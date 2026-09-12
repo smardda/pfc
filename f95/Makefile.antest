@@ -1,0 +1,117 @@
+# basic Makefile
+
+$(info >>> ENTERING $(lastword $(MAKEFILE_LIST)))
+# config file.
+include ../config/config.inc
+ 
+# Path and libraries
+include ../config/path.inc
+
+SOURCES = \
+antenna_h.f90 \
+antenna_m.f90 \
+antest_h.f90 \
+antest_m.f90 \
+atcontrol_h.f90 \
+atcontrol_m.f90 \
+powcal_h.f90 \
+powelt_m.f90 \
+powres_h.f90 \
+prcontrol_h.f90 \
+radnsource_h.f90 \
+radnsource_m.f90 \
+ray_m.f90 \
+skyl_h.f90 \
+antest.f90
+ 
+PROG = antest
+ 
+
+VPATH=$(SMAPATH)
+
+MODULES=$(SOURCES:.f90=.mod)
+
+OBJECTS=$(SOURCES:.f90=.o)
+
+
+$(PROG) : lib $(OBJECTS)
+	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
+
+$(OBJECTS):$(MODULES)
+	@touch .TOUCHFILE
+
+$(MODULES): %.mod : %.f90
+	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
+
+clean:
+	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_CLEAN_FILES)
+
+distclean: clean
+	rm -f $(PROG)
+
+lib :
+	cd $(SMAPATH)/LIB && $(MAKE) 
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
+
+deepclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) clean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib clean
+
+deeplibclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) libclean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib libclean
+
+txt:
+	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
+
+.PHONY : clean distclean lib deepclean deeplibclean
+
+antenna_m.f90 : antenna_h.mod
+antenna_m.f90 : powelt_m.mod
+antenna_m.f90 : radnsource_h.mod
+antenna_m.f90 : radnsource_m.mod
+antenna_m.f90 : ray_m.mod
+antest_h.f90 : antenna_h.mod
+antest_m.f90 : antenna_h.mod
+antest_m.f90 : antenna_m.mod
+antest_m.f90 : antest_h.mod
+antest_m.f90 : radnsource_h.mod
+antest_m.f90 : radnsource_m.mod
+antest_m.f90 : ray_m.mod
+atcontrol_m.f90 : antenna_h.mod
+atcontrol_m.f90 : antenna_m.mod
+atcontrol_m.f90 : antest_h.mod
+atcontrol_m.f90 : antest_m.mod
+atcontrol_m.f90 : atcontrol_h.mod
+atcontrol_m.f90 : radnsource_h.mod
+atcontrol_m.f90 : radnsource_m.mod
+atcontrol_m.f90 : ray_m.mod
+powcal_h.f90 : antenna_h.mod
+powcal_h.f90 : powres_h.mod
+powcal_h.f90 : prcontrol_h.mod
+powcal_h.f90 : radnsource_h.mod
+powcal_h.f90 : ray_m.mod
+powelt_m.f90 : antenna_h.mod
+powelt_m.f90 : powcal_h.mod
+powelt_m.f90 : powres_h.mod
+powelt_m.f90 : radnsource_h.mod
+powelt_m.f90 : radnsource_m.mod
+powelt_m.f90 : ray_m.mod
+powres_h.f90 : skyl_h.mod
+radnsource_m.f90 : radnsource_h.mod
+ray_m.f90 : radnsource_h.mod
+ray_m.f90 : radnsource_m.mod
+antest.f90 : antenna_h.mod
+antest.f90 : antenna_m.mod
+antest.f90 : antest_h.mod
+antest.f90 : antest_m.mod
+antest.f90 : atcontrol_h.mod
+antest.f90 : atcontrol_m.mod
+antest.f90 : powcal_h.mod
+antest.f90 : powelt_m.mod
+antest.f90 : powres_h.mod
+antest.f90 : prcontrol_h.mod
+antest.f90 : radnsource_h.mod
+antest.f90 : radnsource_m.mod
+antest.f90 : ray_m.mod
+antest.f90 : skyl_h.mod

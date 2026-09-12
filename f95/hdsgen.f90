@@ -1,5 +1,4 @@
 module hdsgen_p
-
   use const_kind_m
   use const_numphys_h
   use control_h
@@ -72,7 +71,7 @@ contains
 
     call date_time_init(timestamp)
     call clock_init(20)
-    call clock_start(1,'hdsgen run time')
+    call clock_start(1,'hdsgen run CPU-time')
 
     !--------------------------------------------------------------------------
     !! print header
@@ -100,14 +99,14 @@ contains
 
     !--------------------------------------------------------------------------
     !! read control file
-    call clock_start(2,'control_init time')
+    call clock_start(2,'control_init CPU-time')
     call control_init(fileroot)
     call control_read(file,numerics,plot,combined)
     call clock_stop(2)
     
     !--------------------------------------------------------------------------
     !! initialise  geobjl data
-    call clock_start(3,'geobjlist_init time')
+    call clock_start(3,'geobjlist_init CPU-time')
     if(decomp%bcasthdsgen) then
        call geobjlist_init(geobjl,file%vtkdata,numerics,.True.)
        call bcast_geobjlist(geobjl,decomp%myrankshadhds,decomp%commshadhds)
@@ -121,7 +120,7 @@ contains
 
     !--------------------------------------------------------------------------
     !! initialise btree
-    call clock_start(4,'btree_init time')
+    call clock_start(4,'btree_init CPU-time')
     call btree_init(btree,numerics)
     call clock_stop(4)
     !--------------------------------------------------------------------------
@@ -131,7 +130,7 @@ contains
 
     !--------------------------------------------------------------------------
     !!sort geobjl onto bins
-    call clock_start(9,'geobjlist_sort time')
+    call clock_start(9,'geobjlist_sort CPU-time')
     call geobjlist_bin(geobjl,btree)
     numerics%geobj_coord_tfm=geobjl%quantfm
     call clock_stop(9)
@@ -147,7 +146,7 @@ contains
     
     !!plot mapped HDS
     if(plot%hdsm) then
-       call clock_start(10,'vfile_hdsm time')
+       call clock_start(10,'vfile_hdsm CPU-time')
        call geobjlist_makehedline(geobjl,'hds lowest',vtkdesc)
        call vfile_init(file%hdsm,vtkdesc,nplot)
        call btree_writev(btree,numerics,'hds lowest',nplot)
@@ -157,7 +156,7 @@ contains
 
     !!plot HDS quantised (default)
     if(plot%hdsq) then
-       call clock_start(11,'vfile_hdsq time')
+       call clock_start(11,'vfile_hdsq CPU-time')
        call geobjlist_makehedline(geobjl,'hds quantised',vtkdesc)
        call vfile_init(file%hdsq,vtkdesc,nplot)
        call btree_writev(btree,numerics,'hds quantised',nplot)
@@ -167,7 +166,7 @@ contains
 
     !!plot assigned geobj
     if(plot%geobjq) then
-       call clock_start(14,'vfile_assignedgeobj time')
+       call clock_start(14,'vfile_assignedgeobj CPU-time')
        call geobjlist_makehedline(geobjl,'assigned geobj',vtkdesc)
        call vfile_init(file%geobjq,vtkdesc,nplot)
        ! in quantised space
@@ -178,7 +177,7 @@ contains
 
     !!plot unassigned geobjs
     if(plot%lostgeobj) then
-       call clock_start(15,'vfile_unassignedgeobj time')
+       call clock_start(15,'vfile_unassignedgeobj CPU-time')
        call geobjlist_makehedline(geobjl,'unassigned geobj',vtkdesc)
        call vfile_init(file%lostgeobj,vtkdesc,nplot)
        ! in quantised space
@@ -189,7 +188,7 @@ contains
 
     !!plot all geobj points
     if(plot%geoptq) then
-       call clock_start(16,'vfile_allgeoptq time')
+       call clock_start(16,'vfile_allgeoptq CPU-time')
        call geobjlist_makehedline(geobjl,'all geoptq',vtkdesc)
        call vfile_init(file%geoptq,vtkdesc,nplot)
        ! in quantised space
@@ -200,7 +199,7 @@ contains
 
     !!plot density geobjs
     if(plot%densitygeobj) then
-       call clock_start(17,'vfile_densitygeobj time')
+       call clock_start(17,'vfile_densitygeobj CPU-time')
        call geobjlist_makehedline(geobjl,'density geobj',vtkdesc)
        call vfile_init(file%densitygeobj,vtkdesc,nplot)
        ! in quantised space
@@ -212,7 +211,7 @@ contains
     !--------------------------------------------------------------------------
     !! output file
 
-    call clock_start(20,'outfile_init time')
+    call clock_start(20,'outfile_init CPU-time')
     call outfile_init(file,timestamp)
     call outfile_write(geobjl,btree)
     call outfile_close
@@ -221,7 +220,7 @@ contains
     !--------------------------------------------------------------------------
     !! hds output file
 
-    call clock_start(21,'hdsfile_init time')
+    call clock_start(21,'hdsfile_init CPU-time')
     call hdsfile_init(file%hdslist,timestamp,nouth)
     call hdsfile_write(geobjl,numerics,btree)
     call hdsfile_close
@@ -244,17 +243,20 @@ end module hdsgen_p
 
 
 #ifndef COMBINED
-!> @addtogroup groupname9
-!> @{
 program hdsgen
-!> @}  
   use hdsgen_p
   
   type(decomp_t) :: decomp
+  real(kr8) t0, dt_wc
+
+  t0 = smiter_wctime()
 
   if(serialmpi_init()) call hdsgen_sub(1,.FALSE.,decomp)
 
   call serialmpi_finish()
+
+  dt_wc = smiter_wctime() -t0
+  print '(" hdsgen TOTAL WC-time = ", t40, g12.5, "secs")', dt_wc
   
 end program hdsgen
 #endif

@@ -3,22 +3,65 @@ module namelist
   use const_kind_m
 
 ! public types
-  integer(ki4), parameter :: MAX_NUMBER_OF_POSITIONS=100 !< maximum number of positions allowed
-  integer(ki4), parameter :: MAX_NUMBER_OF_PARAMETERS=10 !< maximum number of parameters allowed
-  integer(ki4), parameter :: maxinp=100 !< Maximum number of inputs allowed for each variable
-  integer(ki4), parameter  :: maximum_number_of_tracks=100 !< maximum number of tracks allowed
-  integer(ki4), parameter  :: maximum_number_of_files=100 !< maximum number of files allowed
-  integer(ki4), parameter  :: maximum_number_of_panels=100 !< maximum number of panels allowed
+     integer(ki4), parameter :: MAX_NUMBER_OF_POSITIONS=100 !< maximum number of positions allowed
+     integer(ki4), parameter :: MAX_NUMBER_OF_PARAMETERS=10 !< maximum number of parameters allowed
+     integer(ki4), parameter :: maxinp=100 !< Maximum number of inputs allowed for each variable
+     integer(ki4), parameter  :: maximum_number_of_tracks=100 !< maximum number of tracks allowed
+     integer(ki4), parameter  :: maximum_number_of_files=100 !< maximum number of files allowed
+     integer(ki4), parameter  :: maximum_number_of_panels=100 !< maximum number of panels allowed
+
 !---------------------------------------------------------------------
-!> Entries in namelist analysisfiles
+!> Entries in namelist analysisfiles.
   type, public :: analysisfiles
-     character(len=80), dimension(maximum_number_of_files) :: vtk_data_file !< vtk format geometry data input file, default 'null'
-     character(len=80) :: vtk_input_file  !< smanal data input file _powx format, default 'null'
-     character(len=80) :: gnu_output_file  !< smanal gnu/csv data output file, default 'null'
-     character(len=80) :: gnure_output_file  !< smanal gnu/csv data output file, default 'null'
-     character(len=80) :: vtk_small_output_file  !< smanal data output at centroids file, default 'null'
-     character(len=80) :: vtk_output_file  !< smanal data output file, default 'null'
+   !> (legacy) vtk format geometry data input file,
+   !! default 'null'
+     character(len=80), dimension(maximum_number_of_files) :: vtk_data_file !< .
+   !> smanal data input file _powx format,
+   !! default 'null'
+     character(len=80) :: vtk_input_file  !<  .
+   !> smanal gnu/csv data output file,
+   !! default 'null'
+     character(len=80) :: gnu_output_file  !< .
+   !> smanal gnu/csv data output file,
+   !! default 'null'
+     character(len=80) :: gnure_output_file  !< .
+   !> smanal data output at centroids file,
+   !! default 'null'
+     character(len=80) :: vtk_small_output_file  !< .
+   !> smanal data output file,
+   !! default 'null'
+     character(len=80) :: vtk_output_file  !<.
   end type analysisfiles
+
+!---------------------------------------------------------------------
+!> Entries in namelist antennaparameters.
+  type, public :: antennaparameters
+     real(kr8) :: power_split !< variable with meaningful name, default 0.5_kr8
+     integer(ki4) :: ntheta !< number of samples in theta, default  25,  normally overwritten by value in geometry file
+     integer(ki4) :: nphi !< number of samples in phi, default  25,  normally overwritten by value in geometry file
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !< self-explanatory, default 0
+     integer(ki4) :: number_of_real_parameters  !< self-explanatory, default 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !< self-explanatory, default 0
+     integer(ki4) :: number_of_integer_parameters  !< self-explanatory, default 0
+     logical :: plot_diagvtk !< logical to decide whether to visualise or not, default  .false.
+  end type antennaparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist antestparameters.
+  type, public :: antestparameters
+     real(kr8) :: number_of_samples_in_theta !< self-explanatory, default  25
+     real(kr8) :: number_of_samples_in_phi !< self-explanatory, default  25
+     real(kr8) :: case_select_for_sampling_pattern !< self-explanatory, default  1
+     real(kr8) :: number_of_samples_along_ray !< self-explanatory, default  30
+     real(kr8) :: terminating_distance_of_ray !< self-explanatory, default  100
+     real(kr8) :: power_split !< INERT variable with meaningful name, default 0.5_kr8
+     character(len=80) :: antest_formula !< INERT formula to be used, default 'unset'
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !< self-explanatory variable, default 0
+     integer(ki4) :: number_of_real_parameters  !< self-explanatory variable, default 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !< self-explanatory variable, default 0
+     integer(ki4) :: number_of_integer_parameters  !< self-explanatory variable, default 0
+  end type antestparameters
+
 !---------------------------------------------------------------------
 !> Entries in namelist beqparameters.
 !! - Three different magnetic field configurations are recognised,
@@ -207,36 +250,44 @@ module namelist
      real(kr8) :: beq_fscale !< .
    !> set .TRUE. to work in duct coordinates
      logical :: beq_duct !< .
-     !> flag whether any skylight(s) defined by flux limits
-     !! default .FALSE.
+   !> flag whether any skylight(s) defined by flux limits
+   !! default .FALSE.
      logical :: skylight_flux_limits !< .
-     !> flag whether any skylight(s) defined by plasma centre line
-     !! default .FALSE.
+   !>flag whether centre line is to be a cutout, default .FALSE.
+     logical :: centre_line_cutout !< .
+   !> flag whether any skylight(s) defined by plasma centre line
+   !! default .FALSE.
      logical :: skylight_centre_line !< .
    !> number of absorbers defined geometrically, default 0.
    !! Following beqparameters in the file, there must be a
    !! absorber_objects x (datvtkparameters + optional progfiles)
-  integer(ki4) :: absorber_objects !< .
+     integer(ki4) :: absorber_objects !< .
   !> number of invisible objects defined geometrically, default 0.
    !! Following beqparameters in the file, there must be a
    !! invisible_objects x (datvtkparameters + optional progfiles)
-  integer(ki4) :: invisible_objects !< .
+     integer(ki4) :: invisible_objects !< .
    !> number of skylights defined geometrically, default 0.
    !! Following beqparameters in the file, there must be a
    !! skylparameters namelist and then skylight_objects x (datvtkparameters + optional progfiles)
      integer(ki4) :: skylight_objects !< .
-  !> number of beancan surfaces defined geometrically, default 0.
+   !> number of beancan surfaces defined geometrically, default 0.
    !! Following beqparameters in the file, there must be a
    !! beancan_objects x (datvtkparameters + optional progfiles)
-  integer(ki4) :: beancan_objects !< .
-  !> number of cutouts defined geometrically, default 0.
+     integer(ki4) :: beancan_objects !< .
+   !> number of cutouts defined geometrically, default 0.
    !! A cutout is surface designed to absorb energy without trace,
    !! e.g. to stop fieldlines going "round the back" of surfaces.
    !! Following beqparameters in the file, there must be
    !! cutout_objects x (namelists datvtkparameters + optional progfiles)
      integer(ki4) :: cutout_objects !< .
-   !> Level of output to help understand skylight production
-   !! Default 0, no output.
+  !> number of antennas defined geometrically, default 0.
+   !! An antenna is a hemispherical surface designed for the launching
+   !! of rays uniformly distributed in both latitude and longitude
+   !! Following beqparameters in the file, there must be
+   !! antenna_objects x (namelists datvtkparameters + optional progfiles)
+     integer(ki4) :: antenna_objects !< .
+   !> Level of output to help understand skylight production,
+   !! default 0, no output.
      integer(ki4) :: skylight_debug !< .
    !> \f$ M \f$ number of ripple coils, default 0
    !! for field formula see header
@@ -308,16 +359,16 @@ module namelist
      real(kr8) :: beq_psibig !< .
    !> equilibrium helicity is ok, no need for overrides which are ignored if .TRUE.
      logical :: equil_helicity_ok !< .
-   logical :: equil_scale !<  default false, if true, scale flux by psic-psib (equ case)
-   logical :: equil_mastequ !<  default true, MAST-U equ file has right helicity even if equil_helicity_ok=.false.
+     logical :: equil_scale !<  default false, if true, scale flux by psic-psib (equ case)
+     logical :: equil_mastequ !<  default true, MAST-U equ file has right helicity even if equil_helicity_ok=.false.
    !> Specifies file containing spl3d format vacuum field
      character(len=80) :: beq_vacuum_field_file !<  .
-   !> Defines the number of active x-points in the flux. Currenly the options are 1 (default value)
+   !> Defines the number of active x-points in the flux. Currently the options are 1 (default value)
    !! and 2 (double null case)
-    integer(ki4) ::       n_xpoints !< 
-   !> If set to 1 then all values of \f$ R_m, B_{pm}, B_m \f$ are set to the same value as defined by beq_bdryopt 
-   !! Default value=0 
-    integer(ki4) ::  same_rmbpmbm
+     integer(ki4) ::       n_xpoints !< 
+   !> If set to 1 then all values of \f$ R_m, B_{pm}, B_m \f$ are set to the same value as defined by beq_bdryopt,
+   !! default 0
+     integer(ki4) ::  same_rmbpmbm
   end type beqparameters
 
 !---------------------------------------------------------------------
@@ -342,7 +393,7 @@ module namelist
      integer(ki4):: btree_sizep !< .
    !> EXPERT  size of exten array, must be positive,
    !! default 1000
-     integer(ki4):: btree_sizee  !< local variable
+     integer(ki4):: btree_sizee  !< .
    !> EXPERT  size of list array hoc, must be positive,
    !! default 2
      integer(ki4):: btree_sizeh !< .
@@ -367,656 +418,16 @@ module namelist
    !! 2. use nxyz, set split at top directly
      integer(ki4):: tree_ttalg !< .
    !> type of tree, must be positive
-   !! 1. BSP  (EXPERT)
+   !! 1. BSP  (EXPERT, default)
    !! 2. octree
    !! 3. multi-octree (octree with special top)
      integer(ki4):: tree_type !< .
   end type btreeparameters
 
-!!---------------------------------------------------------------------
-!> Entries in namelist equilparameters.
-!! Normally equilibria are specified via an EQDSKG  file output by EFIT,
-!! but there is also the possibility for the user to define equilibria
-!! if the equilibrium file extension is given as 'ana'.
-!! - For a description of EQDSKG format
-!! see https://fusion.gat.com/theory/Efitgeqdsk
-!! - File xxx.ana must contain namelists equilparameters and
-!! meshparameters in that order
-!! 1.  An analytic equilibrium may be specified following Solovev.
-!! The Solovev solution of the Grad-Shafranov equation is given by
-!! \f[
-!! \psi  =  \psi_0  \chi  ,  0 \le \chi \le 1  ,  \chi =  \left [ (R^2
-!! - R^2_0)^2  +  \frac{Z^2} {E^2}  (R^2 - R^2_x) \right ] \frac{4}
-!! {(R^2_2 - R^2_1)^2}
-!! \f]
-!! ultimately determined by a set of four separate
-!! positions \f$(R_1,R_2,R_m,Z_m)\f$ which define a D-shaped reference
-!! surface going through the three points \f$(R_1,0), (R_2,0) \f$ and \f$ (R_m,Z_m)\f$.
-!! (The solution is up-down symmetric: \f$\psi(R,Z) = \psi(R,-Z)\f$.)
-!! These four positions are used to define the parameters via
-!! \f{eqnarray*}{
-!! R_0^2 &=& \frac {R_1^2 + R_2^2} {2},
-!! R_x^2 &=& \frac{R_1^2 R_2^2 - R_{\rm m}^4} {R_1^2 + R_2^2 - 2R_ m^2,},
-!!  E^2 &=& \frac {Z_{\rm m}^2} {R_1^2 + R_2^2 - 2 R_m^2}
-!! \f}
-!!      - plasma minor radius \f$a = \frac{R_2 - R_1} {2} \f$
-!!      - it is up to the user to choose parameters sensibly.
-!! Some indicative values are set in the source code beqan_m.f90
-!! 2. User-defined  as special f95 subroutine coded by user, called
-!! beqan_userdefined in file beqan_m.f90. The parameter arrays below are
-!! provided for convenience.
-!! 3. Remember that equilibria may have left or right-handed helicity, and
-!! this may be changed by the code unless equil_helicity_ok=.TRUE.
-  type, public :: equilparameters
-   !> equilibrium formula, currently recognised values are
-   !! - 'solovev'
-   !! - 'userdefined'
-     character(len=80) :: equilibrium_formula !< .
-     real(kr8) :: BPhi !< \f$ B_T \f$ Value of toroidal field at plasma centre
-     real(kr8) :: Psi0 !< \f$ \psi_0 \f$ Flux through plasma
-     real(kr8) :: R1 !< \f$ R_1>0 \f$ inner cylindrical radius
-     real(kr8) :: R2 !< \f$ R_2>R_1 \f$ outer cylindrical radius
-     real(kr8) :: Rm !< \f$ R \f$ at maximum height, \f$ R_1<R_m<R_2 \f$
-     real(kr8) :: Zm !< \f$ Z \f$ at maximum height
-     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters !< general real parameters
-     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters !< general integer_parameters
-     integer(ki4) :: number_of_real_parameters !< actual  number of real parameters
-     integer(ki4) :: number_of_integer_parameters !< actual  number of integer parameters
-  end type equilparameters
-
-!!---------------------------------------------------------------------
-!> Entries in namelist meshparameters.
-!! These define the mesh as a uniform lattice in R-Z
-  type, public :: meshparameters
-     real(kr8) :: rmin !< \f$ R_{\min} \f$ Minimum value of \f$ R \f$, \f$ R_{\max} \neq R_{\min} \f$
-     real(kr8) :: rmax !< \f$ R_{\max} \f$ Maximum value of \f$ R \f$, \f$ R_{\max} \neq R_{\min} \f$
-     integer(ki4) :: nw !< \f$ N_R>0 \f$ number of grid points in R-direction
-     real(kr8) :: zmin !< \f$ Z_{\min} \f$ Minimum value of \f$ Z \f$, \f$ Z_{\max} \neq Z_{\min} \f$
-     real(kr8) :: zmax !< \f$ Z_{\max} \f$ Maximum value of \f$ Z \f$, \f$ Z_{\max} \neq Z_{\min} \f$
-     integer(ki4) :: nh !< \f$ N_Z>0 \f$ number of grid points in Z-direction
-  end type meshparameters
-
-!!---------------------------------------------------------------------
-!> Entries in namelist hdsgenparameters.
-!! These control subdivision that generates HDS.
-!! A box corresponding to a leaf of the binary tree is referred
-!! to as a 'bin'.
-  type, public :: hdsgenparameters
-   !> Stop dividing if less than this number of objects
-   !! in 'bin', default 10.
-     integer(ki4) :: limit_geobj_in_bin !< .
-   !> INERT numerical parameter
-     integer(ki4) :: nbins_child  ns_child!< .
-   !> Type of geometry
-   !! 1. Points (default)
-   !! 2. Triangles
-     integer(ki4) :: geometrical_type !< .
-   !> INERT Positive tolerance <= max_tolerance
-     real(kr4) :: min_tolerance !< .
-   !> Positive tolerance, default 0.1.
-   !! Expand bounding box by this margin in every direction, units of input geometry
-     real(kr4) :: max_tolerance !< .
-   !> Number of extra bounding cubes, no more than two, default 0
-   !! If delta_inner_length>=0 then add this margin to volume,
-   !! and if delta_outer_length>=0 add inner+outer_length margin.
-   !! If delta_inner_length<0, then use corner values to define and only
-   !! produce one cube. N.B. this will be expanded to include all objects
-     integer(ki4) :: no_boundary_cubes !< .
-   !> vector defining corner with lesser component values
-   !! default origin (absolute coordinates)
-   !! Only active if any of the components is less than the smallest
-   !! corresponding coordinate in the geometry, and then only that coordinates are affected.
-     real(kr4), dimension(3) :: lower_corner !< .
-   !> vector defining corner with greater component values (absolute coordinates)
-   !! Only active if any of the components is greater than the largest
-   !! corresponding coordinate in the geometry, and then only those coordinates are affected.
-     real(kr4), dimension(3) :: upper_corner !< .
-   !> Inner bounding cube separation from geometry, mm,
-   !! default -1
-     real(kr4) :: delta_inner_length   !< .
-   !> Outer bounding cube separation from inner, mm,
-   !! default 0
-     real(kr4) :: delta_outer_length   !< .
-   !> \f$ N_Q \f$, default 1024
-     integer(ki4) :: quantising_number !< .
-   !> EXPERT Number of objects in tree, default 0, normally determined automatically
-     integer(ki4) :: no_geobj_records !< .
-   !> If positive, expand global bounding box bin by
-   !! margin determined by other settings, default 0
-     integer(ki4) :: margin_type !< .
-   !> INERT type of scaling of geobj position values
-     integer(ki4) :: type_geobj_coord_scaling !< .
-  end type hdsgenparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist edgprofparameters.
-!! These define the profile of edge power deposition.
-!! -The standard and Eich formulae are defined in Arter et al, 2015,
-!! preprint at http://arxiv.org/abs/1403.7142
-!! using the same notation.
-!! - The expdouble formula is taken from Kocan et al Eq(1),
-!! paper at http://iopscience.iop.org/0029-5515/55/3/033019 as
-!! \f$ q_{\parallel 0}\left(\exp(-\Delta r/\lambda_q) +
-!! R_{near} \exp(-\Delta r/\lambda_{q,near}) \right)\f$
-!! where \f$ \Delta r \f$ is the midplane separation between the flux
-!! contour on the PFC and the LCFS (positive outside LCFS).
-!! - One of \f$ P_{loss} \f$  and \f$ q_{\parallel 0} \f$ must be positive,
-!! one which is negative is ignored
-!! - Maximum number of positions at which to sample profile,
-!! MAX_NUMBER_OF_POSITIONS=100
-!! - Maximum number of parameters which may used to define fuction,
-!! MAX_NUMBER_OF_PARAMETERS=100
-  type, public :: edgprofparameters
-   !> power deposition formula to be used for each region. profile_formula is an array of size
-   !! n_regions which is given by the geoq output file. The available profiles are
-   !! - 'unset' standard exponential profile (default)
-   !! - 'exp' standard exponential profile
-   !! - 'expdouble' as two exponentials
-   !! - 'eich' as defined by T. Eich
-   !! - 'samples' as a set set of samples at specified positions. 
-   !! N.B. it is up to the user to arrange normalisation.
-   !! - 'userdefined' as special f95 subroutine coded by user, called
-   !! edgprof_userdefined in file edgprof_m.f90.
-   !! N.B. it is up to the user to arrange normalisation.
-     character(len=80) :: profile_formula !<
-   !> \f$ F \f$ power split ion to electron direction. \n
-   !! Must lie between 0 and 1 \n
-   !! Default = 0.5
-     real(kr8) :: power_split !<
-   !> \f$ \lambda_m \f$ power decay length at midplane (m) to be used for \n
-   !! each region. decay_length is an array of size
-   !! n_regions which is given by the geoq output file.
-   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$ \n
-   !! if Eich formula used \n
-   !! Default = 0.012 (units m)
-     real(kr8) :: decay_length !<
-   !> \f$ P_{loss} \f$ power crossing the separatrix (W) for \n
-   !! each one of the 4 regions. power_loss is an array of size
-   !! n_regions which is given by the geoq output file. In the case
-   !! of n_regions=4, the first 2 values should be set the same, and 
-   !! the last 2 values should be the same.
-   !! Default = 7.5e+06 (Units Watts)
-     real(kr8) :: power_loss !<
-   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm). \n
-   !! Default = -1 (if negative it is ignored)
-     real(kr8) :: q_parallel0 !<
-   !>  \f$ \sigma \f$ Eich formula length (m) for each region. sigma is an array of size
-   !! n_regions which is given by the geoq output file.
-   !! Default = 0
-     real(kr8) :: diffusion_length !<
-   !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
-   !! for expdouble formula \n
-   !! Default = 0
-     real(kr8) :: ratio_of_q_parallel0_near !<
-   !> \f$ \lambda_{q,near} \f$ near-SOL power decay length at midplane (m)
-   !! for expdouble formula for each region. decay_length_near is an array of size
-   !! n_regions which is given by the geoq output file. \n
-   !! Default = 0
-     real(kr8) :: decay_length_near !<
-   !> Define profile as samples at these positions \n
-   !! Default = 0
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<
-   !> Profile determined as samples \n
-   !! Default = 0
-     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<
-   !> whether positions in distance or flux from SOL
-   !! - 'radius'
-   !! - 'flux' \n
-   !! Default = radius
-     character(len=80) :: coord_of_positions !<
-   !> Number of positions actually used. If sampling, \n
-   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS \n
-   !! Default = 0
-     integer(ki4) :: number_of_positions  !<
-   !> Parameters which may be used in user-defined function \n
-   !! Default = 0
-     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<
-   !> Parameters which may be used in user-defined function \n
-   !! Default = 0
-     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<
-   !> Number of real parameters actually used. If defining function, \n
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
-   !! Default = 0
-     integer(ki4) :: number_of_real_parameters  !<
-   !> Number of integer parameters actually used. If defining function, \n
-   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS \n
-   !! Default = 0
-     integer(ki4) :: number_of_integer_parameters  !<
-   !> Choice of calculation of lambda_q 
-   !! Default='Default'
-       character(len=80) :: lambda_q_choice !<  
-  end type edgprofparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist odesparameters.
-!! The system integrated depends on the parameter fldspec, in fact has order
-!! dependent on fldspec. (In axisymmetric flux coordinates, order is unity,
-!! two in case of cylindrical axisymmetric, three in general cylindricals.)
-!! - Minimum values for \f$ \epsilon_r \f$, \f$ \epsilon_a \f$ and
-!! \f$ \Delta t_0 \f$ should in principle be much smaller in the
-!! cylindrical mapped cases
-!! than in flux-mapped, but in practice it makes little difference to the cost
-!! of a flux-mapped run if smaller values than strictly necessary are used.
-!! Values below single precision round-off are not however sensible.
-!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
-!! \f$ (\psi,\theta,\zeta) \f$ in case of flux coordinates.
-!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
-!! \f$ (R,Z,\xi) \f$ (N.B. \f$ \xi \f$ not \f$ \zeta \f$) in cylindrical case.
-  type, public :: odesparameters
-   !> EXPERT system order,
-   !! 1. for  flux-mapped case
-   !! 2. for axisymmetric field
-   !! 3. for field with ripple
-     integer(ki4) :: system_order !<.
-   !> INERT start control
-     integer(ki4) :: start_control !<.
-   !> INERT termination control
-   !! - Positive value corresponds to fieldline rising above plane,
-   !! negative value corresponds to fieldline falling below plane.
-   !! - Position of plane determined by termination_parameters(3).
-     integer(ki4) :: termination_control !<.
-   !> termination parameters
-   !! - (1) Distance to avoid self-intersection, in quantised units,
-   !!  typically 1/1024 of geometry, default 1.
-   !! - (2) Maximum allowed length of one fieldline segment,
-   !! units are domain size, default effectively \f$ \infty \f$.
-   !! - (3) INERT Terminating plane position in Z, units metres,
-   !! superseded by more flexible definitions in namelist termplaneparameters.
-   !! (EXPERT Only active if termination_planes=F and parameter lpmidplane=T
-   !! with fldspec=2, default effectively \f$ \infty \f$.)
-     real(kr8), dimension(3)  :: termination_parameters !<.
-   !> relative error \f$ \epsilon_r \f$,
-   !! must be >=0 and <=1, default \f$ 10^{-4} \f$
-     real(kr8) :: rel_error !<.
-   !> absolute error \f$ \epsilon_a \f$,
-   !! must be >=0 and <=1, default \f$ 10^{-4} \f$
-     real(kr8) :: abs_error !<.
-   !> Maximum number of steps for one fieldline integration,
-   !! must be positive, default 100.
-     integer(ki4) :: max_numsteps   !<.
-   !> Initial step-size \f$ \Delta t_0 =0.1\f$ (default) for fieldline integration,
-   !! i.e. increment in independent variable, must be positive.
-   !! (Code will determine which is outgoing direction.)
-     real(kr8) :: initial_dt !<.
-   !> Maximum allowed change in \f$ \zeta \f$ (radians) over
-   !! one fieldline integration, default 1.
-     real(kr8) :: max_zeta !<.
-  end type odesparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist powcalparameters.
-!! This is the main parameter control for powcal, however there are also
-!! subsidiary controls, which follow in order:
-!! - termplaneparameters (must only  be present if termination_planes=.TRUE.)
-!! - edgprofparameters (must only  be present if more_profiles=.TRUE.,
-!! now controls power deposition formula)
-!! - odesparameters
-!!
-!! Maximum number of tracks allowed for explicit selection, maximum_number_of_tracks=100.
-  type, public :: powcalparameters
-   !> analytic launch type, for EXPERT use only
-     integer(ki4) :: analytic_launch_type !< local variable
-   !> calculation type
-   !! - 'local' shadowing only by  toroidally localised geometry
-   !! - 'global' shadowing by fieldlines which may wrap around torus
-   !! - 'middle' EXPERT start fieldlines at "midplane", Z=const.
-     character(len=80) :: calculation_type !< local variable
-   !> INERT if more_profiles, \f$ \lambda_m \f$ power decay length at midplane (m),
-   !! default 0.012 (12mm)
-     real(kr8) :: decay_length !< local variable
-   !> INERT if more_profiles, \f$ \sigma \f$ Eich formula length (m),
-   !! default 0
-     real(kr8) :: diffusion_length !< local variable
-   !> tracks selected by element number
-     integer(ki4), dimension(maximum_number_of_tracks) :: element_numbers !< local variable
-   !> If nonzero, compute only selected tracks, default 0.
-   !! Tracks selected using element number. Remember to set plot_flinx/m .TRUE. to get
-   !! track output , and setting plot_powx .FALSE. will save disk space
-     integer(ki4) :: number_of_tracks !< local variable
-   !> INERT if more_profiles, \f$ P_{loss} \f$ power crossing the separatrix (W) ,
-   !! default 7.5e+06 (7.5MW)
-     real(kr8) :: power_loss !< local variable
-   !> power on launch geometry, for EXPERT use only
-     integer(ki4) :: power_on_launch_geo !< local variable
-   !> power on shadow geometry, for EXPERT use only
-     integer(ki4) :: power_on_shadow_geo !< local variable
-   !> INERT if more_profiles, \f$ F \f$ power split ion to electron direction,
-   !! must lie between 0 and 1, default 0.5.
-     real(kr8) :: power_split !< local variable
-   !> INERT if more_profiles, \f$ q_{\parallel 0} \f$ parallel reference flux (W/sqm).
-   !! Default is -1 and if negative is ignored.
-     real(kr8) :: q_parallel0 !< local variable
-   !> level of refinement to be used, always unity,
-   !! EXPERT increasing to 2 or 3 increases number of samples by 4X or 16X
-   !! if mesh has been appropriately prepared using CFMCNP
-     integer(ki4) :: refine_level !< local variable
-   !> control shadowing
-   !! - (-2). "Paint power" onto surfaces
-   !! - (-1). For testing purposes only
-   !! - 0. No shadowing (default)
-   !! - 1. Shadowing by shadow geometry
-     integer(ki4) :: shadow_control !< local variable
-   !> Default .FALSE. implies use of value psista (sic) for \f$ \psi \f$ on termination plane
-   !! to evaluate \f$ Q \f$ in global calculation.  If .TRUE., use instead value of \f$ \psi \f$ on
-   !! PFC to evaluate \f$ Q \f$. (Integration errors may lead to discrepancies in psista even in
-   !! the case of exisymmetric field.)
-     logical :: use_pfc_flux   !< .
-   !> termination planes present, always set .TRUE. to use more
-   !! sophisticated termination criteria in termplaneparameters namelist,
-   !! default .FALSE.
-     logical :: termination_planes !< local variable
-   !> more profiles can be used, always set .TRUE. to use more
-   !! power deposition profiles in edgprofparameters namelist,
-   !! default .FALSE.
-     logical :: more_profiles !< local variable
-     logical :: skylight !< activate skylights if present, default .TRUE.
-     logical :: power_in_pfr !<  default .TRUE., power in private flux region
-     logical :: employ_skyl_pfr !<  INERT default .TRUE., employ skylights in private flux region
-   !> Distance that assumes intersection with skylight, in quantised units, in each direction
-   !!  typically 1/1024 of geometry, default 1.
-     real(kr8), dimension(3) :: skylight_tolerance !< .
-  end type powcalparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist plotselections.
-!! There is a namelist plotselections for each ot the major component
-!! programs, datvtk, geoq, hdsgen, smanal and powcal (although required for datvtk
-!! if a .ctl file is used, the namelist controls have no effect). The plots that
-!! can be produced vary with each program, but the following conventions
-!! are observed:
-!! 1. All variables are logicals, and must be set .TRUE. to produce a
-!! data file for plotting, or be omitted, or set .FALSE. (otherwise an error will
-!! terminate execution).
-!! 2. All variable names begin with 'plot_', then followed by an identifier
-!! for the particular program if a vtk file is wanted, thus
-!!     - geoq or geofld for geoq
-!!     - hds or geo for hdsgen
-!!     - pow for powcal
-!!     - if gnu appears, a file for gnuplot is produced
-!! 3. All vtk files (for visualisation using ParaView) contain only surface
-!! information, unless the string
-!! 'vol' appears following the program identifier, or they show the HDS
-!! which is inherently a 3-D wireframe.
-!! 4. All gnu files (for visualisation using gnuplot) contain only
-!! information projected in cross-section on a plane \f$ \zeta=const. \f$.
-!! The main gnu files of interest are produced by geoq and may be
-!! processed using the command geoqgnu root, where root.ctl is the
-!! control file used to generate them
-!! 5. The coordinate system used is indicated by the last letter before
-!! the .vtk filetype, viz:
-!!     - x for Cartesians (mm)
-!!     - m for mapped coordinates (either flux coordinates or cylindricals
-!! depending on fldspec, the way the magnetic field is specified). Angles
-!! are in radians, and in the
-!! case of cylindricals, units of metres are used for R and Z.
-!!     - q for quantised coordinates, the system in which lines are actually
-!! tracked, typically ranging over 0 to 1024.
-!! 6. There are also names which are a legacy of previous developments,
-!! if they are set .TRUE., a warning will be issued.
-!! 7. Corresponding output files to variable plot_xxx have names root_xxx.vtk
-!! or root_xxx.gnu or root_gnu(_opt).gnu, where root.ctl is the
-!! control file used to generate them
-!! 8. If it is not sensible to produce a plot file, its output will be
-!! suppressed
-  type, public :: plotselections
-   !> geoq only, above conventions apply
-     logical :: plot_geoqx !< .
-   !> geoq only, above conventions apply
-     logical :: plot_geoqvolx !< .
-   !> geoq only, above conventions apply, except 'mm' implies field is mapped
-   !! as well as coordinates
-     logical :: plot_geoqmm !< .
-   !> geoq only, above conventions apply
-     logical :: plot_geoqm !< .
-   !> geoq only, above conventions apply
-     logical :: plot_geoqfldx !< .
-   !> geoq only, above conventions apply. Files with _opt component will
-   !! be produced, depending on fldspec, with content determined by opt
-   !! - (omitted) \f$ \psi \f$ values in R-Z coordinates
-   !! - dR \f$ \partial \psi/\partial R \f$ values in R-Z coordinates
-   !! - dZ \f$ \partial \psi/\partial Z \f$ values in R-Z coordinates
-     logical :: plot_gnu !< .
-   !> geoq only, above conventions apply. Files with _opt component will
-   !! be produced, depending on fldspec, with content determined by opt
-   !! - R \f$ R \f$ values in \f$  \psi-\theta \f$  space
-   !! - Z \f$ Z \f$ values in \f$  \psi-\theta \f$  space
-   !! - RJ \f$ R/J \f$ values in \f$  \psi-\theta \f$  space
-   !! - RZ \f$ R \f$ and \f$ Z \f$ values in \f$  \psi-\theta \f$  space
-     logical :: plot_gnum !< .
-   !> geoq only, above conventions apply. Points of the geometry
-   !! projected in R-Z coordinates.
-     logical :: plot_gnusil !< .
-   !> geoq only, above conventions apply. Points of the geometry
-   !! projected in \f$  \psi-\theta \f$  space
-     logical :: plot_gnusilm !< .
-   !> hdsgen only, above conventions apply.
-     logical :: plot_hdsm !< .
-   !> hdsgen only, above conventions apply.
-     logical :: plot_hdsq !< .
-   !> hdsgen only, plot geometry in quantised coordinates
-     logical :: plot_geobjq !< .
-   !> hdsgen only, plot points of geometry in quantised coordinates
-     logical :: plot_geoptq !< .
-     logical :: plot_cartv !<  magtfm only, vtk plot selector, default .FALSE.
-     logical :: plot_allcartv !<  magtfm only, vtk plot selector, default .FALSE.
-     logical :: plot_testtfm !<  magtfm only, do test of FFT analysis, default .FALSE.
-     logical :: plot_bcartx !<  magtfm only, output scaled B in fmesh format in txt file, default .FALSE.
-     logical :: plot_gnuv !<  magtfm only, gnu 2-D plot selector, default .FALSE.
-     logical :: plot_modes !<  magtfm only, gnu 2-D plot selector, default .FALSE.
-     logical :: plot_gnu !<  magtfm only, gnu 1-D plot selector, default .FALSE.
-     logical :: plot_smanalout !< smanal output data selector, default  .FALSE.
-     logical :: plot_anx !< smanal only, vtk plot selector, default  .FALSE.
-     logical :: plot_ansmallx !< smanal only, vtk plot at centroids only, default  .FALSE.
-     logical :: plot_angnu !< smanal only, gnuplot plot selector, default  .FALSE.
-   !> powcal only, EXPERT use only, above conventions apply
-     logical :: plot_powstatx !< .
-   !> powcal only, above conventions apply.
-     logical :: plot_powx !< .
-   !> powcal only. Plot power on walls if 'middle' option set.
-     logical :: plot_wall !< .
-   !> powcal only, above conventions apply.  Files for fieldlines
-   !! are produced, names beginning 'trackx', numbered by start element,
-   !! with '01.vtk' terminating
-     logical :: plot_flinx !< .
-   !> powcal only. First and last points of
-   !! each fieldline are output in gnuplot format in Cartesian coordinates
-     logical :: plot_flinends !< .
-   !> powcal only, above conventions apply.  Files for fieldlines
-   !! are produced, names beginning 'trackm', numbered by start element,
-   !! with '01.vtk' terminating
-     logical :: plot_flinm !< .
-   !> geoq only, produce files eqdsk_eqbdry.gnu and eqdsk_eqltr.gnu
-   !! describing boundary and limiter from eqdsk file with root 'eqdsk'
-     logical :: plot_eqdsk_boundary !< .
-     logical :: plot_skylprovis_lower !< geoq only, provisional lower skylight plot selector
-     logical :: plot_skylprovis_upper !< geoq only, provisional upper skylight plot selector
-  end type plotselections
-
-!---------------------------------------------------------------------
-!> Entries in namelist termplaneparameters.
-!! Terminate if fieldline intersects or hits a plane going in a certain direction,
-!! possibly subject to an auxilliary condition on position.
-!! Only activated if termination_planes = .TRUE. in namelist powcalparameters.
-!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
-!! \f$ (R,Z,\xi) \f$, N.B. \f$ \xi \f$ not \f$ \zeta \f$.
-!! - Note arrangement that array entries align with termplane_position,
-!! if setting termplane_direction, ensure corresponding termplane_intersection
-!! is zero and vice versa.
-!! - Maximum number of inputs allowed for each variable, maxinp=100.
-  type, public :: termplaneparameters
-   !> Terminate if fieldline hits a plane going in a certain direction,
-   !! possibly subject to an auxilliary condition on position,
-   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed,
-   !! or dummy entry of zero.
-   !! - Positive direction corresponds to fieldline rising above plane,
-   !! negative direction corresponds to fieldline falling below plane.
-   !! - Position of plane determined by termplane_position.
-     integer(ki4), dimension(maxinp):: termplane_direction  !< .
-   !> Terminate if fieldline intersects a plane,
-   !! plane directions \f$ 1-3 \f$ allowed, or dummy entry of zero.
-   !! - Position of plane determined by termplane_position.
-     integer(ki4), dimension(maxinp):: termplane_intersection  !< .
-   !> Terminate if fieldline reaches an extremum,
-   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed.
-   !! - Positive sign implies only maximum recognised,
-   !! negative sign implies only minimum recognised,
-     integer(ki4), dimension(maxinp):: termplane_extremum  !< .
-   !> Position of plane in coordinate \f$ 1-3 \f$ as specified,
-   !! units metres or radians
-     real(kr8), dimension(maxinp):: termplane_position  !< .
-   !> Terminate when fieldline intersects a plane provided
-   !! an auxilliary condition on position in this direction has been met,
-   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed,
-   !! - Positive value corresponds to greater than criterion
-   !! negative value corresponds to less than
-   !! - Position of plane determined by termplane_condition.
-     integer(ki4), dimension(maxinp):: termplane_condition_dir  !< .
-   !> Position of auxilliary condition plane in coordinate \f$ 1-3 \f$ as specified,
-   !! units metres or radians
-     real(kr8), dimension(maxinp):: termplane_condition  !< .
-   !> INERT number of active termination planes. This is determined
-   !! automatically thanks to the arrangement with dummy zeroes described above.
-     integer(ki4):: termplane_max  !< .
-  end type termplaneparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist panelarrayparameters.
-!! This assigns transforms to bodies, strictly objects defined by
-!! the numbers defined by process_by_name in namelist
-!! vtktfmparameters (if used). It is easiest to understand
-!! if every body appears in the
-!! panel_bodies list and has a corresponding transform,
-!! unless the 'split' option is set when each transform corresponds
-!! to two adjacent bodies in the list. However, the software will by
-!! default enter all bodies into a list of length up to
-!! maximum_number_of_panels and assign the
-!! identity transformation to each.
-!!
-  type, public :: panelarrayparameters
-   !> bodies defining the geometry,
-   !! if no bodies are listed, then all are considered
-     integer(ki4), dimension(2*maximum_number_of_panels) :: panel_bodies !< .
-   !> number of transform to apply,
-   !! default -1 gives error so must be changed
-     integer(ki4), dimension(2*maximum_number_of_panels) :: panel_transform !< .
-  end type panelarrayparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist vtkfiles.
-!! This sets the names of the vtk format files to be used by vtktfm,
-!! and how many copies in total are needed of each file.
-!! Note that if a file is to be copied, it is assumed that it contains
-!! only one body (use datvtk -xxm to remove body identifiers from dat files
-!! when converting to vtk).
-!! The copies of the first file in the vtk_input_file list are numbered
-!! 101, 102, 103, ... etc, the second are numbered 201, 202, 203, ...etc.
-!! (so that if 4 occurrences of the geometry in file 2 are needed,
-!! set the number of copies to 4, and reference them as 201-204).
-!!
-  type, public :: vtkfiles
-   !> vtk format geometry data input files,
-   !! default 'null' gives error so must be changed
-     character(len=80), dimension(maximum_number_of_files) :: vtk_input_file !< .
-   !> number of copies needed of each corresponding input file,
-   !! default 1 for each entry in vtk_input_file list
-     integer(ki4), dimension(maximum_number_of_files) :: number_of_copies !< .
-   !> labels vtk format geometry data input file (not used),
-   !! default 'null'
-     character(len=80), dimension(maximum_number_of_files) :: vtk_label  !< .
-   !> numeric label for input file (not used),
-   !! default 0
-     integer(ki4), dimension(maximum_number_of_files) :: vtk_label_number !< .
-   !> vtk format geometry data output file,
-   !! defaults to root of ctl file (plus vtk suffix)
-     character(len=80) :: vtk_output_file  !< .
-  end type vtkfiles
-
-!---------------------------------------------------------------------
-!> Entries in namelist positionparameters.
-!! These describe a transform of position in a 3-D coordinate system.
-!!
-  type, public :: positionparameters
-   !> transformation 3x3 matrix,
-   !! default is identity matrix
-     real(kr4), dimension(3,3):: position_matrix  !< .
-   !> transformation scale 3-vector,
-   !! default \f$ (1.,  1.,  1. ) \f$
-     real(kr4), dimension(3):: position_scale  !< .
-   !> transformation offset 3-vector,
-   !! default \f$ (0.,  0.,  0. ) \f$
-     real(kr4), dimension(3):: position_offset  !< .
-   !> transformation type,
-   !! default 0 (identity),
-   !! - 1. scale - scale in Cartesian coordinates
-   !! - 2. offsca - scale and offset  in Cartesians
-   !! - 6. poltil - poloidal tilt, rotate about an axis parallel to the
-   !! toroidal direction through the centre of the body
-   !! - 7. tortil - toroidal tilt, rotate about an axis in the
-   !! vertical direction through the centre of the body
-   !! - 12. torrot - rotate in toroidal direction
-   !! - 22. polrot - rotate in poloidal direction
-   !! - 42. radial - displace towards a point \f$ (R,Z) \f$, which will
-   !! normally be the centre of the torus (i.e. displace in minor radius),
-   !! negative displacements imply outwards translation. The first entry is
-   !! the displacement, and the next two give the point coordinates
-     integer(ki4):: position_transform  !< .
-   !> describes transformation type,
-   !! default 'cartesian_scale' (inert)
-     character(len=20) :: transform_desc !< .
-   !> identifies transformation,
-   !! default 'unit' (inert)
-     character(len=20) :: transform_id !< .
-  end type positionparameters
-
-!---------------------------------------------------------------------
-!> Entries in namelist magfiles.
-!! These define the input and output files for the vacuum magnetic
-!! field data transformed by magtfm.
-!!
-  type, public :: magfiles
-   !> txt format magnetic field data input file,
-   !! default 'null' implies that there are no 3-D (non-axisymmetric)
-   !! field effects to be considered.
-   !! The precise format is defined in \ref magtfm.
-     character(len=80) :: mag_input_file  !< .
-   !> sp3 format magnetic field data output file,
-   !! for input to powcal (internal to SMARDDA-PFC)
-   !! setting to 'null' suppresses calculation as well as output
-   !! of sp3 file, in which case it would be normal to have
-   !! set plot_bcartx=T to produce txt format file
-   !! for input to powcal
-     character(len=80) :: mag_output_file  !< .
-  end type magfiles
-
-!---------------------------------------------------------------------
-!> Entries in namelist progfiles.
-!! These set the file(s) used by datvtk -c.
-!! Either r_input_file and z_input_file  should contain
-!! equal numbers of \f$ R \f$ and \f$ Z \f$ coordinates respectively, one per line, with
-!! a null value for rz_input_file, or rz_input_file  should
-!! contain the \f$ (R,Z) \f$ positions, one pair of numbers per line, and the other two
-!! filenames should be 'null'.
-!!
-!! The file format used here is referred to as the 'gnu dat' format, to
-!! distinguish it from the NASTRAN .dat format, as it is compatible with the
-!! gnuplot plotting package. It allows for a single header line beginning '#'
-!! with a closely defined layout to describe the content.
-!!
-  type, public :: progfiles
-   !> position coordinate 1 \f$ (R) \f$ data input file,
-   !! default 'null'
-     character(len=80) :: r_input_file  !< .
-   !> position coordinate 2 \f$ (Z) \f$ data input file,
-   !! default 'null'
-     character(len=80) :: z_input_file !< .
-   !> position coordinate 1 and 2 \f$ (R,Z) \f$ data input file,
-   !! default 'null'
-     character(len=80) :: rz_input_file  !< .
-  end type progfiles
-
 !---------------------------------------------------------------------
 !> Entries in namelist datvtkparameters.
-!! This is the main parameter control for datvtk, when
+!! This is the main parameter control for datvtk and made extensive use
+!! of by geoq and geofil, when
 !! a ctl file (datvtk -c) is used to generate a surface from file(s)
 !! containing \f$ R \f$ and/or \f$ Z \f$ point values.
 !! (Note that otherwise datvtk
@@ -1038,27 +449,42 @@ module namelist
 !! the direction given by finish_position-start_position and by a
 !! distance equal to the length of finish_position-start_position.
 !!
-!! Note 1) that if variables start_position and end_position are
+!! Note 1) that if variables start_position and finish_position are
 !! used to define a surface, then
 !! input variable line_divisions must be explicitly set positive. \n
-!! Note for geoq 2) the ordering of namelists corresponding to each
+!! 2) Presently only two types of surfaces may be produced, depending
+!! on whether transform_type is set to 'rotate' or 'translate'. 
+!! \arg For surfaces formed by rotation, the range of angles is set by
+!! start_angle and finish_angle, unless end_angle is nonzero, when
+!! the line in \f$ (R,Z) \f$ is swept through all the angles in the geometry \n
+!! \arg For surfaces formed by translation,
+!! a planar surface is produced by sweeping in the direction
+!! of the vector difference of finish_position and start_position.
+!! The plane in which the line in \f$ (R,Z) \f$ is regarded as
+!! positioned initially is given by start_angle, unless end_angle is nonzero,
+!! when either the smallest or largest angle in the geometry is selected
+!! depending whether end_angle=-1 or +1.\n
+!!
+!! For geoq, the ordering of namelists corresponding to each
 !! description of geometry follows that of the list below, ordered
 !! after skylparameters if the presence of skylight has been 
 !! flagged in beqparameters \n
-!! Note for geoq 3) .dat-style files may be used to define a surface if
+!! .dat-style files may be used to define a surface if
 !! filedata=.TRUE., these are defined using namelist progfiles
 !! which comes AFTER namelist datvtkparameters
   type, public :: datvtkparameters
    !> surface interaction with particles
-   !! This may be set as a check when geoq reads the .ctl file
-   !! that the namelists are in the right order
+   !! This may be set as a check that when geoq reads the .ctl file,
+   !! the namelists are in the right order
    !! - 'absorb' first wall (absorbing boundary)
    !! - 'invisi' transparent geometry, totally ignored
    !! - 'skylit' skylight
    !! - 'escape' escape boundary (loss)
    !! - 'errlos' beancan (error loss)
    !! - 'cutout' cutout (expected loss)
-   character(len=80) :: description  !< .
+   !! - 'antenn' antenna (launch rays)
+   !! - 'antena' antenna (launch rays)
+     character(len=80) :: description  !< .
   !> If .TRUE., then data file specifies geometry
   !! The default depends on which  code is being used.
   !! if datvtk, then the default is .TRUE.
@@ -1067,7 +493,7 @@ module namelist
   !! there needs to be a matching namelist progfiles following
   !! datvtkparameters in the file,
   !! which refers to .dat-style file(s) to define a surface
-  logical :: filedata !< -
+     logical :: filedata !< .
    !> angle units, either radian(s or degree(s),
    !! default 'degree'
      character(len=20) :: angle_units  !< .
@@ -1103,51 +529,475 @@ module namelist
    !! Number of points inserted between each point in .dat file, EXCEPT
    !! If line_divisions > number of positions in the .dat file, then
    !! replace those points with positions uniformly spaced on the line between
-   !! the first and last \f$(R,Z)$\f$ points in the file
+   !! the first and last \f$(R,Z)\f$ points in the file
      integer(ki4) :: line_divisions !< .
+   !> When constructing planes using transform_type='translate',
+   !! set to +-1, use largest/smallest angle in geometry to define
+   !! vertical plane of mesh, else use start_angle if zero
+   !! default  0
+     integer(ki4) :: end_angle !< .
+   !> cell geometry, values VTK_TRIANGLE, VTK_QUAD etc.,
+   !! default  VTK_TRIANGLE
+     integer(ki4) :: cell_type !< .
   end type datvtkparameters
 
 !---------------------------------------------------------------------
+!> Entries in namelist dbtreeparameters.
+!! Binary tree that may updated dynamically, as more objects are
+!! added into domain (size of which must not change from initial specification).
+!! The cuboidal geometrical entries corresponding to the bottom levels ('leaves')
+!! of the tree are variously described as cells, boxes or bins.
+  type, public :: dbtreeparameters
+!> Type of geometry
+!! 1. Points (default)
+!! 2. Triangles
+     integer(ki4) :: geometrical_type !< .
+!> INERT Positive tolerance <= max_tolerance
+     real(kr4) :: min_tolerance !< .
+!> Positive tolerance, default 0.1.
+!! Expand bounding box by this margin in every direction, units of input geometry
+     real(kr4) :: max_tolerance !< .
+     integer(ki4) :: quantising_number !< variable controlling log2(depth of tree), default 4096 = 2**12
+!> EXPERT Number of objects in tree, default 0, normally determined automatically
+     integer(ki4) :: no_geobj_records !<.
+!> If positive, expand global bounding box bin by
+!! margin determined by max_tolerance, default 0
+     integer(ki4) :: margin_type !< .
+     integer(ki4) :: type_geobj_coord_scaling !< type of scaling of geobj position value, default 2 which allows for offset
+     integer(ki4) :: max_size_tree_array !<  max size of tree array, default 2000000
+     integer(ki4) :: max_size_tree_pter_array !<  EXPERT max number of tree pointers, default 4
+     integer(ki4) :: max_size_exten_array !<  max size of exten array, default 1000
+     integer(ki4) :: max_size_list_array_hoc !<  EXPERT max number of list array hoc's, default 2
+     integer(ki4) :: max_size_list_array !<  max size of list array, default 2000000
+     integer(ki4) :: max_depth_tree !< max depth of tree, default 30
+!> define top of tree quantisation algorithm if multi-octree \n
+!! 0. automatic
+!! 1. default, use hxyz (use spacings to set top)
+!! 2. use nxyz (set top directly)
+     integer(ki4) :: type_tree_algorithm !< .
+!> re-determine splitting direction
+!! look at consequences of splitting in each direction in terms of absolute
+!! difference between number of particles in each half-box,
+!! and choose split direction accordingly (seems to suffer from instability
+!! whereby always split in same direction as first split)
+!! 0. rotate splitting direction regardless, default
+!! 1. least symmetric split
+!! 2. intermediate split
+!! 3. most symmetric split
+     integer(ki4) :: splitting_algorithm !< .
+     integer(ki4) :: limit_geobj_in_bin !< maximum number of objects allowed any bin before splitting, default 20
+!> structure used to list entries within leaf of tree \n
+!!  0. numbered linked list, default
+!!  1. simple linked list, assuming mostly consecutive integer values
+!!  2. doubly linked list
+     integer(ki4) :: type_list_structure !< .
+     integer(ki4), dimension(3) :: top_tree_children !< top of tree children, default (/2,2,2/) for multi-octree
+     real(kr4), dimension(3) :: top_tree_spacings !< top of tree spacings, default (/0.1,0.1,0.1/) for multi-octree
+!> type of tree, must be positive
+!! 1. BSP, default 
+!! 2. octree
+!! 3. multi-octree (octree except root not restricted to 2x2x2=8 entries)
+     integer(ki4):: tree_type !< . 
+  end type dbtreeparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist edgprofparameters.
+!! These define the profile of edge power deposition.
+!! -The standard and Eich formulae are defined in Arter et al, 2015,
+!! preprint at http://arxiv.org/abs/1403.7142
+!! using the same notation.
+!! - The expdouble formula is taken from Kocan et al Eq(1),
+!! paper at http://iopscience.iop.org/0029-5515/55/3/033019 as
+!! \f$ q_{\parallel 0}\left(\exp(-\Delta r/\lambda_q) +
+!! R_{near} \exp(-\Delta r/\lambda_{q,near}) \right)\f$
+!! where \f$ \Delta r \f$ is the midplane separation between the flux
+!! contour on the PFC and the LCFS (positive outside LCFS).
+!! - One of \f$ P_{loss} \f$  and \f$ q_{\parallel 0} \f$ must be positive,
+!! one which is negative is ignored
+!! - Maximum number of positions at which to sample profile,
+!! MAX_NUMBER_OF_POSITIONS=100
+!! - Maximum number of parameters which may used to define function,
+!! MAX_NUMBER_OF_PARAMETERS=100
+  type, public :: edgprofparameters
+   !> power deposition formula to be used for each region. profile_formula is an array of size
+   !! n_regions which is given by the geoq output file. The available profiles are
+   !! - 'unset' standard exponential profile (default)
+   !! - 'exp' standard exponential profile
+   !! - 'expdouble' as two exponentials
+   !! - 'eich' as defined by T. Eich
+   !! - 'samples' as a set set of samples at specified positions. 
+   !! N.B. it is up to the user to arrange normalisation.
+   !! - 'userdefined' as special f95 subroutine coded by user, called
+   !! edgprof_userdefined in file edgprof_m.f90.
+   !! N.B. it is up to the user to arrange normalisation.
+     character(len=80) :: profile_formula !<
+   !> \f$ F \f$ power split ion to electron direction. \n
+   !! Must lie between 0 and 1,
+   !! default 0.5
+     real(kr8) :: power_split !<
+   !> \f$ \lambda_m \f$ power decay length at midplane (m) to be used for \n
+   !! each region. decay_length is an array of size
+   !! n_regions which is given by the geoq output file.
+   !! \f$ \lambda_m \geq 0 \f$, also doubles as \f$ \lambda_q \f$ \n
+   !! if Eich formula used., \n
+   !! default 0.012 (units m)
+     real(kr8) :: decay_length !<
+   !> \f$ P_{loss} \f$ power crossing the separatrix (W) for
+   !! each one of the 4 regions. power_loss is an array of size
+   !! n_regions which is given by the geoq output file. In the case
+   !! of n_regions=2, the first 2 values should be set the same, and 
+   !! the last 2 values should be the same. !!X
+   !! default \f$ 7.5 \time 10^6 \f$ (Units Watts)
+     real(kr8) :: power_loss !<
+   !> \f$ q_{\parallel 0}  \f$ parallel reference flux (W/sqm),
+   !! default -1 (if negative it is ignored)
+     real(kr8) :: q_parallel0 !<
+   !>  \f$ \sigma \f$ Eich formula length (m) for each region. sigma is an array of size
+   !! n_regions which is given by the geoq output file,
+   !! default 0
+     real(kr8) :: diffusion_length !<
+   !> \f$ R_{near} \f$, near-SOL parallel relative reference flux (dimensionless)
+   !! for expdouble formula,
+   !! default 0
+     real(kr8) :: ratio_of_q_parallel0_near !<
+   !> \f$ \lambda_{q,near} \f$ near-SOL power decay length at midplane (m)
+   !! for expdouble formula for each region. decay_length_near is an array of size
+   !! n_regions which is given by the geoq output file., \n
+   !! default 0
+     real(kr8) :: decay_length_near !<
+   !> Define profile as samples at these positions, \n
+   !! default 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: positions  !<
+   !> Profile determined as samples, \n
+   !! default 0
+     real(kr8), dimension(MAX_NUMBER_OF_POSITIONS) :: deposition_profile  !<
+   !> whether positions in distance or flux from SOL
+   !! - 'radius'
+   !! - 'flux' \n
+   !! default 'radius'
+     character(len=80) :: coord_of_positions !<
+   !> Number of positions actually used. If sampling, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_POSITIONS, \n
+   !! default 0
+     integer(ki4) :: number_of_positions  !<
+   !> Parameters which may be used in user-defined function, \n
+   !! default 0
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters  !<
+   !> Parameters which may be used in user-defined function, \n
+   !! default 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters  !<
+   !> Number of real parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS, \n
+   !! default 0
+     integer(ki4) :: number_of_real_parameters  !<
+   !> Number of integer parameters actually used. If defining function, \n
+   !! must be positive, not larger than MAX_NUMBER_OF_PARAMETERS, \n
+   !! default 0
+     integer(ki4) :: number_of_integer_parameters  !<
+   !> Choice of calculation of lambdaq,
+   !! default 'Default'
+     character(len=80) :: lambda_q_choice !<  
+  end type edgprofparameters
+
+!----------------------------------------------------------------------
+!> Entries in namelist equilparameters.
+!! Normally equilibria are specified via an EQDSK-G  file output by EFIT,
+!! but there is also the possibility for the user to define equilibria
+!! if the equilibrium file extension is given as 'ana'.
+!! - For a description of EQDSK-G format
+!! see https://fusion.gat.com/theory/Efitgeqdsk
+!! - File xxx.ana must contain namelists equilparameters and
+!! meshparameters in that order
+!! 1.  An analytic equilibrium may be specified following Solovev.
+!! The Solovev solution of the Grad-Shafranov equation is given by
+!! \f[
+!! \psi  =  \psi_0  \chi  ,  0 \le \chi \le 1  ,  \chi =  \left [ (R^2
+!! - R^2_0)^2  +  \frac{Z^2} {E^2}  (R^2 - R^2_x) \right ] \frac{4}
+!! {(R^2_2 - R^2_1)^2}
+!! \f]
+!! ultimately determined by a set of four separate
+!! positions \f$(R_1,R_2,R_m,Z_m)\f$ which define a D-shaped reference
+!! surface going through the three points \f$(R_1,0), (R_2,0) \f$ and \f$ (R_m,Z_m)\f$.
+!! (The solution is up-down symmetric: \f$\psi(R,Z) = \psi(R,-Z)\f$.)
+!! These four positions are used to define the parameters via
+!! \f{eqnarray*}{
+!! R_0^2 &=& \frac {R_1^2 + R_2^2} {2},
+!! R_x^2 &=& \frac{R_1^2 R_2^2 - R_{\rm m}^4} {R_1^2 + R_2^2 - 2R_ m^2,},
+!!  E^2 &=& \frac {Z_{\rm m}^2} {R_1^2 + R_2^2 - 2 R_m^2}
+!! \f}
+!!      - plasma minor radius \f$a = \frac{R_2 - R_1} {2} \f$
+!!      - it is up to the user to choose parameters sensibly.
+!! Some indicative values are set in the source code beqan_m.f90
+!! 2. User-defined  as special f95 subroutine coded by user, called
+!! beqan_userdefined in file beqan_m.f90. The parameter arrays below are
+!! provided for convenience.
+!! 3. Remember that equilibria may have left or right-handed helicity, and
+!! this may be changed by the code unless equil_helicity_ok=.TRUE.
+  type, public :: equilparameters
+   !> equilibrium formula, currently recognised values are
+   !! - 'solovev' (default)
+   !! - 'userdefined'
+     character(len=80) :: equilibrium_formula !< .
+   !> \f$ B_T \f$ Value of toroidal field at plasma centre,
+   !! default 1.
+     real(kr8) :: BPhi !< .
+   !>  \f$ \psi_0 \f$ Flux through plasma,
+   !! default 0.76225
+     real(kr8) :: Psi0 !< .
+   !> \f$ R_1>0 \f$ inner cylindrical radius,
+   !! default 2.
+     real(kr8) :: R1 !< .
+   !> \f$ R_2>R_1 \f$ outer cylindrical radius,
+   !! default 4.
+     real(kr8) :: R2 !< .
+   !> \f$ R \f$ at maximum height, \f$ R_1<R_m<R_2 \f$,
+   !! default 2.828427125
+     real(kr8) :: Rm !< .
+   !> \f$ Z \f$ at maximum height,
+   !! default 1.75
+     real(kr8) :: Zm !< .
+   !> general real parameters,
+   !! default 0
+     real(kr8), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_real_parameters !< .
+   !> general integer_parameters,
+   !! default 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS) :: general_integer_parameters !< .
+   !> actual  number of real parameters,
+   !! default 0
+     integer(ki4) :: number_of_real_parameters !< .
+   !> actual  number of integer parameters,
+   !! default 0
+     integer(ki4) :: number_of_integer_parameters !< .
+  end type equilparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist fmeshparameters.
+  type, public :: fmeshparameters
+     character(len=80) :: mesh_formula !< mesh formula, default 'regular'
+     logical :: mesh_transform !< mesh transform, default .TRUE.
+     integer(ki4)  :: dimensionality !< dimension of mesh array (1, 2 or 3), default 3
+     integer(ki4)  :: nstaggered !< whether mesh staggered (1) or not (0), default 0
+     character(len=80)  :: length_units !< units, either me(tres) or mm, default 'metre'
+     character(len=80)  :: plot_units !< units, either me(tres) or mm, default 'millimetre'
+     real(kr8) :: length_x !< physical extent of mesh, default 1.
+     real(kr8) :: length_y !< physical extent of mesh, default 1.
+     real(kr8) :: length_z !< physical extent of mesh, default 1.
+     real(kr8) :: xstart !< origin of mesh in first direction, default 0.
+     real(kr8) :: ystart !< origin of mesh in second direction, default 0.
+     real(kr8) :: zstart !< origin of mesh in third direction, default 0.
+     real(kr8) :: xend !< far point of mesh in first direction, default 1.
+     real(kr8) :: yend !< far point of mesh in second direction, default 1.
+     real(kr8) :: zend !< far point of mesh in third direction, default 1.
+     integer(ki4) :: nx !< input field mesh size, default 26
+     integer(ki4) :: ny !< input field mesh size, default 26
+     integer(ki4) :: nz !< input field mesh size, default 26
+     real(kr8) :: dx !< input field mesh spacing size, default .04
+     real(kr8) :: dy !< input field mesh spacing size, default .04
+     real(kr8) :: dz !< input field mesh spacing size, default .04
+  end type fmeshparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist geofilparameters.
+!! For geofil geometry generation code.
+  type, public :: geofilparameters
+     integer(ki4) :: absorber_objects !< number of absorbers defined geometrically, default 0
+     logical :: angular_segment !< angular_segment, default .TRUE.
+     integer(ki4) :: antenna_objects !< number of antennas defined geometrically, default 0
+     integer(ki4) :: beancan_objects !< number of beancan surfaces defined geometrically, default 0
+     logical :: centre_line_cutout !< flag whether centre line is to be a cutout, default .FALSE.
+     integer(ki4) :: cutout_objects !< number of cutouts defined geometrically, default 0
+     integer(ki4) :: invisible_objects !< number of invisible objects defined geometrically, default 0
+     character(len=80) :: scalar_key !< key to be used to sort scalar variable, default 'Body'
+     integer(ki4) :: skylight_objects !< number of skylights defined geometrically, default 0
+  end type geofilparameters
+
+!----------------------------------------------------------------------
+!> Entries in namelist hdsgenparameters.
+!! These control subdivision that generates HDS.
+!! A box corresponding to a leaf of the binary tree is referred
+!! to as a 'bin'.
+  type, public :: hdsgenparameters
+   !> EXPERT numerical parameter, default  10, overrides limit_geobj_in_bin
+      integer(ki4) :: min_geobj_in_bin !<.
+   !> Stop dividing if less than this number of objects
+   !! in 'bin', default 10.
+     integer(ki4) :: limit_geobj_in_bin !< .
+   !> INERT numerical parameter
+     integer(ki4) :: nbins_child!< .
+   !> Type of geometry
+   !! 1. Points (default)
+   !! 2. Triangles
+     integer(ki4) :: geometrical_type !< .
+   !> INERT Positive tolerance <= max_tolerance
+     real(kr4) :: min_tolerance !< .
+   !> Positive tolerance, default 0.1.
+   !! Expand bounding box by this margin in every direction, units of input geometry
+     real(kr4) :: max_tolerance !< .
+   !> Number of extra bounding cubes, no more than two, default 0
+   !! If delta_inner_length>=0 then add this margin to volume,
+   !! and if delta_outer_length>=0 add inner+outer_length margin.
+   !! If delta_inner_length<0, then use corner values to define and only
+   !! produce one cube. N.B. this will be expanded to include all objects
+     integer(ki4) :: boundary_cubes !< .
+   !> vector defining corner with lesser component values
+   !! default origin (absolute coordinates)
+   !! Only active if any of the components is less than the smallest
+   !! corresponding coordinate in the geometry, and then only that coordinates is affected.
+     real(kr4), dimension(3) :: lower_corner !< .
+   !> vector defining corner with greater component values (absolute coordinates)
+   !! Only active if any of the components is greater than the largest
+   !! corresponding coordinate in the geometry, and then only those coordinates are affected.
+     real(kr4), dimension(3) :: upper_corner !< .
+   !> Inner bounding cube separation from geometry, mm,
+   !! default -1
+     real(kr4) :: delta_inner_length   !< .
+   !> Outer bounding cube separation from inner, mm,
+   !! default 0
+     real(kr4) :: delta_outer_length   !< .
+   !> \f$ N_Q \f$, default 1024
+     integer(ki4) :: quantising_number !< .
+   !> EXPERT Number of objects in tree, default 0, normally determined automatically
+     integer(ki4) :: no_geobj_records !< .
+   !> If positive, expand global bounding box bin by
+   !! margin determined by other settings, default 0
+     integer(ki4) :: margin_type !< .
+   !> INERT type of scaling of geobj position values
+     integer(ki4) :: type_geobj_coord_scaling !< .
+  end type hdsgenparameters
+
+!---------------------------------------------------------------------
 !> Entries in namelist inputfiles.
-!! There is a namelist inputfiles for each of the major component
-!! programs, geoq, hdsgen and powcal. The namelist
-!! specifies names of key input files in each case.
+!! There is a namelist inputfiles for many SMARDDA programs
+!! programs including geoq, hdsgen and powcal. The namelist
+!! specifies names of key input files in each case. As should be expected,
+!! variables must be present in the code-specific version of the namelist.
 !!
   type, public :: inputfiles
-   !> hdsgen only, geobj data input file.
-   !! geoq and powcal only,  legacy vtk format geometry data input file,
-   !! default 'null',
-   !! must be ASCII text and note that only a restricted set of objects
-   !! such as triangles and tetrahedra is accepted.
-     character(len=80) :: vtk_input_file  !< .
+   !> powcal and antest only, antenna vtk format data input file,
+   !! default 'null'
+     character(len=80) :: antenna_input_file  !< .
    !> geoq only,  EQDSK G format data input file,
    !! default 'null'
      character(len=80) :: eqdsk_input_file  !< .
-   !> geoq and powcal only,  launch data input file,
-   !! default 'null', EXPERT only
-     character(len=80) :: lau_input_file  !< .
    !> geoq only,  generic equilibrium input file,
    !! default 'null'
      character(len=80) :: equil_input_file  !< .
-   !> geoq only,  generic mesh input file used by nucode, on which field defined
-   !! default 'null'
-     character(len=80) :: mesh_input_file  !< .
-   !> powcal only,  vtk format geometry data input file,
-   !! describing target or results geometry, default 'null'
-     character(len=80) :: vtkres_input_file  !< .
    !> powcal only,  special format output file from geoq
    !! containing equilibrium field as splines, other field
    !! information and key parameters, default 'null'
      character(len=80) :: geoq_input_file  !< .
-   !> powcal only,  special format output file from hdsgen
+   !> powcal, move and datvtk only,  special format output file from hdsgen
    !! describing HDS and containing mapping parameters, default 'null'
      character(len=80) :: hds_input_file  !< .
+   !> geoq and powcal only,  launch data input file,
+   !! default 'null', EXPERT only
+     character(len=80) :: lau_input_file  !< .
+   !> geoq only,  generic mesh input file used by nucode, on which field defined
+   !! default 'null'
+     character(len=80) :: mesh_input_file  !< .
+   !> move and datvtk only, qry data input file
+   !! contents described under query_file_content in numericalparameters
+   !! default 'null'
+     character(len=80) :: query_input_file  !< .
+   !> powcal only (INERT in antest) radiation magtfm format data input file, 
+   !! radiation data file as \f$ W/m^3 \f$ values across \f$ (R,Z) \f$ grid, usually as plain txt file.
+   !! To use, set radnsource_formula = 'file_input' in radnsourceparameters,
+   !! default 'null'
+     character(len=80) :: radiation_input_file  !< .
+   !> powcal only, describing target or results geometry, default 'null'
+     character(len=80) :: vtkres_input_file  !< .
+   !> hdsgen and move only, geobj data input file for use by move.
+   !! geoq, powcal, geofil, smanal and datvtk, (legacy) vtk format geometry data input file,
+   !! in vtktfm is part of namelist vtkfiles and then is array of input file names 
+   !! default 'null',
+   !! must be ASCII text and note that only a restricted set of objects
+   !! such as triangles and tetrahedra is accepted.
+     character(len=80) :: vtk_input_file  !< .
   end type inputfiles
 
 !---------------------------------------------------------------------
+!> Entries in namelist lambdaqparameters.
+!! The following formulae are used to calculate a value of \f$\lambda_q\f$ based
+!! on the parameters that may be set using the namelist.
+!! The two 'credible' engineering formulae have been implemented, viz. D9 and E6, from Horacek et al.
+!! Ho20Scal https://doi.org/10.1088/1741-4326/ab7e47
+!! Note that Ho20Scal's formulae give \f${\lambda_{q}^{{\rm omp}}}\f$ in mm, and the engineering
+!! formulae also require current to be in units of Ampere, not MA as stated in Ho20Scal
+!! - plasma minor radius \f$a\f$ \f$m\f$
+!! - plasma semi-height \f$b\f$ \f$m\f$
+!! - plasma major radius \f$R_0\f$ \f$m\f$
+!! - plasma current \f$I_p\f$ \f$MA\f$
+!! - upper plasma triangularity \f$\delta_{\rm up}=\frac{R_0-R(Z=Z_{\rm max})}{a}\f$
+!! - plasma elongation \f$\kappa=b/a\f$
+!! - plasma cross-section area \f$A=\pi a^2 \kappa\f$ \f$m^2\f$
+!! - plasma current / cross-section \f$j_p=I_p/A=\pi a^2 \kappa\f$ \f$MA/m^2\f$
+!!
+!! Ho20Scal-D9 formula \n
+!! \arg \f${\lambda_{q}^{{\rm omp}}}=4350 . (a/R_0 )^{1.09}j_p^{−0.43}\f$
+!!
+!! Ho20Scal-E6 formula \n
+!! \arg \f${\lambda_{q}^{{\rm omp}}}=1.48 \times 10^5 . \delta_{\rm up}^{0.46} j_p^{−0.73}\f$
+!!
+  type, public :: lambdaqparameters
+  character(len=80) :: lambdaq_vars !< which variables to use in formula, default 'derived'
+  real(kr8) :: plasma_minor_radius !< plasma minor radius, default  1.8 (m)
+  real(kr8) :: plasma_semi_height !< plasma semi height, default  2.5 (m)
+  real(kr8) :: plasma_major_radius !< plasma major radius, default  6.5 (m)
+  real(kr8) :: plasma_current_MA !< plasma current in MA, default  12
+  real(kr8) :: upper_plasma_triangularity !< upper plasma triangularity, default  0.21
+  real(kr8) :: plasma_elongation_ratio !< plasma elongation ratio, default  1.4
+  real(kr8) :: plasma_crosssection_area !< plasma crosssection area, default  14.2 (sq m)
+  real(kr8) :: plasma_current_density !< plasma current density, default  0.87 (MA/sq m)
+  end type lambdaqparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist magfiles.
+!! These define the input and output files for the vacuum magnetic
+!! field data transformed by magtfm.
+!!
+  type, public :: magfiles
+   !> txt format magnetic field data input file,
+   !! default 'null' implies that there are no 3-D (non-axisymmetric)
+   !! field effects to be considered.
+   !! The precise format is defined in \ref sec2magtfm.
+     character(len=80) :: mag_input_file  !< .
+   !> sp3 format magnetic field data output file,
+   !! for input to powcal (internal to SMARDDA-PFC)
+   !! setting to 'null' (default) suppresses calculation as well as output
+   !! of sp3 file, in which case it would be normal to have
+   !! set plot_bcartx=T to produce txt format file
+   !! for input to powcal
+     character(len=80) :: mag_output_file  !< .
+  end type magfiles
+
+!----------------------------------------------------------------------
+!> Entries in namelist meshparameters.
+!! These define the mesh as a uniform lattice in R-Z
+  type, public :: meshparameters
+   !> \f$ R_{\min} \f$ Minimum value of \f$ R \f$, \f$ R_{\max},eq R_{\min} \f$ \n
+   !! default 3
+     real(kr8) :: rmin !< .
+   !> \f$ R_{\max} \f$ Maximum value of \f$ R \f$, \f$ R_{\max},eq R_{\min} \f$ \n
+   !! default 9
+     real(kr8) :: rmax !< .
+   !> \f$ N_R>0 \f$ number of grid points in R-direction,
+   !! default 100
+     integer(ki4) :: nw !< .
+   !> \f$ Z_{\min} \f$ Minimum value of \f$ Z \f$, \f$ Z_{\max},eq Z_{\min} \f$ \n
+   !! default -5
+     real(kr8) :: zmin !< .
+   !> \f$ Z_{\max} \f$ Maximum value of \f$ Z \f$, \f$ Z_{\max},eq Z_{\min} \f$ \n
+   !! default 5
+     real(kr8) :: zmax !< .
+   !> \f$ N_Z>0 \f$ number of grid points in Z-direction,
+   !! default 100
+     integer(ki4) :: nh !< .
+  end type meshparameters
+
+!---------------------------------------------------------------------
 !> Entries in namelist miscparameters.
-!! There is a namelist miscparameters for each of the major component
-!! programs, geoq, magtfm, powcal, smanal and vtktfm.
+!! There is a namelist miscparameters for nearly all SMARDDA
+!! programs including geoq, magtfm, powcal, smanal and vtktfm.
 !! The namelist was intended as a catch-all
 !! for parameters that did not easily fit into any other category, and
 !! primarily intended for expert use. However, for  magtfm and vtktfm
@@ -1168,46 +1018,9 @@ module namelist
 !! correspondence between isolated geometry bodies and panels.
 !!
   type, public :: miscparameters
-   !> magtfm only,  \f$ R \f$ value at which \f$ B_T R \f$ defined,
-   !! default  0.8,
-   !! the two parameters together determine the amplitude of the
-   !! vacuum field.
-     real(kr8) :: radius_of_axis !< .
-   !> magtfm only,  how vacuum field is determined,
-   !! default  1 (inert)
-     integer(ki4) :: vacuum_field_axis_calculation    !< .
-   !> magtfm only,  order of spline,
-   !! default  4 (implies cubic spline, other values untested)
-     integer(ki4) :: spline_order    !< .
-   !> magtfm only,  order of transform splitting,
-   !! default  2 (must be two, implying sine and cosine components)
-     integer(ki4) :: split_transform    !< .
-   !> Number of repeats of magnetic field in toroidal direction for mapping to cylindricals
-   !! \f$ N_{\zeta p} \f$, default 0
-     integer(ki4) :: nzetap !< .
-   !> Toroidal angle \f$ zeta \f$ of first point in samples (degrees) \f$ \zeta_{0} \f$,
-   !! defaukt 370 (so ignored)
-     real(kr8) :: zeta_start  !< .
-   !> magtfm only,  minimum wavenumber vector for evaluation,
-   !! default  \f$ (1,1,0) \f$, filters out constant contributions
-   !! to vacuum field \f$ R \f$ and \f$ Z \f$ components
-     integer(ki4), dimension(3) :: min_wavenumber !< .
-   !> magtfm only,  maximum wavenumber vector for evaluation,
-   !! default  \f$ (1,1,1) \f$. It is not sensible to choose
-   !! a value of more than half the number of samples in angle.
-   !! Truncation is controlled by the mode_cutoff parameter if
-   !! the wavevector is set to \f$ (-1,-1,-1) \f$
-     integer(ki4), dimension(3) :: max_wavenumber !< .
-   !> magtfm only,  parity (1=even,2=odd,3=both) for each field component,
-   !! default  \f$ (2,2,1) \f$ is the usual symmetry.
-     integer(ki4), dimension(3) :: mode_parity !< .
-   !> magtfm only,  relative mode cut-off amplitude,
-   !! default  .0001
-     real(kr8) :: mode_cutoff !< .
-   !> magtfm only,  \f$ B_T R \f$  to help determine with specified \f$ R \f$,
-   !! the amplitude of the vacuum field.
-   !! default  1.
-     real(kr8) :: i_requested !< .
+   !> vtktfm only,  units, either radian(s) or degree(s),
+   !! default  'radians'
+     character(len=20) :: angle_units  !< .
    !> magtfm only, layout of data within .txt input file
    !!  - 0. default, MAST-U periodic spec
    !!  - 1. MAST-U periodic spec after Geoff
@@ -1221,87 +1034,678 @@ module namelist
    !!  - 34. The ITER 360deg case (stacked datasets in phi ordering)
    !!  - 42. Incorrectly assumed data has angular data segments patched together
    integer(ki4) :: data_layout !< .
-   !> vtktfm only,  for defining panels and their transforms,
-   !! default  'split_panels', i.e. each panel consists of two disjoint
-   !! bodies of geometry, unless set to 'panel' when it is assumed that
-   !! there is one-to-one correspondence between bodies and panels.
-   !! 'tagged' is for EXPERT use only
-     character(len=20) :: option !< .
-   !> vtktfm only,  set .TRUE. to read namelist vtktfmparameters
-     logical :: new_controls !< .
-   !> vtktfm only,  number \f$ \geq \f$ number of files for which transform defined,
-   !! default  1, needs to be \f$ \leq \f$ maximum_number_of_files
-     integer(ki4) :: max_number_of_files !< .
-   !> vtktfm only,  units, either radian(s) or degree(s),
-   !! default  'radians'
-     character(len=20) :: angle_units  !< .
-   !> vtktfm only,  number \f$ \geq \f$ number of panels in geometry,
-   !! default  1, needs to be \f$ \leq \f$ maximum_number_of_panels
-     integer(ki4) :: max_number_of_panels !< .
-   !> vtktfm only,  number \f$ \geq \f$ number of transforms defined,
-   !! default  1, no direct restriction on number
-     integer(ki4) :: max_number_of_transforms !< .
+   !> geoq only, INERT, dummy,
+   !! default  10 
+     integer(ki4) :: dummy_number !< .
+   !> magtfm only,  \f$ B_T R \f$  to help determine with specified \f$ R \f$,
+   !! the amplitude of the vacuum field.
+   !! default  1.
+     real(kr8) :: i_requested !< .
    !> vtktfm only, dimension of bods index array, default 1000
      integer(ki4) :: max_bods_index !< .
    !> vtktfm only, used to generate unique bods numbers over many files, default 100
      integer(ki4) :: max_bods_in_file !< .
-   !> vtktfm only, bods remain distinct, default .FALSE.
-     logical :: preserve_input_structure !< .
+   !> vtktfm only,  number \f$ \geq \f$ number of files for which transform defined,
+   !! default  1, needs to be \f$ \leq \f$ maximum_number_of_files
+     integer(ki4) :: max_number_of_files !< .
+   !> vtktfm only,  number \f$ \geq \f$ number of panels in geometry,
+   !! default  1, needs to be \f$ \leq \f$ maximum_number_of_panels
+     integer(ki4) :: max_number_of_panels !< .
+   !> powcal only, DEPRECATED  maximum number of tracks,
+   !! default  100
+     integer(ki4) :: max_number_of_tracks !< .
+   !> vtktfm only,  number \f$ \geq \f$ number of transforms defined,
+   !! default  1, no direct restriction on number
+     integer(ki4) :: max_number_of_transforms !< .
+   !> magtfm only,  maximum wavenumber vector for evaluation,
+   !! default  \f$ (1,1,1) \f$. It is not sensible to choose
+   !! a value of more than half the number of samples in angle.
+   !! Truncation is controlled by the mode_cutoff parameter if
+   !! the wavevector is set to \f$ (-1,-1,-1) \f$
+     integer(ki4), dimension(3) :: max_wavenumber !< .
+   !> magtfm only,  minimum wavenumber vector for evaluation,
+   !! default  \f$ (1,1,0) \f$, filters out constant contributions
+   !! to vacuum field \f$ R \f$ and \f$ Z \f$ components
+     integer(ki4), dimension(3) :: min_wavenumber !< .
+   !> magtfm only,  relative mode cut-off amplitude,
+   !! default  .0001
+     real(kr8) :: mode_cutoff !< .
+   !> magtfm only,  parity (1=even,2=odd,3=both) for each field component,
+   !! default  \f$ (2,2,1) \f$ is the usual symmetry.
+     integer(ki4), dimension(3) :: mode_parity !< .
+     integer(ki4) :: ndummy !< geofil only, INERT, dummy namelist variable
+   !> vtktfm only,  set .TRUE. to read namelist vtktfmparameters
+     logical :: new_controls !< .
    !> vtktfm only,  number of panels for which bodies defined,
    !! default  0, needs to be \f$ \leq \f$ maximum_number_of_panels
      integer(ki4) :: number_of_panels !< .
    !> vtktfm only,  number of transforms defined,
    !! default  0, no direct restriction on number
      integer(ki4) :: number_of_transforms !< .
+   !> magtfm only, number of repeats of magnetic field in toroidal direction for mapping to cylindricals
+   !! \f$ N_{\zeta p} \f$, default 0
+     integer(ki4) :: nzetap !< .
+   !> vtktfm only,  for defining panels and their transforms,
+   !! default  'split_panels', i.e. each panel consists of two disjoint
+   !! bodies of geometry, unless set to 'panel' when it is assumed that
+   !! there is one-to-one correspondence between bodies and panels.
+   !! 'tagged' is for EXPERT use only
+     character(len=20) :: option !< .
+   !> vtktfm only, bods remain distinct, default .FALSE.
+     logical :: preserve_internal_structure !< .
+     character(len=80) :: prog_control  !< antest only, INERT, option control parameter, default  'standard'
+     integer(ki4) :: prog_intpar !< antest only, INERT, integer control parameter, default  1
+     logical :: prog_logicpar !< antest only, INERT, logical control parameter, default  .false.
+     real(kr8) :: prog_realpar !< antest only, INERT, real control parameter, default  .0001_kr8
+   !> magtfm only,  \f$ R \f$ value at which \f$ B_T R \f$ defined,
+   !! default  0.8,
+   !! the two parameters together determine the amplitude of the
+   !! vacuum field.
+     real(kr8) :: radius_of_axis !< .
+   !> magtfm only,  order of spline,
+   !! default  4 (implies cubic spline, other values untested)
+     integer(ki4) :: spline_order    !< .
+   !> magtfm only,  order of transform splitting,
+   !! default  2 (must be two, implying sine and cosine components)
+     integer(ki4) :: split_transform    !< .
+   !> magtfm only,  how vacuum field is determined,
+   !! default  1 (inert)
+     integer(ki4) :: vacuum_field_axis_calculation    !< .
+   !> magtfm only, toroidal angle \f$ zeta \f$ of first point in samples (degrees) \f$ \zeta_{0} \f$,
+   !! default 370 (so ignored)
+     real(kr8) :: zeta_start  !< .
   end type miscparameters
 
 !---------------------------------------------------------------------
-!> Entries in namelist smanalparameters.
-!! Cluster analysis is performed using the sort_key, and the results will 
-!! typically be rekeyed using new_key. The demonstration case classifies
-!! bodies (sort_key) into clusters according to their centroids and then rekeys
-!! using the poloidal angle of the centroid (new_key).
-!! Analysis proceeds over each cluster.
-!!
-!! The centre about which the angle is taken is defined as the centroid of
-!! all the geometry defined as a set of points. The centre
-!! may be redefined in \f$ (R,Z) \f$ coordinates, using set_r_central, nominal_r_central, etc.
-  type, public :: smanalparameters
-     character(len=80) :: analysis_mode !< only one mode available, default 'regular'
-   !> key to be used to sort scalar field, default 'Body', 'Surf' is probably another possibility,
-   !! note that the leading capital letter is significant, these are in principle arbitrary labels.
-     character(len=80) :: sort_key !< .
-     character(len=80) :: analyse_scalar !< identifier of scalar field to analyse, default 'Q'
-     integer(ki4) :: number_of_clusters !< sets cluster size by dividing range of key, default  18
-   !> New key for sorting, always an angle,
-   !! inert unless rekey is .TRUE.
-   !! Only values 'angle', 'poloidal', 'toroidal', 'userdefined'  are allowed, default  'null',
-   !! and 'angle' implies poloidal angle (only the first 6 characters signify)
-     character(len=80) :: new_key !<.
-     logical :: rekey !<  Only use new key if .TRUE., default  .FALSE.
-   !> user defined dictionary
-   !! Zero entry terminates. For example to group bodies 1,2,3 and 4, set first four entries
-   !! to 1, then say bodies 5 and 6 are grouped by setting entries 5 and 6 each to 2 etc.
-   !! If there are more bodies than entries in the dictionary, then they are all grouped
-   !! together with key equal to number of entries plus one.
-     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS)  :: dictionary !< .
-   !> Statistics to be calculated
-   !! Allowed values are 'intg  ', 'intgsq', 'max   ', 'min   ', 'maxabs', and 'minabs'.
-   !! intg performs the integral as sum of scalar x (triangle area) and
-   !! intgsq is the integral of scalar squared, the others should have obvious meanings
-     character(len=80), dimension(MAX_NUMBER_OF_PARAMETERS) :: required_statistics  !< .
-     logical :: set_r_central !< user sets nominal central \f$ R \f$ for poloidal angle analysis
-     logical :: set_z_central !< user sets nominal central \f$ Z \f$ for poloidal angle analysis
-     !> user defined value of central \f$ R \f$,
-     !! note ignored unless set_r_central=.TRUE.
-     real(kr8) :: nominal_r_central !< .
-     !> user defined value of central \f$ Z \f$,
-     !! note ignored unless set_z_central=.TRUE.
-     real(kr8) :: nominal_z_central !< .
-  end type smanalparameters
+!> Entries in namelist numericalparameters.
+!! The entries below only apply to the program move.
+  type, public :: numericalparameters
+     integer(ki4) :: geometrical_type !< type of geometry, default  1
+     real(kr4) :: min_tolerance !< numerical parameter, default  \f$ 10^{-3} \f$
+     real(kr4) :: max_tolerance !< numerical parameter, default  0.1
+     integer(ki4) :: quantising_number !< self-explanatory, default 1024
+     integer(ki4) :: no_geobj_records !< self-explanatory, default  0
+     integer(ki4) :: margin_type !< local variable, default  0
+  !> type of scaling of geobj x value, default 2,
+  !! allows for offset
+     integer(ki4) :: type_geobj_coord_scaling !< .
+  !> content of query file, which need not have full vtk header,
+  !! only number of tracks on first line
+  !! 0. Default, alternate start and end points
+  !! 1. Alternate start points and velocity values
+  !! 2. Velocity field is separate VECTORS field_name in .vtk file
+     integer(ki4) :: query_file_content ! < .
+  !> nominal timestep if velocity in vtk test file, default 1
+     real(kr8) :: nominal_dt !< .
+  !> actual name of velocity vector field in vtk test file,
+  !! default 'Vel'
+     character(len=80) :: field_name !< .
+  end type numericalparameters
 
 !---------------------------------------------------------------------
-!> Entries in namelist skylparameters
+!> Entries in namelist odesparameters.
+!! The system integrated depends on the parameter fldspec, in fact has order
+!! dependent on fldspec. (In axisymmetric flux coordinates, order is unity,
+!! two in case of cylindrical axisymmetric, three in general cylindricals.)
+!! - Minimum values for \f$ \epsilon_r \f$, \f$ \epsilon_a \f$ and
+!! \f$ \Delta t_0 \f$ should in principle be much smaller in the
+!! cylindrical mapped cases
+!! than in flux-mapped, but in practice it makes little difference to the cost
+!! of a flux-mapped run if smaller values than strictly necessary are used.
+!! Values below single precision round-off are not however sensible.
+!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
+!! \f$ (\psi,\theta,\zeta) \f$ in case of flux coordinates.
+!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
+!! \f$ (R,Z,\xi) \f$ (N.B. \f$ \xi \f$ not \f$ \zeta \f$) in cylindrical case.
+  type, public :: odesparameters
+   !> EXPERT system order,
+   !! 1. for flux-mapped case
+   !! 2. for axisymmetric field
+   !! 3. for field with ripple
+     integer(ki4) :: system_order !<.
+   !> INERT start control
+     integer(ki4) :: start_control !<.
+   !> INERT termination control
+   !! - Positive value corresponds to fieldline rising above plane,
+   !! negative value corresponds to fieldline falling below plane.
+   !! - Position of plane determined by termination_parameters(3), default 0
+     integer(ki4) :: termination_control !<.
+   !> termination parameters, default 0
+   !! - (1) Distance to avoid self-intersection, in quantised units,
+   !!  typically 1/1024 of geometry, default 1.
+   !! - (2) Maximum allowed length of one fieldline segment,
+   !! units are domain size, default effectively \f$ \infty \f$.
+   !! - (3) INERT Terminating plane position in Z, units metres,
+   !! superseded by more flexible definitions in namelist termplaneparameters.
+   !! (EXPERT Only active if termination_planes=F and parameter lpmidplane=T
+   !! with fldspec=2, default effectively \f$ \infty \f$.)
+     real(kr8), dimension(3)  :: termination_parameters !<.
+   !> relative error \f$ \epsilon_r \f$,
+   !! must be >=0 and <=1, default \f$ 10^{-4} \f$
+     real(kr8) :: rel_error !<.
+   !> absolute error \f$ \epsilon_a \f$,
+   !! must be >=0 and <=1, default \f$ 10^{-4} \f$
+     real(kr8) :: abs_error !<.
+   !> Maximum number of steps for one fieldline integration,
+   !! must be positive, default 100.
+     integer(ki4) :: max_numsteps   !<.
+   !> Initial step-size \f$ \Delta t_0 =0.1\f$ (default) for fieldline integration,
+   !! i.e. increment in independent variable, must be positive.
+   !! (Code will determine which is outgoing direction.)
+     real(kr8) :: initial_dt !<.
+   !> Maximum allowed change in \f$ \zeta \f$ (radians) over
+   !! one fieldline integration, default 1.
+     real(kr8) :: max_zeta !<.
+  end type odesparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist panelarrayparameters.
+!! This assigns transforms to bodies, strictly objects defined by
+!! the numbers defined by process_by_name in namelist
+!! vtktfmparameters (if used). It is easiest to understand
+!! if every body appears in the
+!! panel_bodies list and has a corresponding transform,
+!! unless the 'split' option is set when each transform corresponds
+!! to two adjacent bodies in the list. However, the software will by
+!! default enter all bodies into a list of length up to
+!! maximum_number_of_panels and assign the
+!! identity transformation to each.
+!! Program ctlgen uses an abbreviated version of this namelist.
+!!
+  type, public :: panelarrayparameters
+   !> bodies defining the geometry,
+   !! if no bodies are listed, then all are considered,
+   !! default 0 
+     integer(ki4), dimension(2*maximum_number_of_panels) :: panel_bodies !< .
+   !> number of transform to apply,
+   !! default -1 (gives error if not changed)
+     integer(ki4), dimension(2*maximum_number_of_panels) :: panel_transform !< .
+   !> INERT, default null
+     character(len=20) :: transform_id !<.
+  end type panelarrayparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist plotselections.
+!! There is a namelist plotselections for each of the major component
+!! programs, datvtk, geoq, hdsgen, move, smanal and powcal (although required for datvtk
+!! if a .ctl file is used, the namelist controls have no effect). The plots that
+!! can be produced vary with each program, but the following conventions
+!! are observed:
+!! 1. All variables are logicals, and must be set .TRUE. to produce a
+!! data file for plotting. If they are omitted, by default all are set .FALSE.
+!! (The variables must also be in the code-specific version of the namelist,
+!! otherwise an error will  terminate execution.)
+!! 2. All variable names begin with 'plot_', optionally followed by an identifier
+!! for the particular program if a vtk file is wanted, thus
+!!     - geoq or geofld for geoq
+!!     - hds or geo for hdsgen
+!!     - mov or geo for move
+!!     - pow for powcal
+!!     - if gnu appears, a file for gnuplot is produced
+!! 3. All vtk files (for visualisation using ParaView) contain only surface
+!! information, unless the string
+!! 'vol' appears following the program identifier, or they show the HDS
+!! which is inherently a 3-D wireframe.
+!! 4. All gnu files (for visualisation using gnuplot) contain only
+!! information projected in cross-section on a plane \f$ \zeta=const. \f$.
+!! The main gnu files of interest are produced by geoq and may be
+!! processed using the command geoqgnu root, where root.ctl is the
+!! control file used to generate them
+!! 5. The coordinate system used is indicated by the last letter before
+!! the .vtk filetype, viz:
+!!     - x for Cartesians (mm)
+!!     - m for mapped coordinates (either flux coordinates or cylindricals
+!! depending on fldspec, the way the magnetic field is specified). Angles
+!! are in radians, and in the
+!! case of cylindricals, units of metres are used for R and Z.
+!!     - q for quantised coordinates, the system in which lines are actually
+!! tracked, typically ranging over 0 to 1024.
+!! 6. There are also names which are a legacy of previous developments,
+!! if they are set .TRUE., a warning will be issued.
+!! 7. Corresponding output files to variable plot_xxx have names root_xxx.vtk
+!! or root_xxx.gnu or root_gnu(_opt).gnu, where root.ctl is the
+!! control file used to generate them
+!! 8. If it is not sensible to produce a plot file, its output will be
+!! suppressed
+  type, public :: plotselections
+     logical :: plot_allcartv !<  magtfm only, vtk plot selector
+     logical :: plot_allgeobj !< move only, vtk plot selector
+     logical :: plot_angnu !< smanal only, gnuplot plot selector
+     logical :: plot_ansmallx !< smanal only, vtk plot at centroids only
+   !> powcal only, gnu plot selector, above conventions apply.
+     logical :: plot_antenna_data !< .
+   !> antest only, antest output data selector, above conventions apply.
+     logical :: plot_antestout !< .
+     logical :: plot_anx !< smanal only, vtk plot selector
+     logical :: plot_bcartx !<  magtfm only, output scaled B in fmesh format in txt file
+     logical :: plot_cartv !<  magtfm only, vtk plot selector
+   !> hdsgen only, vtk plot selector, above conventions apply.
+     logical :: plot_densitygeobj !< .
+   !> geoq only, produce files eqdsk_eqbdry.gnu and eqdsk_eqltr.gnu
+   !! describing boundary and limiter from eqdsk file with root 'eqdsk'
+     logical :: plot_eqdsk_boundary !< .
+   !> powcal only. First and last points of
+   !! each fieldline are output in gnuplot format in Cartesian coordinates
+     logical :: plot_flinends !< .
+   !> powcal only, above conventions apply.  Files for fieldlines
+   !! are produced, names beginning 'trackm', numbered by start element,
+   !! with '01.vtk' terminating
+     logical :: plot_flinm !< .
+   !> powcal only, above conventions apply.  Files for fieldlines
+   !! are produced, names beginning 'trackx', numbered by start element,
+   !! with '01.vtk' terminating
+     logical :: plot_flinx !< .
+   !> hdsgen only, vtk plot selector, above conventions apply.
+     logical :: plot_geobj !< .
+   !> hdsgen and move only, plot geometry in quantised coordinates
+     logical :: plot_geobjq !< .
+   !> geoq only, vtk plot selector, above conventions apply.
+   !! plot field in quantised coordinates
+     logical :: plot_geofld_quantised !< .
+   !> geoq only, vtk plot selector, above conventions apply.
+     logical :: plot_geofldx !< .
+   !> geoq only, vtk plot selector, above conventions apply.
+     logical :: plot_geofldxyz !< .
+   !> move only, plot points of geometry
+     logical :: plot_geopt !< .
+   !> hdsgen and move only, plot points of geometry in quantised coordinates
+     logical :: plot_geoptq !< .
+   !> geoq only, above conventions apply.
+     logical :: plot_geoqfldxyz !< .
+   !> geoq only, above conventions apply.
+     logical :: plot_geoqm !< .
+   !> geoq only, above conventions apply, except 'mm' implies field is mapped
+   !! as well as coordinates
+     logical :: plot_geoqmm !< .
+   !> geoq only,  vtk plot selector, above conventions apply.
+     logical :: plot_geoqvolm !< .
+   !> geoq only,  vtk plot selector, above conventions apply.
+     logical :: plot_geoqvolx !< .
+   !> geoq only,  vtk plot selector, above conventions apply.
+     logical :: plot_geoqvolxyz !< .
+   !> geoq only, above conventions apply.
+     logical :: plot_geoqvolx !< .
+   !> geoq only, above conventions apply.
+     logical :: plot_geoqx !< .
+   !> antest, datvtk, geoq, magtfm and powcal, above conventions apply.
+   !! Files with _opt component will
+   !! be produced, depending on fldspec, with content determined by opt
+   !! - (omitted) \f$ \psi \f$ values in R-Z coordinates
+   !! - dR \f$ \partial \psi/\partial R \f$ values in R-Z coordinates
+   !! - dZ \f$ \partial \psi/\partial Z \f$ values in R-Z coordinates
+     logical :: plot_gnu !< .
+   !> geoq only, above conventions apply. Files with _opt component will
+   !! be produced, depending on fldspec, with content determined by opt
+   !! - R \f$ R \f$ values in \f$  \psi-\theta \f$  space
+   !! - Z \f$ Z \f$ values in \f$  \psi-\theta \f$  space
+   !! - RJ \f$ R/J \f$ values in \f$  \psi-\theta \f$  space
+   !! - RZ \f$ R \f$ and \f$ Z \f$ values in \f$  \psi-\theta \f$  space
+     logical :: plot_gnum !< .
+   !> geoq only, above conventions apply.
+     logical :: plot_gnuptz !< .
+   !> geoq only, above conventions apply. Points of the geometry
+   !! projected in R-Z coordinates.
+     logical :: plot_gnusil !< .
+   !> geoq only, above conventions apply. Points of the geometry
+   !! projected in \f$  \psi-\theta \f$  space
+     logical :: plot_gnusilm !< .
+     logical :: plot_gnuv !<  magtfm only, gnu 2-D plot selector
+   !> hdsgen and move only, above conventions apply.
+     logical :: plot_hdsm !< .
+   !> hdsgen and move only, above conventions apply.
+     logical :: plot_hdsq !< .
+   !> hdsgen only,  vtk plot selector, above conventions apply.
+     logical :: plot_lostgeobj !< .
+     logical :: plot_modes !<  magtfm only, gnu 2-D plot selector
+     logical :: plot_move_positions !< move only,  DUPLICATE vtk plot selector, default  .false.
+     logical :: plot_moves !< move only, vtk plot selector, default  .true.
+     logical :: plot_movesq !< move only, vtk plot selector, default  .false.
+     logical :: plot_points !< move only,  DUPLICATE vtk plot selector, default  .false.
+   !> powcal only, EXPERT use only, above conventions apply.
+     logical :: plot_powstatx !< .
+   !> powcal and antest only, above conventions apply.
+     logical :: plot_powx !< .
+   !> gnu plot selector, above conventions apply.
+     logical :: plot_radiation_data !< .
+   !> powcal only. Plot rays in \f$ (R,Z) \f$ as .gnu file to visualise rays launched from antenna.
+   !! NOTE: number_of_antennas should be set to 1, otherwise a separate file will be produced for every antenna in results geometry.
+     logical :: plot_rayg !< .
+     logical :: plot_skylprovis_lower !< geoq only, provisional lower skylight plot selector
+     logical :: plot_skylprovis_upper !< geoq only, provisional upper skylight plot selector
+     logical :: plot_smanalout !< smanal output data selector
+     logical :: plot_testtfm !<  magtfm only, do test of FFT analysis
+   !> antest, datvtk and geofil only,  vtk plot selector.
+     logical :: plot_vtk !< .
+   !> powcal only. Plot power on walls if 'middle' option set.
+     logical :: plot_wall !< .
+  end type plotselections
+
+!---------------------------------------------------------------------
+!> Entries in namelist positionparameters.
+!! These describe a transform of position in a 3-D coordinate system.
+!! Program ctlgen uses an abbreviated version of this namelist.
+!!
+  type, public :: positionparameters
+     real(kr4), dimension(9):: position_vector  !< transformation matrix 3x3 as vector, default 0 x nine
+   !> transformation 3x3 matrix,
+   !! default is identity matrix
+     real(kr4), dimension(3,3):: position_matrix  !< .
+   !> transformation scale 3-vector,
+   !! default \f$ (1.,  1.,  1. ) \f$
+     real(kr4), dimension(3):: position_scale  !< .
+   !> transformation offset 3-vector,
+   !! default \f$ (0.,  0.,  0. ) \f$
+     real(kr4), dimension(3):: position_offset  !< .
+   !> transformation type,
+   !! default 0 (identity),
+   !! - 1. scale - scale in Cartesian coordinates
+   !! - 2. offsca - scale and offset  in Cartesians
+   !! - 6. poltil - poloidal tilt, rotate about an axis parallel to the
+   !! toroidal direction through the centre of the body
+   !! - 7. tortil - toroidal tilt, rotate about an axis in the
+   !! vertical direction through the centre of the body
+   !! - 12. torrot - rotate in toroidal direction
+   !! - 22. polrot - rotate in poloidal direction
+   !! - 42. radial - displace towards a point \f$ (R,Z) \f$, which will
+   !! normally be the centre of the torus (i.e. displace in minor radius),
+   !! negative displacements imply outwards translation. The first entry is
+   !! the displacement, and the next two give the point coordinates
+     integer(ki4):: position_transform  !< .
+   !> describes transformation type,
+   !! default 'cartesian_scale' (inert)
+     character(len=20) :: transform_desc !< .
+   !> identifies transformation,
+   !! default 'unit' (inert)
+     character(len=20) :: transform_id !< .
+  end type positionparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist powcalparameters.
+!! This is the main parameter control for powcal to perform both particle and radiation power deposition calculations. 
+!! By setting plot_powx = .TRUE. a plot of power deposition for both forms can be visualised in ParaView. \n
+!! There are also subsidiary controls to consider, which follow in order:
+!! - termplaneparameters (must only  be present if termination_planes=.TRUE.)
+!! - edgprofparameters (must only  be present if more_profiles=.TRUE.,
+!! now controls power deposition formula)
+!! - odesparameters
+!! - radnsourceparameters (definition of radiation source for rad calculations) 
+!! - rayparameters (definition of rays for rad calculations) \n
+!! Maximum number of tracks allowed for explicit selection, maximum_number_of_tracks=100. \n
+!! Maximum number of antennas allowed for explicit selection, maximum_number_of_antennas=100.
+  type, public :: powcalparameters
+   !> Switch for code to perform radiation power calculations. NOTE can be switched on alongside perform_particle to$   !! - 0. No radiation calculations performed (default)
+   !! - 0. No particle calculations performed
+   !! - 1. Perform particle power calculations (default)
+     real(kr8) :: perform_particle !< .
+   !> Switch for code to perform radiation power calculations. NOTE can be switched on alongside perform_particle to perform both power calculations in one run
+   !! - 0. No radiation calculations performed (default)
+   !! - 1. Perform radiation calculations
+     real(kr8) :: perform_radiaiton !< .
+   !> Control shadowing for radiation calculations
+   !! - 0. No shadowing (default)
+   !! - 1. Shadowing by user specified shadow geometry (same geometry used for particle shadowing)
+     real(kr8) :: shadow_radiation !< .
+   !> analytic launch type, for EXPERT use only, default 0
+     integer(ki4) :: analytic_launch_type !< .
+   !> calculation type
+   !! - 'local' shadowing only by  toroidally localised geometry
+   !! - 'global' shadowing by fieldlines which may wrap around torus
+   !! - 'middle' EXPERT start fieldlines at "midplane", Z=const., default 'unset'
+     character(len=80) :: calculation_type !< .
+   !> INERT if more_profiles, \f$ \lambda_m \f$ power decay length at midplane (m),
+   !! default 0.012 (12mm)
+     real(kr8) :: decay_length !< .
+   !> INERT if more_profiles, \f$ \sigma \f$ Eich formula length (m),
+   !! default 0
+     real(kr8) :: diffusion_length !< .
+   !> tracks selected by element number, default 0
+     integer(ki4), dimension(maximum_number_of_tracks) :: element_numbers !< .
+   !> If nonzero, compute only selected tracks, default 0.
+   !! Tracks selected using element number. Remember to set plot_flinx/m .TRUE. to get
+   !! track output , and setting plot_powx .FALSE. will save disk space, default 0
+     integer(ki4) :: number_of_tracks !< .
+   !> antennas selected by element numbers to plot out launched rays from that antenna in \f$ (R,Z) \f$,
+   !! default 0
+     integer(ki4), dimension(maximum_number_of_antennas) :: antenna_numbers !< .
+   !> If nonzero, compute only selected antennas for \f$ (R,Z) \f$ plots of rays with plot_rayg, default 0.
+   !! Antennas selected using element number. Remember to set plot_rayg .TRUE. to get
+   !! ray output,
+   !! default 0 
+     integer(ki4) :: number_of_antennas !< .
+   !> INERT if more_profiles, \f$ P_{loss} \f$ power crossing the separatrix (W) ,
+   !! default 7.5e+06 (units Watts)
+     real(kr8) :: power_loss !< .
+   !> power on launch geometry, for EXPERT use only,
+   !! default 0
+     integer(ki4) :: power_on_launch_geo !< .
+   !> power on shadow geometry, for EXPERT use only,
+   !! default 0
+     integer(ki4) :: power_on_shadow_geo !< .
+   !> INERT if more_profiles, \f$ F \f$ power split ion to electron direction.,
+   !! Must lie between 0 and 1.,
+   !! default 0.5
+     real(kr8) :: power_split !< .
+   !> INERT if more_profiles, \f$ q_{\parallel 0} \f$ parallel reference flux (W/sqm).,
+   !! default -1 (if negative is ignored)
+     real(kr8) :: q_parallel0 !< .
+   !> level of refinement to be used, always unity,,
+   !! EXPERT increasing to 2 or 3 increases number of samples by 4X or 16X,
+   !! if mesh has been appropriately prepared using CFMCNP,
+   !! default 1
+     integer(ki4) :: refine_level !< .
+   !> control shadowing
+   !! - (-2). "Paint power" onto surfaces
+   !! - (-1). For testing purposes only
+   !! - 0. No shadowing (default)
+   !! - 1. Shadowing by shadow geometry (NOTE this needs to be selected for shadowing to work with radiation calculations)
+     integer(ki4) :: shadow_control !< .
+   !> DEPRECATED Use flux_from_pfc instead.
+     logical :: use_pfc_flux   !< .
+   !> termination planes present, always set .TRUE. to use more
+   !! sophisticated termination criteria in termplaneparameters namelist,
+   !! default .FALSE.
+     logical :: termination_planes !< .
+   !> more profiles can be used, always set .TRUE. to use more
+   !! power deposition profiles in edgprofparameters namelist,
+   !! default .FALSE.
+     logical :: more_profiles !< .
+   !> activate skylights if present,
+   !! default .TRUE.	
+     logical :: skylight !< .
+   !> power in private flux region,
+   !! default .TRUE.
+     logical :: power_in_pfr !< .
+   !> employ skylights in private flux region,
+   !! default  .TRUE. (INERT)
+     logical :: employ_skyl_pfr !< .
+   !> Distance that assumes intersection with skylight, in quantised units, in each direction
+   !!  typically 1/1024 of geometry, default 1.
+     real(kr8), dimension(3) :: skylight_tolerance !< .
+   !! Default .FALSE. implies use of value psista (sic) for \f$ \psi \f$ on termination plane
+   !! to evaluate \f$ Q \f$ in global calculation.  If .TRUE., use instead value of \f$ \psi \f$ on
+   !! PFC to evaluate \f$ Q \f$. (Integration errors may lead to discrepancies in psista even in
+   !! the case of exisymmetric field.)
+     logical :: flux_from_pfc   !< .
+  end type powcalparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist progfiles.
+!! These set the file(s) used by datvtk -c.
+!! Either r_input_file and z_input_file  should contain
+!! equal numbers of \f$ R \f$ and \f$ Z \f$ coordinates respectively, one per line, with
+!! a null value for rz_input_file, or rz_input_file  should
+!! contain the \f$ (R,Z) \f$ positions, one pair of numbers per line, and the other two
+!! filenames should be 'null'.
+!!
+!! The file format used here is referred to as the 'gnu dat' format, to
+!! distinguish it from the NASTRAN .dat format, as it is compatible with the
+!! gnuplot plotting package. It allows for a single header line beginning '#'
+!! with a closely defined layout to describe the content.
+!!
+  type, public :: progfiles
+   !> position coordinate 1 \f$ (R) \f$ data input file,
+   !! default 'null'
+     character(len=80) :: r_input_file  !< .
+   !> position coordinate 2 \f$ (Z) \f$ data input file,
+   !! default 'null'
+     character(len=80) :: z_input_file !< .
+   !> position coordinate 1 and 2 \f$ (R,Z) \f$ data input file,
+   !! default 'null'
+     character(len=80) :: rz_input_file  !< .
+  end type progfiles
+
+!---------------------------------------------------------------------
+!> Entries in namelist querypositionparameters.
+  type, public :: querypositionparameters
+     character(len=80) :: query_file !< local variable
+     integer(ki4):: nquery_position_type !< local variable, default 1
+     integer(ki4):: nquery_type !< local variable, default 1
+     integer(ki4):: nquery_energies !< local variable, default 150
+     integer(ki4):: nquery_extra_energies !< local variable, default 0
+     integer(ki4):: nquery_energies_per_line !< local variable, default 1
+     integer(ki4):: nquery_in_longitude !< local variable, default 10
+     integer(ki4):: nquery_in_latitude !< local variable, default 10
+     real(kr4), dimension(3,3):: query_matrix  !< local variable
+     real(kr4), dimension(3):: query_scale  !< local variable, default (/1.,  1.,  1. /)
+     real(kr4):: query_scale_energy  !< local variable, default 1.
+     real(kr4), dimension(3):: query_offset  !< local variable, default (/0.,  0.,  0. /)
+     integer(ki4):: query_transform  !< local variable, default 1
+  end type querypositionparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist radnsourceparameters.
+!! The following parameters are used within the powcal code to define exactly how the radiation
+!! source should be defined for a particular runcase. Including whether or not the source
+!! is defined from a data file input or from an analytical function of \f$ \psi \f$ or \f$ (R,Z) \f$.
+  type, public :: radnsourceparameters
+   !> Select the analytical formula to be used in defining the radiation source, 
+   !! either via file input or with an analytical formula:
+   !! - 'file_input' Radnsource defined by user input file defining radiation source as \f$ W/m^3 \f$ 
+   !! across \f$ (R,Z) \f$ grid. NOTE: radiation source data file should be specified in inputfiles as radiation_input_file 
+   !! - 'unset'/'userdefined' default. User specifies their own formula in source code 
+   !! (in the radnsource_userdefined subroutine) either in \f$ (R,Z) \f$ or \f$ \psi \f$
+   !! - 'circular' power density distribution defined circularly with only dependance on 
+   !!  minor radius \f$ r \f$, source normalised to total_power 
+   !! - 'analytic' power density distribution follows function \f$ \psi \f$, \f$ (1 - \psi^a)^b \f$ 
+   !! Allows for source to follow curvature of actual plasma, source normalised to total_power  
+   !! - 'physics' distribution of \f$ n_e \f$ and \f$ T_e \f$ across plasma calculated 
+   !! using 'analytic' formula; then power density calculated from relevant physics formulas 
+   !! for radiation mechanisms such as bremsstrahlung. If selected total_power should not be specified
+     real(kr8) :: radnsource_formula !<.
+   !> User specified total radiative power escaping the plasma that is to be distributed across results geometry,
+   !! should be given in \f$ W \f$. Analytical formulae normalised to this value over plasma integral.\n
+   !! Default: -1, should be left as -1 if radnsource_formula set to 'file_input' or 'physics'. 
+   !! Otherwise specify the amount of power leaving plasma that is to be considered for 
+   !! radiation power deposition on results geometry.
+     real(kr8) :: total_power !< .
+   !> Switch for writing radiation calculation diagnostics to logfile,
+   !! default .FALSE.
+     logical :: radiation_diagnostics !< .
+   !> Plasma parameter electron temperature \f$ T_e \f$ (used within 'physics' formula),
+   !! default 8800 (units eV)
+     real(kr8) :: te !< .
+   !> Plasma parameter electron density \f$ n_e \f$ (used within 'physics formula),
+   !! default  \f$ 1.415\times 10^{20} \f$ (units per cu m)
+     real(kr8) :: ne !< .
+   !> \f$ a \f$ exponent in analytical formula,
+   !! default 2.
+     real(kr8) :: a_exponent !< .
+   !> \f$ b \f$ exponent in analytical formula,
+   !> default 1.
+     real(kr8) :: b_exponent !<.
+   !> \f$ a \f$ exponent in analytical formula for \f$ T_e \f$ distribution in 'physics',
+   !! default 2.
+     real(kr8) :: te_a_exponent !<  .
+   !> \f$ a \f$ exponent in analytical formula for \f$ n_e \f$ distribution in 'physics',
+   !! default 2.
+     real(kr8) :: ne_a_exponent !< .
+   !> \f$ b \f$ exponent in analytical formula for \f$ T_e \f$ distribution in 'physics',
+   !! default 1.
+     real(kr8) :: te_b_exponent !<      .
+   !> \f$ b \f$ exponent in analytical formula for \f$ n_e \f$ distribution in 'physics',
+   !! default 1.
+     real(kr8) :: ne_b_exponent !<   .
+   !> Default 0
+     integer(ki4) :: number_of_integer_parameters  !< .
+   !> switch for Line+Bremsstrahlung contributions to radiation power density for radnsource_formula= 'physics'
+   !! - 0. Ignore contribution
+   !! - 1. Include contribution (default)
+     integer(ki4) :: bremsstrahlung_switch !<.
+   !> switch for Cyclotron contributions to radiation power density for radnsource_formula= 'physics'
+   !! - 0. Ignore contribution (default)
+   !! - 1. Include contribution  
+     integer(ki4) :: cyclotron_switch !< .
+   !> switch for Recombination contributions to radiation power density for radnsource_formula= 'physics' (NOT USED)
+   !! - 0. Ignore contribution (default)
+   !! - 1. Include contribution 
+     integer(ki4) :: recombination_switch !<  .
+   !> order of spline used in radiation source piecewise spline function,
+   !! default 4  
+     integer(ki4) :: order_of_source_spline !< .
+   !> plasma box limits set,
+   !! default .FALSE.
+     logical :: plasma_box_set !< .
+   !> plasma box limit,
+   !! default 0
+     real(kr8) :: box_r_start  !< .
+   !> plasma box limit,
+   !! default 0
+     real(kr8) :: box_z_start  !< .
+   !> plasma box limit,
+   !! default 0
+     real(kr8) :: box_r_end  !< .
+   !> plasma box limit,
+   !! default 0
+     real(kr8) :: box_z_end  !< .
+  end type radnsourceparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist rayparameters.
+!! The following parameters are used within the powcal code to to define how the rays work within
+!! radiation calculations. These should mostly left to their defaults.
+  type, public :: rayparameters
+   !> user specified number of sample points along a ray (used with radiation_shadowing = 0 
+   !! in powcalparameters),
+   !! default 100 
+     integer(ki4) :: nsample !<.
+   !> user fixed maximum ray length (m) (used with radiation_shadowing = 0 in powcalparameters), 
+   !! default 10, 
+     real(kr8) :: termdistance !< .
+   !> no source below this value, end track,
+   !! default 1
+     real(kr8) :: source_threshold !<  .
+   !> multiplies maximum length based on mesh,
+   !! default 1
+     real(kr8) :: distance_factor 
+   !> multiplies minimum sample separation based on mesh,
+   !! default 1
+     real(kr8) :: separation_factor !< .
+   !> start distance to ensure miss launch surface,
+   !! default \f$ 10^{-4} \f$ (m)
+     real(kr8) :: domain_epsilon !< .
+   !> minimum sample separation,
+   !! default \f$ 10^{-1} \f$
+     real(kr8) :: absolute_separation !< .
+   !> use factor or absolute value if unity,
+   !! default 1
+     integer(ki4) :: distance_strategy !<  .
+   !> default trapezoidal rule (currently no other options),
+   !! default 1
+     integer(ki4) :: integration_rule !< .
+   !> use flux values or source_threshold,
+   !! default 0
+     integer(ki4) :: source_threshold_strategy !<.
+   !> Fraction of each impurity relative to the electrons (array element order is assumed to be in the following order),
+   !!frac_impurity= f_ar f_c  f_h  f_kr f_ne f_o  f_w  f_be f_fe f_he f_n  f_ni f_si f_xe,
+   !! default 0.
+     real (kr8) :: frac_impurity(14)!<.
+   !> used to define the temperature and density profiles used to each impurity,
+   !! default 0
+     integer(ki4)  :: prof_custom !<    .
+  end type rayparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist skylparameters.
 !!
 !! Skylight generation is triggered by setting either 
 !! the logical switch skylight_flux_limits or skylight_objects>0
@@ -1367,13 +1771,141 @@ module namelist
    !! overwritten by input skylight_tolerance in namelist powcalparameters
      real(kr8), dimension(3) :: intersect_tolerance !< .
   end type skylparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist smanalparameters.
+!! Cluster analysis is performed using the sort_key, and the results will 
+!! typically be rekeyed using new_key. The demonstration case classifies
+!! bodies (sort_key) into clusters according to their centroids and then rekeys
+!! using the poloidal angle of the centroid (new_key).
+!! Analysis proceeds over each cluster.
+!!
+!! The centre about which the angle is taken is defined as the centroid of
+!! all the geometry defined as a set of points. The centre
+!! may be redefined in \f$ (R,Z) \f$ coordinates, using set_r_central, nominal_r_central, etc.
+  type, public :: smanalparameters
+     character(len=80) :: analysis_mode !< only one mode available, default 'regular'
+   !> key to be used to sort scalar field, default 'Body', 'Surf' is probably another possibility,
+   !! note that the leading capital letter is significant, these are in principle arbitrary labels.
+     character(len=80) :: sort_key !< .
+     character(len=80) :: analyse_scalar !< identifier of scalar field to analyse, default 'Q'
+     integer(ki4) :: number_of_clusters !< sets cluster size by dividing range of key, default  18
+   !> New key for sorting, always an angle,
+   !! inert unless rekey is .TRUE.
+   !! Only values 'angle', 'poloidal', 'toroidal', 'userdefined'  are allowed,
+   !! and 'angle' implies poloidal angle (only the first 6 characters signify), default  'null'
+     character(len=80) :: new_key !<.
+     logical :: rekey !<  Only use new key if .TRUE., default  .FALSE.
+   !> user defined dictionary
+   !! Zero entry terminates. For example to group bodies 1,2,3 and 4, set first four entries
+   !! to 1, then say bodies 5 and 6 are grouped by setting entries 5 and 6 each to 2 etc.
+   !! If there are more bodies than entries in the dictionary, then they are all grouped
+   !! together with key equal to number of entries plus one, default 0
+     integer(ki4), dimension(MAX_NUMBER_OF_PARAMETERS)  :: dictionary !< .
+   !> Statistics to be calculated
+   !! Allowed values are 'intg  ', 'intgsq', 'max   ', 'min   ', 'maxabs', and 'minabs'.
+   !! intg performs the integral as sum of scalar x (triangle area) and
+   !! intgsq is the integral of scalar squared, the others should have obvious meanings, default 'unset'
+     character(len=80), dimension(MAX_NUMBER_OF_PARAMETERS) :: required_statistics  !< .
+     logical :: set_r_central !< user sets nominal central \f$ R \f$ for poloidal angle analysis, default .FALSE.
+     logical :: set_z_central !< user sets nominal central \f$ Z \f$ for poloidal angle analysis, default .FALSE.
+     !> user defined value of central \f$ R \f$,
+     !! note ignored unless set_r_central=.TRUE., default 0
+     real(kr8) :: nominal_r_central !< .
+     !> user defined value of central \f$ Z \f$,
+     !! note ignored unless set_z_central=.TRUE., default 0
+     real(kr8) :: nominal_z_central !< .
+  end type smanalparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist termplaneparameters.
+!! Terminate if fieldline intersects or hits a plane going in a certain direction,
+!! possibly subject to an auxilliary condition on position.
+!! Only activated if termination_planes = .TRUE. in namelist powcalparameters.
+!! - Coordinate directions \f$ 1,2,3 \f$ correspond to respectively
+!! \f$ (R,Z,\xi) \f$, N.B. \f$ \xi \f$ not \f$ \zeta \f$.
+!! - Note arrangement that array entries align with termplane_position,
+!! if setting termplane_direction, ensure corresponding termplane_intersection
+!! is zero and vice versa.
+!! - Maximum number of inputs allowed for each variable, maxinp=100.
+  type, public :: termplaneparameters
+   !> Terminate if fieldline hits a plane going in a certain direction,
+   !! possibly subject to an auxilliary condition on position,
+   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed,
+   !! or dummy entry of zero.
+   !! - Positive direction corresponds to fieldline rising above plane,
+   !! negative direction corresponds to fieldline falling below plane.
+   !! - Position of plane determined by termplane_position,
+   !! default 0
+     integer(ki4), dimension(maxinp):: termplane_direction  !< .
+   !> Terminate if fieldline intersects a plane,
+   !! plane directions \f$ 1-3 \f$ allowed, or dummy entry of zero.
+   !! - Position of plane determined by termplane_position,
+   !! default 0
+     integer(ki4), dimension(maxinp):: termplane_intersection  !< .
+   !> Terminate if fieldline reaches an extremum,
+   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed.
+   !! - Positive sign implies only maximum recognised,
+   !! negative sign implies only minimum recognised,
+   !! default 0
+     integer(ki4), dimension(maxinp):: termplane_extremum  !< .
+   !> Position of plane in coordinate \f$ 1-3 \f$ as specified,
+   !! units metres or radians, default 0
+     real(kr8), dimension(maxinp):: termplane_position  !< .
+   !> Terminate when fieldline intersects a plane provided
+   !! an auxilliary condition on position in this direction has been met,
+   !! terminating directions \f$ \pm 1,\pm 2, \pm 3 \f$ allowed,
+   !! - Positive value corresponds to greater than criterion
+   !! negative value corresponds to less than
+   !! - Position of plane determined by termplane_condition,
+   !! default 0
+     integer(ki4), dimension(maxinp):: termplane_condition_dir  !< .
+   !> Position of auxilliary condition plane in coordinate \f$ 1-3 \f$ as specified,
+   !! units metres or radians, default 0
+     real(kr8), dimension(maxinp):: termplane_condition  !< .
+   !> INERT number of active termination planes. This is determined
+   !! automatically thanks to the arrangement with dummy zeroes described above, default 0
+     integer(ki4):: termplane_max  !< .
+  end type termplaneparameters
+
+!---------------------------------------------------------------------
+!> Entries in namelist vtkfiles.
+!! This sets the names of the vtk format files to be used by vtktfm,
+!! and how many copies in total are needed of each file.
+!! Note that if a file is to be copied, it is assumed that it contains
+!! only one body (use datvtk -xxm to remove body identifiers from dat files
+!! when converting to vtk).
+!! The copies of the first file in the vtk_input_file list are numbered
+!! 101, 102, 103, ... etc, the second are numbered 201, 202, 203, ...etc.
+!! (so that if 4 occurrences of the geometry in file 2 are needed,
+!! set the number of copies to 4, and reference them as 201-204).
+!! Program ctlgen uses an abbreviated version of this namelist.
+!!
+  type, public :: vtkfiles
+   !> vtk format geometry data input files,
+   !! default 'null' gives error so must be changed
+     character(len=80), dimension(maximum_number_of_files) :: vtk_input_file !< .
+   !> number of copies needed of each corresponding input file,
+   !! default 1 for each entry in vtk_input_file list
+     integer(ki4), dimension(maximum_number_of_files) :: number_of_copies !< .
+   !> labels vtk format geometry data input file (not used),
+   !! default 'null'
+     character(len=80), dimension(maximum_number_of_files) :: vtk_label  !< .
+   !> numeric label for input file (not used),
+   !! default 0
+     integer(ki4), dimension(maximum_number_of_files) :: vtk_label_number !< .
+   !> vtk format geometry data output file,
+   !! defaults to root of ctl file (plus vtk suffix)
+     character(len=80) :: vtk_output_file  !< .
+  end type vtkfiles
+
 !---------------------------------------------------------------------
 !> Entries in namelist vtktfmparameters.
 !!
 !! It helps to know a little history, in that for early
 !! ITER work, each panel was regarded as composed of two separate bodies
 !! either side of a central attachment (to avoid self-shadowing). For
-!! SMARDDA-PFC use, the option 'panel' should be set so that there is a one-to-one
+!! more recent use, the option 'panel' should be set so that there is a one-to-one
 !! correspondence between isolated geometry bodies and panels. Further,
 !! it became possible for the code to distinguish any integer-labelled attribute
 !! in the input, e.g. using set process_by_name=Surf for surfaces, hence the
@@ -1392,7 +1924,7 @@ module namelist
 !! If there is more than one input file,
 !! then by default each file is treated as a single object with a body with
 !! number greater than 100. The numbering convention should be obvious
-!! from inspection of the examples in the smiter-aux test deck,
+!! from inspection of the examples in the smiteraux test deck,
 !! the first file is numbered 101, the second 201, the third 301, etc.
 !! The number of copies may be specified for each file, default 1
 !! (i.e. a single occurrence of the geometry). Other copies of
@@ -1403,10 +1935,11 @@ module namelist
 !! consecutively starting with unity, but there must not be more than
 !! max_bods_index bods. \n
 !! WARNING (1) unless the bodies are numbered consecutively setting
-!! preserve_input_structure=.TRUE. will usually cause a crash error.\n
+!! preserve_internal_structure=.TRUE. will usually cause a crash error.\n
 !! (2) Most
 !! combinations of preserve_input_structure, extract, split_file and
 !! make_same are untested and may well also cause vtktfm to crash.
+!! Program ctlgen uses an abbreviated version of this namelist.
 !!
   type, public :: vtktfmparameters
    !> Option for defining panels and their transforms
@@ -1438,7 +1971,7 @@ module namelist
      logical :: make_same !< .
    !>  value for attribute to take (e.g. body number), default 1
      integer(ki4) :: same_value !< .
-   !>  name of attribute to be split / homogenised, default Body
+   !>  name of attribute to be split / homogenised, default 'Body'
      character(len=80) :: process_by_name !< .
      logical :: paneltfm !< apply transform only if .TRUE. (default)
      logical :: extract !< extract objects according to key and limits, default .FALSE.
@@ -1449,11 +1982,16 @@ module namelist
      integer(ki4) :: max_bods_in_file !< .
    !> bods remain distinct, default .FALSE.
      logical :: preserve_internal_structure !< .
-     real(kr8), dimension(2) :: plasma_centre !< centre of discharge in \f$ (R,Z) \f$
-     real(kr8) :: minimum_angle !< minimum angle for extraction, default -22.5
-     real(kr8) :: maximum_angle !< maximum angle for extraction, default 22.5
-
-
+   !> centre of discharge in \f$ (R,Z) \f$,
+   !! default (/1,0/)
+     real(kr8), dimension(2) :: plasma_centre !<.
+   !> minimum angle for extraction,
+   !! default -22.5
+     real(kr8) :: minimum_angle !< .
+   !> maximum angle for extraction,
+   !! default 22.5
+     real(kr8) :: maximum_angle !< .
   end type vtktfmparameters
 
 end module namelist
+

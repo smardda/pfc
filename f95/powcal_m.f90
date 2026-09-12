@@ -1,5 +1,4 @@
 module powcal_m
-
   use const_kind_m
   use const_numphys_h
   use control_h
@@ -39,6 +38,7 @@ module powcal_m
   powcal_readcon, &   !< namelist input of controls
   powcal_move, &   !< loop over entries in results
   powcal_calc, &   !< coordinate calculation of power deposition
+  powcal_calcrad, &!< coordinate calculation of radiation power deposition
   powcal_writev, &   !< write (vtk) powcal data
   powcal_refine, &   !< set refinement level
   powcal_write, &  !< output powcal data
@@ -50,7 +50,7 @@ module powcal_m
 ! private types
 
 ! private variables
-  logical :: double_null=.FALSE. !<  if .TRUE., read in values required for double null
+  logical :: double_null=.false. !<  if .TRUE., read in values required for double null
   character(*), parameter :: m_name='powcal_m' !< module name
   integer   :: status   !< error status
   character(len=80) :: ibuf1 !< buffer for input/output
@@ -102,8 +102,8 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
 
   !! arguments
   type(powcal_t), intent(inout) :: self   !< object data structure
-  type(pnumerics_t), intent(in) :: numerics   !< object control data structure
-  type(pplots_t), intent(in) :: plot   !< vtk plot selectors
+  type(pxnumerics_t), intent(in) :: numerics   !< object control data structure
+  type(prplots_t), intent(in) :: plot   !< vtk plot selectors
   type(numerics_t), intent(inout), optional :: gnumerics   !< object control data structure
   real(kr8) :: rxpt(2)   !<  position x point \f$ R \f$
   real(kr8) :: zxpt(2)   !<  position x point \f$ Z \f$
@@ -142,11 +142,14 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   call powcalmpi_decomp(self%decomp,self%powres%npowe,self%powres%geobjl%ng)
 
   ! set size of pow array
-  if(self%decomp%myrankpowcal.eq.0) then
-     allocate(self%powres%pow(self%powres%geobjl%ng), stat=status)
+  ! initialization is required because when ng > npowe
+  ! pow array is only partially filled leaving some elements 
+  ! with garbage memory (out to resf14r_powcal.out)
+  if(self%decomp%myrankpowcal == 0) then
+     allocate(self%powres%pow(self%powres%geobjl%ng), stat=status, source = 0.0)
      call log_alloc_check(m_name,s_name,1,status)
   else
-     allocate(self%powres%pow(self%decomp%firstng:self%decomp%lastng), stat=status)
+     allocate(self%powres%pow(self%decomp%firstng:self%decomp%lastng), stat=status, source = 0.0)
   endif
   !calculate R0 and R5, needed for 4 region case
   do i=self%decomp%firstpowe,self%decomp%lastpowe
@@ -165,7 +168,7 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   end do
   !write(*,*) 'R0 = ',R0,' R5 = ',R5
   ! set size of power statistics arrays
-  if(self%decomp%myrankpowcal.eq.0) then
+  if(self%decomp%myrankpowcal == 0) then
      allocate(self%powres%pows(self%powres%npowe), stat=status)
      call log_alloc_check(m_name,s_name,2,status)
      allocate(self%powres%powa(self%powres%npowe), stat=status)
@@ -194,11 +197,12 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
   self%powres%flinx=plot%flinx
   self%powres%flinends=plot%flinends
   self%powres%flinm=plot%flinm
+  self%n%plotrayg=plot%rayg
 
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
      ! set size of psista, angle and other diagnostics arrays
-     if(self%decomp%myrankpowcal.eq.0) then
+     if(self%decomp%myrankpowcal == 0) then
         allocate(self%powres%psista(self%powres%geobjl%ng), stat=status)
         call log_alloc_check(m_name,s_name,4,status)
         allocate(self%powres%angle(self%powres%geobjl%ng), stat=status)
@@ -222,18 +226,31 @@ subroutine powcal_init(self,numerics,plot,gnumerics,rxpt,zxpt,psixpt)
      self%powres%psista=0
      self%powres%angle=0
      self%powres%zbdotn=0
+     self%powres%lenpath=0
      self%powres%bfield=0
      self%powres%norm=0
   case default
   end select calcn_type
   ! set size and zero of mask array
-  if(self%decomp%myrankpowcal.eq.0) then
+  if(self%decomp%myrankpowcal == 0) then
      allocate(self%powres%pmask(self%powres%geobjl%ng), stat=status)
      call log_alloc_check(m_name,s_name,9,status)
   else
      allocate(self%powres%pmask(self%decomp%firstng:self%decomp%lastng), stat=status)
   endif
   self%powres%pmask=0
+
+  if (self%n%radncalc/=0) then
+   ! set size of radiation power array
+   if (self%decomp%myrankpowcal==0) then
+      allocate(self%powres%powr(self%powres%geobjl%ng), stat=status)
+      call log_alloc_check(m_name,s_name,12,status)
+   else
+      allocate(self%powres%powr(self%decomp%firstng:self%decomp%lastng), stat=status)
+   endif
+   self%powres%powr=0
+endif
+
 
   field_type: select case (self%powres%beq%n%fldspec)
   case(1)
@@ -610,25 +627,29 @@ subroutine powcal_quant(self,gnumerics,rxpt,zxpt,psixpt)
         end if
      else
         ! prevent application of flux skylight
-        self%powres%beq%n%skylpsi=.FALSE.
+        self%powres%beq%n%skylpsi=.false.
      end if
   end select field_type
 
 end subroutine powcal_quant
 !---------------------------------------------------------------------
 !> namelist input of controls
-subroutine powcal_readcon(selfn,kin,number_of_regions)
+subroutine powcal_readcon(selfn,kin)
 
   !! arguments
-  type(pnumerics_t), intent(inout) :: selfn   !< object control data structure
+  type(pxnumerics_t), intent(inout) :: selfn   !< object control data structure
   integer, intent(in) :: kin   !< input channel for object data structure
-  integer(ki4) :: number_of_regions !< number of regions 
+  !?integer(ki4) :: number_of_regions !< number of regions 
 
   !! local
+  integer(ki4) :: number_of_regions !< number of regions 
   character(*), parameter :: s_name='powcal_readcon' !< subroutine name
   real(kr8) :: power_split !< power split ion to electron direction
   real(kr8), dimension(:), allocatable :: decay_length !< power decay length at outer midplane (m)
   real(kr8) , dimension(:), allocatable:: power_loss !< power crossing the separatrix (W)
+  real(kr8) :: perform_particle !< default 1, if nonzero, perform particle power calculation
+  real(kr8) :: perform_radiation !< default 0, if nonzero, perform radiation power calculation
+  real(kr8) :: shadow_radiation !< default 0, if nonzero, shadow radiation power
   real(kr8) , dimension(:), allocatable:: diffusion_length !< (m)
   real(kr8) :: q_parallel0 !< parallel reference flux (W/sqm)
   integer(ki4) :: refine_level   !< level of refinement to be used
@@ -639,6 +660,9 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   integer(ki4) :: number_of_tracks !< nonzero, only compute selected tracks
   integer(ki4), parameter  :: maximum_number_of_tracks=100 !< maximum number of tracks allowed
   integer(ki4), dimension(maximum_number_of_tracks) :: element_numbers !< tracks selected by element number
+  integer(ki4) :: number_of_antennas !< nonzero, only compute rays from selected element antennas
+  integer(ki4), parameter  :: maximum_number_of_antennas=100 !< maximum number of element antennas allowed
+  integer(ki4), dimension(maximum_number_of_antennas) :: antenna_numbers !< rays selected by antenna number
   logical :: termination_planes !<  termination planes present
   logical :: more_profiles !<  use edgprofparameters
   logical :: power_in_pfr !<  if .TRUE., power in private flux region
@@ -646,6 +670,7 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   integer(ki4) :: analytic_launch_type !< analytic launch type
   integer(ki4) :: power_on_launch_geo !< power on launch geometry
   integer(ki4) :: power_on_shadow_geo !< power on shadow geometry
+  integer(ki4) :: i !< local variable
   real(kr8), dimension(3) :: ztola !< default tolerance
   !> Distance that assumes intersection with skylight, in quantised units, in each direction
   !!  typically 1/1024 of geometry, default 1.
@@ -655,12 +680,15 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   !! powcal parameters
   namelist /powcalparameters/ &
  &power_split, decay_length, power_loss, refine_level, shadow_control, &
+ &perform_particle, perform_radiation, &
+ &shadow_radiation, &
  &use_pfc_flux, &
  &flux_from_pfc, &
  &q_parallel0, &
  &diffusion_length, &
  &calculation_type, &
  &number_of_tracks, element_numbers, &
+ &number_of_antennas, antenna_numbers, &
  &termination_planes, &
  &more_profiles, &
  &power_in_pfr, &
@@ -669,6 +697,7 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
  &skylight_tolerance, double_null, &
  &analytic_launch_type, power_on_launch_geo, power_on_shadow_geo
 
+  number_of_regions = selfn%number_regions
 
   allocate(decay_length(number_of_regions),power_loss(number_of_regions),diffusion_length(number_of_regions))
   allocate(selfn%lmid(number_of_regions),selfn%ploss(number_of_regions),selfn%sigma(number_of_regions))
@@ -677,9 +706,12 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   decay_length=.012_kr8
   diffusion_length=0
   power_loss=7.5e+06_kr8
+  perform_particle=1
+  perform_radiation=0
+  shadow_radiation=0
   refine_level=1
-  use_pfc_flux=.FALSE.
-  flux_from_pfc=.FALSE.
+  use_pfc_flux=.false.
+  flux_from_pfc=.false.
   shadow_control=0
   !! ignore q_parallel0 if negative
   q_parallel0=-1_kr8
@@ -689,12 +721,18 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   if (selfn%mtrack>maximum_number_of_tracks) then
      call log_error(m_name,s_name,1,error_warning,'maximum_number_of_tracks parameter too small')
   end if
+
   element_numbers=0
-  termination_planes=.FALSE.
-  more_profiles=.FALSE.
-  power_in_pfr=.TRUE.
-  employ_skyl_pfr=.TRUE.
-  skylight=.TRUE.
+  number_of_antennas=0
+  if (selfn%mtrack>maximum_number_of_antennas) then
+     call log_error(m_name,s_name,1,error_warning,'maximum_number_of_antennas parameter too small')
+  end if
+  antenna_numbers=0
+  termination_planes=.false.
+  more_profiles=.false.
+  power_in_pfr=.true.
+  employ_skyl_pfr=.true.
+  skylight=.true.
   ztola=1._kr8
   skylight_tolerance=ztola
   analytic_launch_type=0
@@ -732,6 +770,12 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   if(q_parallel0<=0.AND.power_loss(l)<=0) &
  &call log_error(m_name,s_name,14,error_fatal,'power_loss (W) must be >0')
  end do
+  if(perform_particle<0) &
+ &call log_error(m_name,s_name,15,error_fatal,'perform_particle must be >=0')
+  if(perform_radiation<0) &
+ &call log_error(m_name,s_name,16,error_fatal,'perform_radiation must be >=0')
+  if(shadow_radiation<0) &
+ &call log_error(m_name,s_name,17,error_fatal,'shadow_radiation must be >=0')
   ! need to check against value in input file
   if(refine_level<1.OR.refine_level>3) &
  &call log_error(m_name,s_name,15,error_fatal,'refine_level must be 1, 2 or 3')
@@ -746,14 +790,30 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
  &call log_error(m_name,s_name,26,error_fatal,'number_of_tracks must be non-negative')
   if(number_of_tracks>0.AND.minval(element_numbers)<0) &
  &call log_error(m_name,s_name,27,error_fatal,'element numbers must be non-negative')
+ if(number_of_antennas<0) &
+ &call log_error(m_name,s_name,28,error_fatal,'number_of_antennas must be non-negative')
+  if(number_of_antennas>0.AND.minval(antenna_numbers)<0) &
+ &call log_error(m_name,s_name,29,error_fatal,'antenna numbers must be non-negative')
 
   !! store values
   selfn%f=power_split
   selfn%lmid=decay_length
   selfn%ploss=power_loss
+  selfn%pclecalc=perform_particle
+  selfn%radncalc=perform_radiation
+  selfn%shadowr=shadow_radiation
   selfn%sigma=diffusion_length
   selfn%nlevel=refine_level
-  selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc
+  ! Temporary runtime split used to preserve legacy particle-only regression test 
+  ! For particle-only runs, retain the historical if condition 
+  ! Radiation and combined particle+radiation runs with historical pfcr condition
+  ! the unified logic  still needs to  be agreed 
+  if (selfn%pclecalc /= 0 .and. selfn%radncalc == 0) then 
+      selfn%usepsista=.NOT.use_pfc_flux.AND..NOT.flux_from_pfc  ! different from pfcr where use_ does not exist
+  else
+     selfn%usepsista=.NOT.flux_from_pfc
+  endif
+
   selfn%shadow=shadow_control
   selfn%qpara0=q_parallel0
 
@@ -766,6 +826,15 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
         selfn%trackno(j)=element_numbers(j)+1
      end do
   end if
+  selfn%nant=number_of_antennas
+  if(number_of_antennas>0) then
+   allocate(selfn%antno(selfn%nant), stat=status)
+   call log_alloc_check(m_name,s_name,31,status)
+   do j=1, number_of_antennas
+      selfn%antno(j)=antenna_numbers(j)+1
+   end do
+end if
+
   selfn%ltermplane=termination_planes
   selfn%ledgprof=more_profiles
   selfn%lpfpower=power_in_pfr
@@ -776,6 +845,7 @@ subroutine powcal_readcon(selfn,kin,number_of_regions)
   selfn%nanalau=analytic_launch_type
   selfn%nlaupow=power_on_launch_geo
   selfn%nshapow=power_on_shadow_geo
+
   if (selfn%ltermplane) then
      call termplane_readcon(selfn%termp,kin)
   else
@@ -796,6 +866,7 @@ subroutine powcal_move(self,zelt,gshadl,btree)
 
   !! local
   character(*), parameter :: s_name='powcal_move' !< subroutine name
+  !?type(powelt_t) :: zelt   !< power element
 
   ! check for axisymmetric !mpi1!
   vac_type: select case (self%powres%beq%n%vactype(1:3))
@@ -918,6 +989,7 @@ subroutine powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
     
   !! local
   character(*), parameter :: s_name='powcal_calc' !< subroutine name
+  !?type(powelt_t) :: zelt   !< powelt data instance
 
   ! calculate power deposition
   do i=self%decomp%firstpowe,self%decomp%lastpowe
@@ -929,6 +1001,32 @@ subroutine powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
   end do
 
 end subroutine powcal_calc
+!---------------------------------------------------------------------
+!> coordinate calculation of radiation power deposition (=powres_XX)
+subroutine powcal_calcrad(self,gshadl,btree)
+
+  !! arguments
+  type(powcal_t), intent(inout) :: self   !< powcal data structure
+  type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
+  type(btree_t), intent(inout), optional :: btree !< btree data
+
+  !! local
+  character(*), parameter :: s_name='powcal_calcrad' !< subroutine name
+  type(powelt_t) :: zelt   !< powelt data instance
+
+  ! calculate power deposition
+  do i=self%decomp%firstpowe,self%decomp%lastpowe
+     zelt%ie=i
+     do j=imlevel,inlevel
+        zelt%je=j
+        !        call antenna_powelt(self%antenna,zelt,&
+        ! &      self%powres%geobjl,self%powres%beq%psi,self%radnsource,self%ray, &
+        ! &      gshadl,self%powres%powr,btree)
+        call powelt_antenna(zelt,self,gshadl,btree)
+     end do
+  end do
+
+end subroutine powcal_calcrad
 !---------------------------------------------------------------------
 !> coordinate calculation of power statistics (=powres_XX)
 subroutine powcal_stat(self,gshadl)
@@ -1069,6 +1167,9 @@ subroutine powcal_writev(self,kchar,kplot)
      rwork=abs(self%powres%pow(:self%powres%geobjl%ng))
      call vfile_rscalarwrite(rwork,self%powres%geobjl%ng,'Q','CELL',kplot,ifirst)
      deallocate(rwork)
+     if (allocated(self%powres%powr)) then
+        call vfile_rscalarwrite(self%powres%powr,self%powres%geobjl%ng,'radn','CELL',kplot,0)
+     end if
      if (allocated(self%powres%psista)) then
         call vfile_rscalarwrite(self%powres%psista,self%powres%geobjl%ng,'psista','CELL',kplot,0)
      end if
@@ -1133,6 +1234,8 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
      call log_alloc_check(m_name,s_name,2,status)
      self%powres%geobjl%nwset=2
   end select calcn_type
+
+  if (self%n%pclecalc/=0) then
   imlevel=1
   do level=1,self%n%nlevel
      inlevel=powelt_table(level,2)
@@ -1142,6 +1245,16 @@ subroutine powcal_refine(self,gshadl,btree,rxpt,zxpt,psixpt)
      call powcal_calc(self,post,gshadl,rxpt,zxpt,psixpt)
      imlevel=inlevel+1
   end do
+   end if
+
+   if (self%n%radncalc/=0) then
+      imlevel = 1
+      do level=1,self%n%nlevel
+         inlevel=powelt_table(level,2)
+         call powcal_calcrad(self,gshadl, btree)
+      enddo
+      imlevel=inlevel+1
+   endif
 
   call powcal_stat(self,gshadl)
 
@@ -1284,6 +1397,9 @@ subroutine powcal_delete(self)
   deallocate(self%powres%pows)
   deallocate(self%powres%pow)
   deallocate(self%powres%pmask)
+  if (self%n%radncalc/=0) then
+     deallocate(self%powres%powr)
+  end if
   calcn_type: select case (self%n%caltype)
   case('afws','local','msus','global')
      deallocate(self%powres%psista)

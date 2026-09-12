@@ -11,6 +11,7 @@ Try to use the latest stable fortran compiler version available.
 
 *NOTE* you must first install the ray-tracing kernel SMARDDA-LIB,
 which may be facilitated by download of git@github.com:smardda/bootstrap.git
+that also helps with PFC.
 
 To proceed to build from here (and only from here), type
 export SMITER_DIR=$PWD

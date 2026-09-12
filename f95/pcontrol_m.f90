@@ -1,5 +1,4 @@
 module pcontrol_m
-
   use const_kind_m
   use const_numphys_h
   use log_m
@@ -15,6 +14,8 @@ module pcontrol_m
   use odes_m
 !  use termplane_h
   use pcontrol_h
+  use antenna_m
+  use radnsource_m
 
   implicit none
   private
@@ -73,16 +74,20 @@ subroutine pcontrol_init(fileroot)
 end  subroutine pcontrol_init
 !---------------------------------------------------------------------
 !> read data for this run
-subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
+subroutine pcontrol_read(file,numerics,onumerics,antnumerics,radnumerics, &
+   raynumerics,edgprof,plot,combined)
 
   !! arguments
-  type(pfiles_t), intent(out) :: file !< file names
-  type(pnumerics_t), intent(out) :: numerics !< input numerical parameters
+  type(prfiles_t), intent(out) :: file !< file names
+  type(pxnumerics_t), intent(out) :: numerics !< input numerical parameters
   type(onumerics_t), intent(out) :: onumerics !< input ODE numerical parameters
-  type(edgprof_t), intent(out) :: edgprof !< input ODE numerical parameters
-  type(pplots_t), intent(out) :: plot !< vtk plot selectors
+  type(antnumerics_t), intent(out) :: antnumerics !< controls for antenna variables
+  type(radnumerics_t), intent(out) :: radnumerics !< radnsource parameters
+  type(raynumerics_t), intent(out) :: raynumerics !< ray parameters
+  type(edgprof_t), intent(out) :: edgprof !< edge profile numerical parameters
+  type(prplots_t), intent(out) :: plot !< vtk plot selectors
   logical,intent(in) :: combined !< is the code running as a single executable
-  integer(ki4) :: number_of_regions !< number of regions 
+  !?integer(ki4) :: number_of_regions !< number of regions 
   
   !!local
   character(*), parameter :: s_name='pcontrol_read' !< subroutine name
@@ -90,6 +95,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   character(len=80) :: vtkres_input_file  !< vtk format `results' geometry data input file
   character(len=80) :: hds_input_file  !< vtk format HDS data input file
   character(len=80) :: geoq_input_file  !< geoq output format data input file
+  character(len=80) :: antenna_input_file  !< antenna vtk format data input file
+  character(len=80) :: radiation_input_file  !< radiation magtfm format data input file
   character(len=80) :: lau_input_file  !< launch data input file
   logical :: filefound !< true of file exists
   integer(ki4) :: max_number_of_tracks !< maximum number of tracks
@@ -102,8 +109,11 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   logical :: plot_flincart !< DUPLICATE  vtk plot selector
   logical :: plot_flinx !< vtk plot selector
   logical :: plot_flinends !< gnu plot selector
+  logical :: plot_antenna_data !< gnu plot selector
+  logical :: plot_radiation_data !< gnu plot selector
   logical :: plot_flinptz !< DUPLICATE  vtk plot selector
   logical :: plot_flinm !< vtk plot selector
+  logical :: plot_rayg !< gnuplot plot selector
   logical :: plot_allptzv !< INERT vtk plot selector
   logical :: plot_geofld !< INERT vtk plot selector
   logical :: plot_geofld_quantised !< INERT vtk plot selector
@@ -115,6 +125,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
  &vtkres_input_file, &
  &hds_input_file, &
  &geoq_input_file, &
+ &antenna_input_file, &
+ &radiation_input_file, &
  &lau_input_file
 
   !! misc parameters
@@ -133,10 +145,13 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
  &plot_flinx, &
  &plot_flinptz, &
  &plot_flinm, &
+ &plot_rayg, &
  &plot_allptzv, &
  &plot_geofld, &
  &plot_geofld_quantised, &
  &plot_flinends, &
+ &plot_antenna_data, &
+ &plot_radiation_data, &
  &plot_gnu
 
   !! read input file names
@@ -144,6 +159,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   vtkres_input_file='null'
   hds_input_file='null'
   geoq_input_file='null'
+  antenna_input_file='null'
+  radiation_input_file='null'
   lau_input_file='null'
   read(nin,nml=inputfiles,iostat=status)
   if(status/=0) then
@@ -157,6 +174,8 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   file%vtkres   = vtkres_input_file
   file%hdsdata   = hds_input_file
   file%geoq   = geoq_input_file
+  file%antdata = antenna_input_file
+  file%radata = radiation_input_file
   file%laudata   = lau_input_file
 
   !!check files exist
@@ -205,13 +224,37 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
      end if
   endif
 
+  if(.not. combined) then
+     if(file%radata/='null') then
+        call log_value(" radiation_input_file",trim(file%radata))
+        inquire(file=radiation_input_file,exist=filefound)
+        if(.not.filefound) then 
+           !!error opening file
+           print '("Fatal error: Unable to find radiation data file, ",a)',radiation_input_file
+           call log_error(m_name, s_name,6,error_fatal,'radiation data file not found')
+        endif
+      endif
+   endif
+
+  if(.not. combined) then
+     if(file%antdata/='null') then
+        call log_value(" antenna_input_file",trim(file%antdata))
+        inquire(file=antenna_input_file,exist=filefound)
+        if(.not.filefound) then 
+           !!error opening file
+           print '("Fatal error: Unable to find antenna data file, ",a)',antenna_input_file
+           call log_error(m_name, s_name,7,error_fatal,'antenna data file not found')
+        endif
+      endif
+   endif
+
   if(file%laudata/='null') then
      call log_value("launch data file, lau_input_file",trim(file%laudata))
      inquire(file=lau_input_file,exist=filefound)
      if(.not.filefound) then
         !! error opening file
         print '("Fatal error: Unable to find lau data file, ",a)',lau_input_file
-        call log_error(m_name,s_name,6,error_fatal,'launch data file not found')
+        call log_error(m_name,s_name,8,error_fatal,'launch data file not found')
      end if
   end if
 
@@ -225,7 +268,7 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
      !! error opening file
      print '("Fatal error: Output file ",a, " already exists")',trim(file%powcalout)
      print '("Remove it and restart run")'
-     call log_error(m_name,s_name,6,error_fatal,'Output file already exists')
+     call log_error(m_name,s_name,9,error_fatal,'Output file already exists')
   end if
 
   !!vtk file roots
@@ -239,6 +282,7 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   file%flinx    =trim(root)//"_flinx"
   file%flinptz    =trim(root)//"_flinptz"
   file%flinm    =trim(root)//"_flinm"
+  file%rayg    =trim(root)//"_rayg"
   file%allptzv    =trim(root)//"_allptzv"
   file%geofld =trim(root)//"_geofld"
   file%geofldq    =trim(root)//"_geofldq"
@@ -276,11 +320,14 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   plot_flinx = .false.
   plot_flinptz = .false.
   plot_flinm = .false.
+  plot_rayg = .false.
   plot_allptzv = .false.
   plot_geofld = .false.
   plot_geofld_quantised = .false.
   plot_gnu = .false.
   plot_flinends = .false.
+  plot_antenna_data = .false.
+  plot_radiation_data = .false.
 
   !!read plot selections
   read(nin,nml=plotselections,iostat=status)
@@ -300,11 +347,14 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
   plot%ptzv    = plot_ptzv
   plot%flinx    = plot_flinx
   plot%flinm    = plot_flinm
+  plot%rayg     = plot_rayg
   plot%allptzv     = plot_allptzv
   plot%geofld    = plot_geofld
   plot%geofldq     = plot_geofld_quantised
   plot%gnu     = plot_gnu
   plot%flinends    = plot_flinends
+  plot%ant     = plot_antenna_data
+  plot%radn   = plot_radiation_data
   if (plot_flincart) then
      plot%flinx = plot_flincart
      call log_error(m_name,s_name,30,error_warning,'Obsolete file handling feature activated')
@@ -317,19 +367,37 @@ subroutine pcontrol_read(file,numerics,onumerics,edgprof,plot,combined)
 end  subroutine pcontrol_read
 !---------------------------------------------------------------------
 !> read data for this run
-subroutine pcontrol_readcon(numerics,onumerics,edgprof,number_of_regions)
+subroutine pcontrol_readcon(numerics,onumerics,antnumerics,radnumerics, raynumerics, &
+                            edgprof,number_of_regions)
 
   !! arguments
-  type(pnumerics_t), intent(inout) :: numerics !< input numerical parameters
+  type(pxnumerics_t), intent(inout) :: numerics !< input numerical parameters
   type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
+  type(antnumerics_t), intent(inout) :: antnumerics !< controls for antenna variables
+  type(radnumerics_t), intent(inout) :: radnumerics !< radnsource parameters
+  type(raynumerics_t), intent(inout) :: raynumerics !< ray parameters
   type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
-  integer(ki4) :: number_of_regions !< number of regions 
+  integer(ki4), intent(in) :: number_of_regions !< number of regions 
 
-  call powcal_readcon(numerics,nin,number_of_regions)
+  numerics%number_regions = number_of_regions
+  edgprof%number_regions = number_of_regions
 
-  call edgprof_readcon(edgprof,numerics,nin,number_of_regions)
+  call powcal_readcon(numerics,nin)
+
+  ! Merge radiation - edgprof_readcon is in smardda-lib -> Cannot receive pxnumerics_t
+  call edgprof_readcon(edgprof,numerics%pnumerics_t,nin)
   
   call odes_readcon(onumerics,nin)
+
+  if (numerics%radncalc/=0) then
+
+      call antenna_readcon(antnumerics,nin)
+
+      call radnsource_readcon(radnumerics,nin)
+
+      call ray_readcon(raynumerics,nin)
+
+  endif
 
 end  subroutine pcontrol_readcon
 !---------------------------------------------------------------------
@@ -337,7 +405,7 @@ end  subroutine pcontrol_readcon
 subroutine pcontrol_fix(numerics,onumerics,ifldspec)
 
   !! arguments
-  type(pnumerics_t), intent(inout) :: numerics !< input numerical parameters
+  type(pxnumerics_t), intent(inout) :: numerics !< input numerical parameters
   type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
   integer(ki4), intent(in) :: ifldspec !< field specification
 

@@ -29,7 +29,7 @@ program namelist_p
 
   call date_time_init(timestamp)
   call clock_init(30)
-  call clock_start(1,'namelist run time')
+  call clock_start(1,'namelist run CPU-time')
 !--------------------------------------------------------------------------
 !! print header
 

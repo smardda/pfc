@@ -6,14 +6,24 @@ stages:
   - test
   - pages
 
-build-pfc:
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
+.build-setup:
   stage: build
-  script:
-    - export DEBIAN_FRONTEND=noninteractive # prevent interactive prompts when running apt
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+    GIT_SUBMODULE_STRATEGY: recursive
+  before_script:
     - apt-get -y update
-    - apt-get -y install gfortran make gnuplot graphviz texlive-font-utils doxygen
+    - apt-get -y install
+        gfortran
+        doxygen
+        gnuplot
+        graphviz
+        libhdf5-dev
+        make
+        python3
+        python3-pip
+        texlive-font-utils
+        xz-utils
       # Discard symbol in libQt5Core that causes gnuplot to crash.
       # The issue is apparently to do with Qt5 making a system call that's not
       # available in some older kernel versions.
@@ -23,49 +33,52 @@ build-pfc:
     - export SMITER_DIR="$(pwd)"
     - export SMALIB="$(pwd)/smardda-lib"
     - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
-    - bash smardda-lib/exec/build gfortran
-    - bash exec/build gfortran
-  artifacts:
-    untracked: true
-    paths:
-      - smardda-lib/f95/
-      - smardda-lib/fortd/
-      - smardda-lib/exec/
-      - exec/
-      - smardda-lib/doc/srcdoc/html/
+    # Dependencies for tests
+    - python3 -m pip install numpy # numpy for fast array comparisons with tolerance
   tags:
     - lower-privacy
     - ubuntu
 
-run-test-deck-pfc-dbg:
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  stage: test
-  dependencies:
-    - build-pfc
+build-and-test-pfc:
+  extends: .build-setup
   script:
-    - export DEBIAN_FRONTEND=noninteractive
-    - apt-get -y update
-    - apt-get -y install gfortran xz-utils python3 python3-pip gnuplot # gnuplot for .ps files
-    - strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
-    - python3 -m pip install numpy # numpy for fast array comparisons with tolerance
-    - export SMITER_DIR="$(pwd)"
-    - export SMALIB="$(pwd)/smardda-lib"
-    - export SMALIB_DIR="$(pwd)/smardda-lib"
-    - export PATH="${SMITER_DIR}/exec:${SMALIB_DIR}/exec:${PATH}"
+    - bash smardda-lib/exec/build gfortran
+    - bash exec/build gfortran
+    # Test
     - cd ./smiteraux # must be in smiteraux directory to run test deck
     - bash ./tests.bash
     - cd ..
     - tar -xf smiter-aux-results/smiteraux.tar.xz -C smiter-aux-results
     - bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
-  tags:
-    - lower-privacy
-    - ubuntu
+  artifacts:
+    untracked: true
+    paths:
+      - smardda-lib/doc/srcdoc/html/
+
+build-and-test-mpi-pfc:
+  extends: .build-setup
+  script:
+    - apt-get -y install openmpi-bin libopenmpi-dev
+    - python3 -m pip install "fieldcompare[all]" vtk
+    - bash smardda-lib/exec/build gfortranmpi
+    - bash exec/build gfortranmpi
+    # Test
+    - cd ./smiteraux # must be in smiteraux directory to run test deck
+    - export OMPI_ALLOW_RUN_AS_ROOT=1
+    - export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+    - bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
+    - cd ..
+    - tar -xf smiter-aux-results/smiteraux.tar.xz -C smiter-aux-results
+    - |
+      python3 ./tools/vtk_folder_compare.py \
+        smiter-aux-results/smiter-aux/Test-EQX40-shado14r-resf14r-3g/P \
+        smiteraux/Test-EQX40-shado14r-resf14r-3g_MPI/P
+
 
 pages:
   stage: pages
   dependencies:
-    - build-pfc
+    - build-and-test-pfc
   script:
     # Move built docs to 'public' folder for GitLab pages
     - mkdir -p public

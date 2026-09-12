@@ -1,5 +1,4 @@
 module goutfile_m
-
   use const_kind_m
   use log_m
   use misc_m

@@ -1,7 +1,9 @@
 module powelt_m
-
   use const_kind_m
   use const_numphys_h
+  use radnsource_h
+  use radnsource_m
+  use antenna_h
   use log_m
   use vfile_m
   use btree_m
@@ -21,6 +23,9 @@ module powelt_m
   use beq_m
   use pcle_h
   use pcle_m
+  use ray_m
+  use gfile_m
+  use geobjlist_m
 !     use termplane_h
 
   implicit none
@@ -35,6 +40,7 @@ module powelt_m
   powelt_normal, & !< normal in cartesians at centre of element
   powelt_normalm, & !< normal in tracking coordinates at centre of element
   powelt_dep, & !< power deposition formula of element
+  powelt_antenna, & !< launch rays from antenna on powelt
   powelt_move, & !< motion along fieldline local, axisymm, flux coords
   powelt_move0, & !< motion along fieldline local, axisymm, cylindricals
   powelt_move1, & !< motion along fieldline global, axisymm, cylindricals
@@ -78,6 +84,7 @@ module powelt_m
   type(posveclis_t) :: wposl   !< list of position data
   integer   :: status   !< error status
   integer :: nplot   !< output channel for powelt data
+  integer :: nplotray   !< output channel for ray data
   integer(ki4) :: i !< loop counter
   integer(ki4) :: j !< loop counter
   integer(ki4) :: k !< loop counter
@@ -141,9 +148,7 @@ subroutine powelt_centre(self,powcal,pos)
   inpow=powelt_addr(self,powcal%powres%npowe)
   iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
   iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
-  call geobj_nodes(iobj,powcal%powres%vecx,powcal%powres%geobjl%nodl,xnodes)
-  pos=powelt_weights(1,1)*xnodes(:,1)+&
- &powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
+  call geobj_centre(iobj,powcal%powres%vecx,powcal%powres%geobjl%nodl,pos)
 
 end subroutine powelt_centre
 !---------------------------------------------------------------------
@@ -158,13 +163,23 @@ subroutine powelt_pos(self,powcal,pos)
   !! local
   character(*), parameter :: s_name='powelt_pos' !< subroutine name
   type(geobj_t) :: iobj !< object
+  integer(ki2) :: ityp !< object type
 
   inpow=powelt_addr(self,powcal%powres%npowe)
   iobj%geobj=powcal%powres%geobjl%obj2(inpow)%ptr
   iobj%objtyp=powcal%powres%geobjl%obj2(inpow)%typ
-  call geobj_nodes(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,xnodes)
-  pos=powelt_weights(1,1)*xnodes(:,1)+&
- &powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
+  ! Temporary split used to preserve legacy powcal baricentric for for triangles, which is
+  ! regression tested and not always numerically identical in kr4 to geobj_centre.
+
+   ityp=ibits(iobj%objtyp,0,GEOBJ_BIT_SHIFT)
+   if (ityp == VTK_TRIANGLE) then
+      call geobj_nodes(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,xnodes)
+      pos=powelt_weights(1,1)*xnodes(:,1)+&
+          powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
+   else
+      call geobj_centre(iobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,pos)
+   endif
+
 
 end subroutine powelt_pos
 !---------------------------------------------------------------------
@@ -178,21 +193,30 @@ subroutine powelt_vec(self,powcal,pb)
 
   !! local
   character(*), parameter :: s_name='powelt_vec' !< subroutine name
+  integer(ki4) :: iobjtyp   !< VTK_TRIANGLE, VTK_QUAD etc.
 
   inpow=powelt_addr(self,powcal%powres%npowe)
   iiobj=powcal%powres%geobjl%obj2(inpow)%ptr
-  inn=geobj_entry_table_fn(powcal%powres%geobjl%obj2(inpow)%typ)
-  if (inn/=3) then
-     call log_error(m_name,s_name,1,error_warning,'object is not a triangle')
-     pb=0
-  else
+  iobjtyp = powcal%powres%geobjl%obj2(inpow)%typ
+  inn=geobj_entry_table_fn(iobjtyp)
+  number_edges: select case(inn)
+  case (3)
      do j=1,inn
         inod(j)=powcal%powres%geobjl%nodl(iiobj+j-1)
         xnodes(:,j)=powcal%powres%vecb%pos(inod(j))%posvec
      end do
      pb=powelt_weights(1,1)*xnodes(:,1)+&
  &   powelt_weights(2,1)*xnodes(:,2)+powelt_weights(3,1)*xnodes(:,3)
-  end if
+   case(2,4)
+     do j=1,inn
+        inod(j)=powcal%powres%geobjl%nodl(iiobj+j-1)
+        xnodes(:,j)=powcal%powres%vecb%pos(inod(j))%posvec
+     end do
+     pb=sum(xnodes(:,1:inn),2)/inn
+   case default
+     call log_error(m_name,s_name,1,error_warning,'object is not a triangle or quad')
+     pb=0
+   end select number_edges
 
 end subroutine powelt_vec
 !---------------------------------------------------------------------
@@ -259,7 +283,7 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
 
   !! local
   character(*), parameter :: s_name='powelt_dep' !< subroutine name
-  real(kr8) :: zpow !< power deposited
+  real(kr4) :: zpow !< power deposited
   real(kr4), dimension(3) :: zpos !< position vector
   type(posvecl_t) :: zpos1   !< one position data
   type(posvecl_t) :: zpos2   !< position data dequantised
@@ -373,8 +397,11 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
      zpsid=zpsi-powcal%powres%beq%psibdry
      zpow=zbdotn*edgprof_fn(powcal%edgprof,zpsi,zpsid,REAL(zpos1%posvec(1),kr8),REAL(zpos1%posvec(2),kr8),cenz,rxpt,psixpt,&
                             powcal%powres%beq%number_regions,powcal%powres%beq%outer_xpoint)
+	!DIAPOWE WRITE(*,*) zpsi,powcal%powres%beq%psibdry,zpsid,zpow,zb,znormal,zbdotn  !DIAPOWE
      powcal%powres%pow(inpow)=zpow
-     powcal%powres%pmask(inpow)=nint(sign(1._kr8,zpow))
+   !DIAPOWE  WRITE(*,*) zpsi, edgprof_fn(powcal%edgprof,zpsi,zpsid,REAL(zpos1%posvec(1),kr8),REAL(zpos1%posvec(2),kr8),cenz,rxpt,psixpt,& !DIAPOWE
+	!DIAPOWE						powcal%powres%beq%number_regions,powcal%powres%beq%outer_xpoint),zbdotn,powcal%powres%pow(inpow) !DIAPOWE
+     powcal%powres%pmask(inpow)=nint(sign(1._kr4,zpow))
      powcal%powres%psista(inpow)=zpsi
      powcal%powres%zbdotn(inpow)=zbdotn
      powcal%powres%bfield(:, inpow)=zb(:)
@@ -385,6 +412,195 @@ subroutine powelt_dep(self,powcal,gshadl,cenr,cenz,rxpt,zxpt,psixpt)
   end if
 
 end subroutine powelt_dep
+!---------------------------------------------------------------------
+!> launch rays from antenna on powelt
+subroutine powelt_antenna(self,powcal,gshadl,btree)
+
+  !! arguments
+  type(powelt_t), intent(in) :: self !< element object
+  type(powcal_t), intent(inout) :: powcal !< module object
+  type(geobjlist_t), intent(inout) :: gshadl !< shadow geobj list data
+  type(btree_t), intent(in), optional :: btree   !< binary tree data
+
+  !! local
+  character(*), parameter :: s_name='powelt_antenna' !< subroutine name
+  integer(ki4) :: iwall !< address of wall triangular element
+  !type(geobj_t) :: walligeobj !< geobj_t specifying ptr and geobj type for the CAD mesh
+  real(kr4), dimension(3) :: normal !< vector to hold output from geobj_normal
+  real(kr4), dimension(3) :: centre !< vector to hold output from geobj_centre
+  type(posvecl_t) :: tricentre !< centre of wall geometry triangle
+  type(posvecl_t) :: trinormal !< normal of wall geometry triangle
+  type(posvecl_t) :: antricentre !< centre of antenna triangle
+  type(posvecl_t) :: antrinormal !< normal of antenna triangle
+  real(kr4), dimension(3,3) :: tfm !< transformation matrix aligns polar axis to triangle normal
+  real(kr4), dimension(3,3) :: trtfm !< matrix transpose
+  real(kr4), dimension(3) :: zscale !< local variable
+  real(kr4) :: n !< transformation matrix component
+  real(kr4) :: n1 !< transformation matrix component
+  real(kr4) :: n2 !< transformation matrix component
+  real(kr4) :: n3 !< transformation matrix component
+  real(kr4) :: nf !< normalisation factor if triangle normal not given as unit normal
+  integer(ki4) :: jin !< loop counter
+  integer(ki4) :: transform !< specify whether forwards or backwards transform
+  type(geobj_t)  :: igeobj   !< local geobj definition
+  real(kr4) :: mag !< magnitude of normal
+  integer(ki4) :: jtri !< loop counter
+  integer :: kplot !< unit number
+  integer :: unorm !< unit number
+  integer :: ucentr !< unit number
+  character(10) :: kchar !< local variable
+  real(kr4) :: zcos1 !< cosine angle of incidence
+  real(kr8) :: zrecdpow !< total power received by antenna
+  real(kr8) :: powtot !< total power of ray
+  type(posang_t) :: posang !< local variable
+  type(geobjlist_t)  :: geobjlil   !< local geobjlist copy
+  !integer(ki4) :: npowe   !< powelt address factor
+
+  iwall=powelt_addr(self,powcal%powres%npowe)
+
+  ! check whether looking at small number of rays
+  if (powcal%n%nant>0) then
+     ! is this element antenna in the test set
+     do j=1,powcal%n%nant
+        if (powcal%n%antno(j)==iwall) go to 1
+     end do
+     return
+  end if
+1     continue
+
+  ! default negative value signals no rays output
+  nplotray=-1
+  if (powcal%n%plotrayg) then
+     ! open file to record RZxi
+     write(ibuff,'(''elt= '',I6,'' sub= '',I2)')  self%ie,self%je
+     write(icfile,'(''raym'',I7.7,I2.2)') self%ie,self%je
+     call gfile_init(icfile,ibuff,nplotray)
+  end if
+
+  ! write(*,*) '--------------elt--------------', iwall !WA2
+  ! calculate normal of current tri
+  !call geobj_normal(walligeobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,normal,mag)
+  call powelt_normal(self,powcal,normal)
+  trinormal%posvec = normal
+  ! calculate centre of current tri
+  !call geobj_centre(walligeobj,powcal%powres%geobjl%posl,powcal%powres%geobjl%nodl,centre)
+  call powelt_centre(self,powcal,centre)
+  tricentre%posvec = centre
+
+  ! positional offset/rotational alignment and calculation/storage
+
+  !! setup transformation matrix to align antenna to given triangle
+
+  n1 = trinormal%posvec(1)
+  n2 = trinormal%posvec(2)
+  n3 = trinormal%posvec(3)
+  n = sqrt(n1**2 + n2**2)
+
+  if (n3<=0) then
+     ! deal with n3 < 0 case specially
+     n = -n
+  end if
+
+  if(n==0) then
+     tfm(1,1) = 0.0
+     tfm(1,2) = -1.0
+     tfm(1,3) = 0.0
+     tfm(2,1) = 0.0
+     tfm(2,2) = 1.0
+     tfm(2,3) = 0
+     tfm(3,1) = 0
+     tfm(3,2) = 0.0
+     tfm(3,3) = 0
+  else
+     if (abs(n)<1.e-5*abs(n3)) then
+        call log_error(m_name,s_name,1,log_info,'Problematic alignment case')
+        call log_value("parameter |n| ",abs(n))
+        tfm(1,1) = n3
+        tfm(1,2) = 0.0
+        tfm(1,3) = 0.0
+        tfm(2,1) = 0.0
+        tfm(2,2) = n3
+        tfm(2,3) = 0.0
+        tfm(3,1) = 0.0
+        tfm(3,2) = 0.0
+        tfm(3,3) = n3
+     else
+        tfm(1,1) = n1*n3/n
+        tfm(1,2) = -n2/n
+        tfm(1,3) = n1
+        tfm(2,1) = n2*n3/n
+        tfm(2,2) = n1/n
+        tfm(2,3) = n2
+        tfm(3,1) = -n
+        tfm(3,2) = 0.0
+        tfm(3,3) = n3
+     end if
+  end if
+
+  call geobjlist_copy(powcal%antenna%hemisphere,geobjlil,0)
+
+  ! offset and rotate positions via rotation matrix tfm
+  geobjlil%tfmdata%matrix=tfm
+  ! set scale
+  zscale = (/1,1,1/)
+  geobjlil%tfmdata%scale = zscale
+  ! set transform 3 for position_tfm
+  geobjlil%tfmdata%ntfm = 3
+  ! set offset vector for transform
+  geobjlil%tfmdata%offset = tricentre%posvec
+
+  call geobjlist_tfm(geobjlil,1)
+
+  zrecdpow=0
+  ! loop over every triangle in antenna
+  do jtri = 1, geobjlil%ng
+     !WA1     write(*,*) 'jtri===============',jtri !WA1
+     igeobj%geobj=geobjlil%obj2(jtri)%ptr
+     igeobj%objtyp=geobjlil%obj2(jtri)%typ
+     ! calculate tri centre
+     call geobj_centre(igeobj,geobjlil%posl,geobjlil%nodl,centre)
+     !convert to metres
+     posang%pos=centre
+     posang%opt=0
+     posang%units=-3
+     call posang_units(posang,0)
+     ! store ray launch position as tri centre
+     antricentre%posvec = posang%pos
+     powcal%antenna%posdir(jtri)%posvec = centre !DIAG
+     !write(ucentr,cfmtbv0c) powcal%antenna%posdir(jtri)%posvec !DIAG
+     ! calculate tri normal
+     call geobj_normal(igeobj,geobjlil%posl,geobjlil%nodl,normal,mag)
+     ! store ray launch direction as tri normal
+     antrinormal%posvec = normal
+     powcal%antenna%dir(jtri)%posvec = normal !DIAG
+     !write(unorm,cfmtbv0c)powcal%antenna%dir(jtri)%posvec !DIAG
+     ! track ray to end
+     if (powcal%n%shadowr/=0) then
+        call ray_trackcoll(powcal%ray,powcal%powres%beq%psi,powcal%radnsource%srcspl2d,&
+ &      gshadl,btree,antricentre,antrinormal,nplotray)
+     else
+        call ray_trackinlcfs(powcal%ray,powcal%powres%beq%psi,powcal%radnsource%srcspl2d,&
+ &      antricentre,antrinormal)
+     end if
+     ! calculate power contribution
+     call ray_trackpower(powcal%ray,powcal%powres%beq%psi,powcal%radnsource%srcspl2d,powtot)
+     ! accumulate over antenna solid angle
+     zcos1=dot_product(antrinormal%posvec,trinormal%posvec)
+     !DIA1 write(*,*) 'recdpow,pow,area,cos',zrecdpow,powtot,self%area(jtri),zcos1 !DIA1
+     zrecdpow=zrecdpow + powtot*powcal%antenna%area(jtri)*zcos1
+
+  end do
+
+  !call geobjlist_tfm(geobjlil,-1) !DIAG
+
+  powcal%powres%powr(iwall)=zrecdpow
+
+  if (powcal%n%plotrayg) then
+     ! close file to record RZxi
+     close(nplotray)
+  end if
+
+end subroutine powelt_antenna
 !---------------------------------------------------------------------
 !> motion along fieldline local, axisymm, flux coords
 subroutine powelt_move(self,powcal,gshadl,btree)
@@ -669,7 +885,7 @@ end subroutine powelt_move
 subroutine powelt_move0(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1089,7 +1305,7 @@ end subroutine powelt_move0
 subroutine powelt_move1(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1576,7 +1792,7 @@ end subroutine powelt_move1
 subroutine powelt_move2(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -1870,7 +2086,7 @@ end subroutine powelt_move2
 subroutine powelt_move3(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -2259,7 +2475,7 @@ end subroutine powelt_move3
 subroutine powelt_move4(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -2674,7 +2890,7 @@ end subroutine powelt_move4
 subroutine powelt_move4qart(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -3087,7 +3303,7 @@ end subroutine powelt_move4qart
 subroutine powelt_move5(self,powcal,gshadl,btree)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   type(geobjlist_t), intent(inout), optional :: gshadl   !< shadow data structure
   type(btree_t), intent(inout),optional :: btree !< btree data
@@ -3263,8 +3479,17 @@ subroutine powelt_move5(self,powcal,gshadl,btree)
      zposd=xo%posvec
      call spl2d_eval(powcal%powres%beq%psi,zposd(1),zposd(2),zpsi)
      ! evaluate I aka f at psi
+
+     ! Temporary runtime split used to preserve current particle-only and radiation-only
+     ! regression behaviour during integration. The correct combined particle+radiation
+     ! logic for this branch still needs to be agreed.
+     if(powcal%n%pclecalc /= 0) then 
      call spleval(powcal%powres%beq%f,powcal%powres%beq%mr,powcal%powres%beq%psiaxis,&
      powcal%powres%beq%psiqbdry,zpsi,zf,1)
+     else
+         call spleval(powcal%powres%beq%f,powcal%powres%beq%mr,powcal%powres%beq%psiaxis,&
+         powcal%powres%beq%psiqbdry,zpsi,zf,2)
+     endif
      call odes_4thstepcon(powcal%odes,ierr,zdfaca,firstcall,zf,&
  &   powcal%powres%beq%psi,powcal%powres%beq%dpsidr,powcal%powres%beq%dpsidz)
      ! check for termination due to solution failure on this field-line
@@ -3668,7 +3893,7 @@ end function powelt_addr
 subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
 
   !! arguments
-  type(powelt_t), intent(inout) :: self   !< object data structure
+  type(powelt_t), intent(in) :: self   !< object data structure
   type(powcal_t), intent(inout) :: powcal !< powcal data structure
   integer(ki4), intent(in) :: nobjhit   !< object hit
   type(posnode_t), intent(in) :: zm !< final position
@@ -3729,16 +3954,16 @@ subroutine powelt_setpow(self,powcal,nobjhit,zm,inpow,gshadl)
   end if
 
 end subroutine powelt_setpow
-
+!---------------------------------------------------------------------
+!>Calculates the angle between input vectors a and b and returns the angle phi.
 subroutine powelt_anglevec(self, a, b, msign, phi)
-    ! Calculates the angle between input vectors a and b and returns the angle
-    ! phi.
+
     type(powelt_t), intent(in) :: self  !< object data structure
     real(kr4), dimension(3), intent(in) :: a, b  !< vectors
     integer(ki4), intent(in) :: msign !< Msign
     real(kr4), intent(out) :: phi  !< angle between vectors
 
-    real(kr4) norm_a, norm_b, dot_ab, arg
+    real(kr4) norm_a, norm_b, dot_ab, arg !<
 
     dot_ab = dot_product(a, b)
     norm_a = dot_product(a, a)

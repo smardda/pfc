@@ -2,6 +2,8 @@
 !.gitignore
 !doc
 !docker
+!docs
+!docs/**
 !exec
 !f95
 !fortd
@@ -12,5 +14,7 @@
 !smardda-lib
 !smiteraux
 !smiter-aux-results
+!tools
+!tools/**
 !.gitmodule
 !.gitlab-ci.yml

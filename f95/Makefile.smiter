@@ -1,6 +1,7 @@
 # basic Makefile
 
 # config file.
+$(info >>> ENTERING $(lastword $(MAKEFILE_LIST)))
 include ../config/config.inc
  
 # Path and libraries
@@ -19,12 +20,18 @@ skyl_h.f90 \
 skyl_m.f90 \
 geoq.f90 \
 hdsgen.f90 \
+prcontrol_h.f90\
 pcontrol_m.f90 \
 poutfile_m.f90 \
 powcal_m.f90 \
 powelt_m.f90 \
 termplane_m.f90 \
 powcal.f90 \
+radnsource_h.f90\
+radnsource_m.f90 \
+ray_m.f90 \
+antenna_h.f90\
+antenna_m.f90\
 smiter.f90
  
 PROG = smiter
@@ -44,12 +51,17 @@ $(OBJECTS):$(MODULES)
 
 $(MODULES): %.mod : %.f90
 	$(F90) -D COMBINED $(F90FLAGS) -I$(SMAPATH) -c $<
+#	$(F90) -D COMBINED  -D RADIATION $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
 	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
 	rm -f $(PROG)
+
+libexec : lib 
+	cd $(SMAPATH)/LIB && $(MAKE) 
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib exec
 
 lib :
 	cd $(SMAPATH)/LIB && $(MAKE) 
@@ -434,3 +446,114 @@ termplane_m.f90 : const_kind_m.mod
 termplane_m.f90 : const_numphys_h.mod
 termplane_m.f90 : log_m.mod
 termplane_m.f90 : termplane_h.mod
+prcontrol_h.f90 : const_kind_m.mod
+prcontrol_h.f90 : pcontrol_h.mod
+mcontrol_m.f90 : const_kind_m.mod
+mcontrol_m.f90 : log_m.mod
+mcontrol_m.f90 : misc_m.mod
+mcontrol_m.f90 : position_h.mod
+mcontrol_m.f90 : mcontrol_h.mod
+mcontrol_m.f90 : position_m.mod
+radnsource_h.f90 : const_kind_m.mod
+radnsource_h.f90 : fmesh_h.mod
+radnsource_h.f90 : fmesh_m.mod
+radnsource_h.f90 : spl2d_m.mod
+radnsource_m.f90 : radnsource_h.mod
+radnsource_m.f90 : misc_m.mod
+radnsource_m.f90 : log_m.mod
+radnsource_m.f90 : const_numphys_h.mod
+radnsource_m.f90 : const_kind_m.mod
+radnsource_m.f90 : geobjlist_h.mod
+radnsource_m.f90 : geobjlist_m.mod
+antenna_h.f90 : const_kind_m.mod
+antenna_h.f90 : position_h.mod
+antenna_h.f90 : geobjlist_h.mod
+antenna_m.f90 : misc_m.mod
+antenna_m.f90 : control_h.mod
+antenna_m.f90 : radnsource_h.mod
+antenna_m.f90 : radnsource_m.mod
+antenna_m.f90 : antenna_h.mod
+antenna_m.f90 : log_m.mod
+antenna_m.f90 : const_numphys_h.mod
+antenna_m.f90 : const_kind_m.mod
+antenna_m.f90 : posang_h.mod
+antenna_m.f90 : posang_m.mod
+antenna_m.f90 : spl2d_m.mod
+antenna_m.f90 : beq_h.mod
+antenna_m.f90 : beq_m.mod
+antenna_m.f90 : vfile_m.mod
+antenna_m.f90 : geobj_m.mod
+antenna_m.f90 : geobjlist_h.mod
+antenna_m.f90 : geobjlist_m.mod
+antenna_m.f90 : powelt_m.mod
+antenna_m.f90 : btree_m.mod
+antenna_m.f90 : ray_m.mod
+ray_m.f90 : log_m.mod
+ray_m.f90 : const_numphys_h.mod
+ray_m.f90 : const_kind_m.mod
+ray_m.f90 : posang_h.mod
+ray_m.f90 : posang_m.mod
+ray_m.f90 : position_h.mod
+ray_m.f90 : position_m.mod
+ray_m.f90 : misc_m.mod
+ray_m.f90 : beq_h.mod
+ray_m.f90 : beq_m.mod
+ray_m.f90 : radnsource_h.mod
+ray_m.f90 : radnsource_m.mod
+ray_m.f90 : geobjlist_h.mod
+ray_m.f90 : geobjlist_m.mod
+ray_m.f90 : btree_m.mod
+ray_m.f90 : pcle_h.mod
+ray_m.f90 : pcle_m.mod
+powres_h.f90 : const_kind_m.mod
+powres_h.f90 : geobjlist_h.mod
+powres_h.f90 : geobj_m.mod
+powres_h.f90 : position_h.mod
+powres_h.f90 : fmesh_h.mod
+powres_h.f90 : beq_h.mod
+powres_h.f90 : odes_h.mod
+powres_h.f90 : skyl_h.mod
+powcal_h.f90 : const_kind_m.mod
+powcal_h.f90 : geobjlist_h.mod
+powcal_h.f90 : geobj_m.mod
+powcal_h.f90 : position_h.mod
+powcal_h.f90 : fmesh_h.mod
+powcal_h.f90 : beq_h.mod
+powcal_h.f90 : odes_h.mod
+powcal_h.f90 : powres_h.mod
+powcal_h.f90 : edgprof_h.mod
+powcal_h.f90 : edgprof_m.mod
+powcal_h.f90 : spl2d_m.mod
+powcal_h.f90 : spl3d_m.mod
+powcal_h.f90 : pcontrol_h.mod
+powcal_h.f90 : prcontrol_h.mod
+powcal_h.f90 : radnsource_h.mod
+powcal_h.f90 : antenna_h.mod
+powcal_h.f90 : ray_m.mod
+powcal_h.f90 : termplane_h.mod
+powcal_h.f90 : smitermpi_h.mod
+skyl_m.f90 : log_m.mod
+skyl_m.f90 : misc_m.mod
+skyl_m.f90 : dcontrol_h.mod
+skyl_m.f90 : const_numphys_h.mod
+skyl_m.f90 : const_kind_m.mod
+skyl_m.f90 : fmesh_h.mod
+skyl_m.f90 : spl2d_m.mod
+skyl_m.f90 : spl3d_m.mod
+skyl_m.f90 : geobjlist_h.mod
+skyl_m.f90 : geobjlist_m.mod
+skyl_m.f90 : vfile_m.mod
+skyl_m.f90 : skyl_h.mod
+skyl_m.f90 : beq_h.mod
+skyl_m.f90 : dcontrol_m.mod
+smitermpi_m.f90 : smitermpi_h.mod
+smitermpi_m.f90 : log_m.mod
+smitermpi_m.f90 : powcal_h.mod
+smitermpi_m.f90 : powres_h.mod
+smitermpi_m.f90 : pcontrol_h.mod
+smitermpi_m.f90 : control_h.mod
+smitermpi_m.f90 : edgprof_h.mod
+smitermpi_m.f90 : odes_h.mod
+smitermpi_m.f90 : termplane_h.mod
+smitermpi_m.f90 : beq_h.mod
+smitermpi_m.f90 : spl2d_m.mod

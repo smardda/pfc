@@ -1,5 +1,12 @@
 *
 !.gitignore
+!antenna_h.f90
+!antenna_m.f90
+!antest.f90
+!antest_h.f90
+!antest_m.f90
+!atcontrol_h.f90
+!atcontrol_m.f90
 !apb_h.f90
 !apb_m.f90
 !bcontrol_m.f90
@@ -21,6 +28,10 @@
 !powcal_m.f90
 !powelt_m.f90
 !powres_h.f90
+!prcontrol_h.f90
+!radnsource_h.f90
+!radnsource_m.f90
+!ray_m.f90
 !skyl_h.f90
 !skyl_m.f90
 !smanal.f90
@@ -42,6 +53,7 @@
 !powcal_m.doc
 !powelt_m.doc
 !powres_h.doc
+!Makefile.antest
 !Makefile.ctlgen
 !Makefile.datvtk
 !Makefile.geoq

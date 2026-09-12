@@ -1,4 +1,5 @@
 #! /bin/bash --norc
+set -e
 swd=$PWD
 if [[ ! -z "$SMITER_DIR" ]] ; then
         cd $SMITER_DIR
@@ -10,14 +11,13 @@ if [[ -z "$SMALIB_DIR" ]] ; then
 fi
 #(cd fortd;make)
 cd f95
-# next line unnecessary - following line meant?
 ln -sf ../fortd LIB
-(cd $SMALIB_DIR/f95;ln -sf ../fortd LIB)
-#extra make helps with file syncing
-make -f Makefile.geoq
-for i in geoq powcal magtfm hdsgen; do make -f Makefile.$i ; done
-for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
+for i in geoq powcal magtfm hdsgen antest smanal; do make -f Makefile.$i ; done
+#for i in smanal vtktfm datvtk ctlgen parse; do make -f Makefile.$i ; done
 make -f Makefile.smiter
 
-for i in geoq powcal smanal magtfm vtktfm datvtk hdsgen ctlgen parse smiter ; do mv -f $i ../exec ;done
+for i in geoq powcal smanal magtfm hdsgen smiter antest ; do mv -f $i ../exec ;done
+
+make -f Makefile.smiter libexec
+for i in geofil move vtktfm datvtk ctlgen parse ; do mv -f $SMALIB_DIR/f95/$i ../exec ;done
 cd $swd

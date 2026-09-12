@@ -1,5 +1,6 @@
 #! /bin/bash
 #smardda-pfc specific setups
+echo "Warning - this script may invoke old/unavailable software and hardware"
 if [[ -z "$SMITER_DIR" ]] ; then
     export SMITER_DIR=$PWD
 fi
@@ -8,12 +9,11 @@ if [[ -z "$SMALIB_DIR" ]] ; then
 fi
 export SMITER_DOC=$SMITER_DIR/doc/srcdoc/html
 export PATH=$SMITER_DIR/exec:$PATH
-alias dd_doc="xdg-open $SMITER_DOC/index.html" # doesn't always work
-alias dd_doc="firefox $SMITER_DOC/index.html"
+alias dd_doc="xdg-open $SMITER_DOC/index.html"
 export dd_doc
 # Module handling
 mcfound=n
-uname -n | grep -q iter
+if uname -n | grep -q iter; then
 # ITER hpc
 if [ $? -eq 0 ] ; then
 mcfound=y
@@ -40,8 +40,7 @@ module use /work/imas/opt/EasyBuild/modules/all
 module load texlive/2015
 # module load Java/1.8.0_162 # For MDSplus compilation
 fi
-uname -n | grep -q freia
-if [ $? -eq 0 ] ; then
+if uname -n | grep -q freia; then
 mcfound=y
 #CCFE Scientific Linux fuslw->freia
 module load doxygen/1.8.9
@@ -49,24 +48,20 @@ module remove ifort
 module load ifort/12.0.1.107
 module load gnuplot/4.6.1
 fi
-uname -n | grep -q Latitude
-if [ $? -eq 0 ] ; then
+if uname -n | grep -q Latitude; then
 #nothing needed on laptop
 mcfound=y
 fi
-uname -n | grep -q f8395
-if [ $? -eq 0 ] ; then
+if uname -n | grep -q f8395; then
 #desktop linux
 module load ifort/12.0
 mcfound=y
 fi
-uname -n | grep -q F8395
-if [ $? -eq 0 ] ; then
+if uname -n | grep -q F8395; then
 #nothing needed on Ubuntu for Windows
 mcfound=y
 fi
-uname -n | grep -q DESKTOP-L49I1U5
-if [ $? -eq 0 ] ; then
+if uname -n | grep -q DESKTOP-L49I1U5; then 
 #nothing needed on Ubuntu for Windows
 mcfound=y
 fi

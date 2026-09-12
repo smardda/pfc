@@ -2,13 +2,14 @@
 #produce executables once git repository cloned
 #options compiler=intel, gfortran (default)
 #Y/N produce documentation, default produce (Y)
+set -e
 if [[ -z "$SMITER_DIR" ]] ; then
    export SMITER_DIR=$PWD
 fi
 if [[ ! -d "$SMITER_DIR" ]] ; then
    echo "SMARDDA-PFC modules must lie under directory \$SMITER_DIR = "$SMITER_DIR
    echo "Which does not exist, please reconcile and try again"
-   return
+   exit 1 
 fi
 if [[ -z "$SMALIB_DIR" ]] ; then
    export SMALIB_DIR=${SMITER_DIR%/*}/smardda-lib
@@ -16,7 +17,7 @@ fi
 if [[ ! -d "$SMALIB_DIR" ]] ; then
    echo "SMARDDA-LIB modules must lie under directory \$SMALIB_DIR = "$SMALIB_DIR
    echo "Which does not exist, please reconcile and try again"
-   return
+   exit 1
 fi
 #echo $SMITER_DIR $SMALIB_DIR
 compiler1=intel
@@ -68,14 +69,14 @@ if [ -f $SMITER_DIR/../gwit/setup ] ; then
 	echo "you may want to add 'source "$SMITER_DIR"/../gwit/setup' to your .bashrc file"
 fi
 
-ln -sf $SMITER_DIR/config/config_"$compiler"_dbg.inc $SMITER_DIR/config/config.inc
-ln -sf $SMITER_DIR/config/config_"$compiler".inc $SMITER_DIR/config/config.inc
+#ln -sf $SMITER_DIR/config/config_"$compiler"_dbg.inc $SMITER_DIR/config/config.inc
+#ln -sf $SMITER_DIR/config/config_"$compiler".inc $SMITER_DIR/config/config.inc
 #should add a consistency test for compiler configs (TO DO)
 #rm required on WSL, should be harmless otherwise
 rm -f config
 ln -sf $SMALIB_DIR/config $SMITER_DIR/config
 
-sed -e "s=SMALIB=$SMALIB_DIR=" < $SMALIB_DIR/config/path_generic.inc > $SMALIB_DIR/config/path.inc
+#sed -e "s=SMALIB=$SMALIB_DIR=" < $SMALIB_DIR/config/path_generic.inc > $SMALIB_DIR/config/path.inc
 
 #make sure executables are
 chmod a+x $SMITER_DIR/Extras/chmodx
@@ -86,11 +87,11 @@ $SMITER_DIR/exec/compile
 
 #read -p '(Re)generate documentation, can take minutes? (Y/N): ' newdoc
 if [ "$newdoc" == "Y" ] ; then
-cd $SMALIB_DIR/doc
+cd $SMITER_DIR/doc
 echo "Warning - Documentation production requires doxygen at 1.8 or later"
 doxygen doxyfile
 if [  $? == 0 ] ; then 
-  echo "to access documentation type firefox  or xdg-open $SMALIB_DIR/doc/srcdoc/html/index.html"
+  echo "to access documentation type firefox  or xdg-open $SMITER_DIR/doc/srcdoc/html/index.html"
 else
   echo "Error producing documentation - look for doxygen log file"
 fi

@@ -21,26 +21,33 @@
 !! \image html layout.png "Logical arrangement of the SMARDDA software"
 !! \image latex layout.eps "Logical arrangement of the SMARDDA software" width=5cm
 !!
-!! Pronunciation  for SMITER is "Sm" plus however you
-!! pronounce ITER, N.B. SMARDDA is pronounced smarter.
+!! Note
+!! \arg Pronunciation
+!!   - for SMITER is "Sm" plus however you pronounce ITER
+!!   - SMARDDA is pronounced "smarter"
+!!   - SMALIB is a synonym for SMARDDA-LIB, pronounced "Smah-lib"
+!! \arg Reflecting Fortran heritage, SMALIB and smalib are the same code, etc.
 !! 
 !! SMARDDA-PFC technical features
 !! 
 !! \arg Accurate field-line integration \n
-!!   -User controlled tolerance to check convergence  \n
-!!   -Cubic spline interpolation of magnetic field  \n
-!!   -Option to use flux coordinates for speed and accuracy in simple flux geometries (more complex coming)  \n
-!!   -Vacuum field may be 3-D  \n
+!!   - User controlled tolerance to check convergence  \n
+!!   - Cubic spline interpolation of magnetic field  \n
+!!   - Option to use flux coordinates for speed and accuracy in simple flux geometries (more complex coming)  \n
+!!   - Vacuum field may be 3-D  \n
 !! \arg Local or global calculations \n
-!!   -Limiter or divertor \n
+!!   - Limiter or divertor \n
 !! \arg Toroidally periodic feature \n
-!!   -Only necessary to specify 1/18 th geometry \n
+!!   - Only necessary to specify repeating fraction of geometry \n
+!!   - MPI parallelism \n
+!! \arg Written in published Fortran-95 style \n
 !! \arg On-going development programme \n
-!!   -More complex flux geometries  \n
-!!   -ANSYS integration  \n
-!!   -GPU implementation  \n
-!!   -Light-weight provenance capture \n
-!!   -Developer documentation
+!!   - More complex flux geometries  \n
+!!   - ANSYS integration  \n
+!!   - GPU implementation  \n
+!!   - Light-weight provenance capture \n
+!!   - Developer documentation \n
+!!   - Developer tools SMARDDA-DEVELOP available
 !! 
 !>
 !! \image html tube.png
@@ -55,8 +62,8 @@
 !! \arg Optionally, ripple magnetic field representation
 !! 
 !! \subsection sec1coord Coordinate Systems
-!! So Many InTERpretations of Space
-!! \arg Accurate first wall geometry originates in CATIA-TM
+!! So Many Accurate Real Descriptions of DAta
+!! \arg Accurate first wall geometry originates in 
 !! Computer-Aided-Design (CAD) geometry database,
 !! coordinates (X,Y,Z) in millimetres (mm).
 !! \arg Fieldline will be approximated by a set of straight line
@@ -79,13 +86,13 @@
 !! \image html circ.png
 !! \image latex circ.eps "Toroidal coordinates" width=5cm
 !! Toroidal coordinates \f$ r\theta\zeta \f$, angles in radians. Angle
-!! measured from vertical through bottom X-point. Also \f$ r\theta\xi \f$.
+!! measured from vertical through the bottom X-point. Also \f$ r\theta\xi \f$.
 !!
 !>
 !! \image html fcirc.png
 !! \image latex fcirc.eps "Flux coordinates" width=5cm
 !! Flux coordinates \f$ \psi\theta\zeta \f$, angles in radians. Angle 
-!! measured from vertical through bottom X-point. Also \f$ \psi\theta\xi \f$.
+!! measured from vertical through the bottom X-point. Also \f$ \psi\theta\xi \f$.
 !! 
 !! Angle \f$ \xi \f$ is \f$ \zeta \f$ scaled so that \f$ \xi \f$ runs from 
 !! \f$ -\pi \f$  to \f$ +\pi \f$ in a toroidal segment, which is a
@@ -94,7 +101,7 @@
 !! 
 !! 
 !! \subsection sec1surf Defining Surfaces Accurately
-!! So Many InTERpretations of Surfaces
+!! So Many AccuRate Definitions of surface DAta
 !! \arg CAD databases contain curves and surfaces defined
 !! as NURBS, a special sort of rational polynomial that
 !! enables exact representation of for example the conic sections.
@@ -105,6 +112,10 @@
 !! every surface. \n
 !! Lots of triangles to test for intersection with fieldline
 !! segments, unless you get SMARDDA.
+!! \arg Detailed discussion of meshing requirements in IEEE Transactions\n
+!! https://dx.doi.org/10.1109/TPS.2024.3399929 \n
+!! with related discussion of meshing sensitivity in \n
+!! https://dx.doi.org/10.1109/TPS.2024.3485530
 !! 
 !! \subsection sec1dnull Single and Double Null Equilibria
 !! Many magnetic equilibria with divertors are single null (SN),
@@ -123,8 +134,8 @@
 !! These will typically correspond to separatrices that are close in space,
 !! and it will be assumed that no PFCs lie in the region between them.
 !!>
-!! \image html Btopo1.png 
-!! \image latex Btopo1.eps "Double Null Equilibrium" width=5cm
+!! \image html dnlab.png 
+!! \image latex dnlab.eps "Double Null Equilibrium" width=5cm
 !! Sketch of double null (DN) equilibrium. X-point "1" always
 !! lies at the bottom, even if the flux surface through the upper X-point
 !! contains a smaller region of plasma.
@@ -279,9 +290,11 @@
 !! size \f$ L_1L_2L_3 \f$. There is a single precision restriction to exponent \f$ <32 \f$.)
 !! \arg Jargon -  an octree is an example of an Hierarchical Data
 !! Structure (HDS), designed to Help Do Surfaces quickly.
+!! For a description of the SMARDDA algorithm for ray tracing
+!! see http://dx.doi.org/10.1109/TPS.2015.2458897 (also http://arxiv.org/abs/1403.6750 )
 !! 
 !! \subsection sec1morecoord Coordinates Summary
-!! SuMmary of InTeRpretations of Space
+!! SuMmary of AccuRate Descriptions of coorDinAtes
 !! 1. Cartesian \f$ XYZ \f$ mm from CAD
 !! 2. Cylindrical polars \f$ RZ\zeta \f$ metres and radians (\f$ RZ\xi \f$)
 !! 3. Toroidal polars \f$ r\theta\zeta \f$ metres and radians (\f$ r\theta\xi \f$)
@@ -295,21 +308,25 @@
 !! \image latex flow.eps "SMARDDA-PFC flow chart" width=10cm
 !!
 !! 
-!! Steps MakIng TrianglEs Ready
+!! Steps MAking ReaDy for geometry DAta
 !! 1. CAD database input -> CAD defeaturing of part body -> CAD
 !! "healing" -> Meshing -> Mesh output of part body. \n
 !! (.CATpart file
-!! -> .dat file, produced by specially trained ITER Design
-!! Office staff)
+!! -> .dat file, preferably produced by specially trained designers
 !! 2. Conversion of .dat format (proprietary MSC Nastran or
 !! a project specific 'gnu dat' format \ref sec2formats) to
-!! legacy .vtk format (OpenSource) by SMARDDA-PFC datvtk.
+!! a legacy .vtk format (OpenSource) by SMALIB datvtk.
+!! (NOTE While ParaView can work with files of this format, 
+!! SMARDDA-LIB cannot read all files described as "legacy .vtk",
+!! mainly because the "legacy format" has been augmented over the years
+!! and anyway it only ever read the "simple" legacy format in ASCII text
+!! that needs to be explicitly requested in most newer releases.)
 !! 3. Combination of part bodies to form PFC geometry under study, by
 !! SMARDDA-LIB vtktfm.
 !! 4. Conversion of STL and obj files to legacy .vtk format (OpenSource) by
 !! ParaView, scripts stl2vtk and obj2vtk provided.
 !! 5. Use of ParaView "Sources" menu  to produce simple objects in legacy .vtk,
-!! format, other objects by meshing constant surfaces of 3-D scalar data.
+!! format as at 2. above, other objects by meshing constant surfaces of 3-D scalar data.
 !! 6. Check using ParaView that surface normals point outward, and if
 !! necessary correct (a body at a time) using datvtk.
 !!
@@ -350,6 +367,11 @@
 !! One feature which currently confuses the software is the presence
 !! of blank lines in the .eqdsk file, so the user will have to arrange
 !! separately to detect and remove such lines.
+!!
+!! Other field formats supported are NetCDF and .equ, the latter an equilibrium description
+!! produced by the FIESTA code. The former is read using the code nceqdskonv, see
+!! \ref netcdfinput, which coverts to .eqdsk format, whereas the latter requires
+!! preliminary editing using smalib/Extras/equ.ed
 !! 
 !! \subsection sec1cli Command line interface
 !!
@@ -359,11 +381,19 @@
 !! )
 !!
 !! \arg The standard way to execute codes is \n
-!! \Emph{code .ctl file}, \n
+!! \code
+!! code ".ctl file"
+!! \endcode
 !! e.g. \Emph{geoq wall}, where file wall.ctl contains
-!! inputs controlling geoq run, except
+!! inputs controlling geoq run, except \n
 !! \arg datvtk was designed as a filter, so instead \n
-!! datvtk -[opt] ".dat file", or datvtk -c ".ctl file" \n
+!! \code
+!! datvtk -[opt] ".dat file"
+!! \endcode
+!! or
+!! \code
+!! datvtk -c ".ctl file"
+!! \endcode
 !! In the latter case, the .ctl file
 !! contains instructions to generate surfaces by rotating
 !! straight lines defined by their end-points, and the points
@@ -379,35 +409,39 @@
 !! contain Fortran namelists which must appear in a
 !! strict order although the variables within a namelist may be
 !! (re)defined in any order.
-!! Variables are documented using doxygen 1.8, which produces
-!! .html files for input to firefox or more generally xdg-open,
-!! which are linked to the \Bold{smpfcint} script \ref sec2smpfcint.
+!! Variables are documented using doxygen 1.9, which produces
+!! .html files for input to a browser such as firefox or xdg-open,
+!! which are linked to the \Bold{smpfcint} script \ref sec2smpfcint,
+!! documentation for each namelist and per variable may be found under\n
+!! \Emph{Modules>Modules List>namelist}
 !! 
 !! Example .ctl file input to geoq \n
-!! &inputfiles \n
-!! vtk_input_file='wall.vtk', \n
-!! eqdsk_input_file='16_97s.eqdsk' \n
-!! / \n
-!! &miscparameters \n
-!! / \n
-!! &plotselections \n
-!! plot_geoqx = .true., \n
-!! plot_geoqvolx = .false., \n
-!! / \n
-!! &beqparameters \n
-!! beq_rmove=-6., \n
-!! beq_cenopt=4, \n
-!! beq_psiopt=1, \n
-!! beq_bdryopt=3, \n
-!! beq_thetaopt=1, \n
+!! \code
+!! &inputfiles
+!! vtk_input_file='wall.vtk',
+!! eqdsk_input_file='16_97s.eqdsk'
 !! /
+!! &miscparameters
+!! /
+!! &plotselections
+!! plot_geoqx = .true.,
+!! plot_geoqvolx = .false.,
+!! /
+!! &beqparameters
+!! beq_rmove=-6.,
+!! beq_cenopt=4,
+!! beq_psiopt=1,
+!! beq_bdryopt=3,
+!! beq_thetaopt=1,
+!! /
+!! \endcode
 !! 
-!! Namelist &inputfiles  obvious \n
-!! Namelist &miscparameters 
+!! - Namelist &inputfiles  obvious \n
+!! - Namelist &miscparameters 
 !! for future/expert use etc. \n
-!! Namelist &plotselections 
+!! - Namelist &plotselections 
 !! almost obvious, see index of outputs in \ref sec1output \n
-!! Namelist & beqparameters 
+!! - Namelist & beqparameters 
 !! go to doxygen documentation headed "Data Types List", 
 !! also accessible directly using
 !! firefox or xdg-open ./smardda/smardda-pfc/doc/srcdoc/html/classes.html
@@ -486,63 +520,81 @@
 !! \arg objhit code, \n
 !! >0 1+(element hit) \n
 !! 0 no collision, ODE integration limits reached \n
-!! -1 track left computational domain \n
-!! -2 track hit termination plane (termplane) \n
+!! - 1 track left computational domain \n
+!! - 2 track hit termination plane (termplane) \n
 !!
 !! \subsection sec1resource SMARDDA-PFC Resources
 !! 
-!! \arg ITER git repository
+!! \arg SMARDDA group on github https://github.com/smardda contains bootstrap and develop repos.
+!!  The former eases download of SMARDDA-PFC, whereas develop has a range of tools to aid
+!!  development of SMARDDA, of very variable quality, hence access to the latter is
+!!  granted by request only.
+!! \arg SMARDDA code should be object Fortran code conforming to the description in 
+!!  https://scientific-publications.ukaea.uk/wp-content/uploads/CCFE-R-1534.pdf ,\n
+!!  templates  in https://github.com/smardda/qprog \n
+!!  and an example as to how construction of an "object" might begin, in 
+!!  https://github.com/wayne-arter/smardda-misc \n
+!!  https://github.com/wayne-arter/smardda-iprog is another example, referenced by the
+!!  SMARDDA error analysis paper https://dx.doi.org/10.1109/TPS.2024.3399929
+!! \arg ITER git repository (controlled access)
 !! \arg ./smardda/smardda-pfc/doc/srcdoc/html as above, includes links to SMARDDA papers on arXiv
 !! \arg ./smardda/smardda-pfc/Extras \n
 !!   .sgo files  scripts covering entire workflow \n
 !!   .ctl files  skeleton control files used by .sgo files \n
-!! \arg Test-deck files - smiter-aux  (tests.bash)
-!! https://git.iter.org/projects/BND/repos/smiter-aux/browse
+!! \arg ./smardda/smardda-pfc/tools Python utilities for regression testing and
+!! VTK result comparison; see \ref sec_regression.
+!! \arg Test-deck files - smiteraux  (tests.bash) and smiteraux2
+!! https://git.iter.org/projects/BND/repos/smiteraux/browse
 !! are data files (geometry and equilibria) used by the .sgo scripts.
-!! The test-deck should be regarded as a valuable resource, providing
-!! examples that can quickly be modified to address new problems.
+!! The test-decks should be regarded as a valuable resource, providing
+!! examples that can quickly be modified to address new problems, illustrate
+!! workflows including use of MPI parallelism, etc.
+!! \arg ./smardda/smardda-pfc/doc/mpidoc/smiterMPI_dev_manual.pdf
+!! describes initial MPI implementation by Huw Leggate
 !! \arg ParaView Guide - a printed version for ParaView 4.3
 !! may be purchased via the web-site http://www.paraview.org, or an electronic version
-!! of the latest release (4.4/5.0 as of March 2016) is a free download.
+!! of the latest release (6.2 as of July 2026) is a free download.
 !! For hints for using ParaView with SMARDDA-PFC see \ref sec2paraview
 !! 
 !! \subsection sec1install SMARDDA-PFC Installation
 !! 
-!! First install SMARDDA-LIB which is available from CCFE gitlab or
-!! IMAS, by
-!! \arg Clone or pull from IMAS git repository
-!! http://git.iter.org/projects/BND/repos/smardda/smardda-lib/browse
+!! First install SMARDDA-LIB which is available from github or IMAS,
+!! but *beware* that instructions for installing the IMAS version may not be up-to-date.
+!! \arg Clone or pull from github repo https://github.com/smardda/smalib.git
+!! IMAS git repository http://git.iter.org/projects/BND/repos/smardda/smardda-lib/browse
 !! and follow instructions in README, noting that
 !! \arg produce executables and optionally documentation (script will enquire)
-!! by typing in the smardda/smardda-lib top directory \n
+!! by typing when in the smardda/smalib OR smardda/smardda-lib directory \n
 !! source ./exec/build intel \n
 !! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
-!! \arg Ensure that for subsequent sessions environment variable
+!! together will mpi-parallel versions gfortranmpi and gfortranmpi_dbg.
+!! \arg Ensure that for subsequent session environment variable
 !! SMALIB_DIR is set correctly as returned by build, as this is where
 !! SMARDDA-PFC will search for library code.
 !!
 !! Next install SMARDDA-PFC similarly
-!! \arg Clone or pull from IMAS git repository
-!! http://git.iter.org/projects/BND/repos/smardda/smardda-pfc/browse
+!! \arg Clone or pull from github repo https://github.com/smardda/pfc.git \n
+!! or IMAS git repository \n 
+!! http://git.iter.org/projects/BND/repos/smardda/smardda-pfc/browse \n
 !! and follow instructions in README, noting that
 !! \arg produce executables and optionally documentation (script will enquire)
 !! by typing in the smardda/smardda-pfc top directory \n
 !! source ./exec/build intel \n
 !! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
-!! \arg SMARDDA was developed in 2007 onwards, whereas the ITER-hpc cluster
-!! runs Centos vintage 2005, hence special
-!! modules are needed.
+!! \arg *except* for building and running SMARDDA-PFC with MPI, including the required
+!! compiler/MPI software environment and the MPI build options, see
+!! \ref sec3 "Building and running SMARDDA-PFC with MPI"
 !! \arg ParaView needs a one-off re-setting of defaults (for
-!! better \Bold{smpfcint} integration)
-!! \arg SMARDDA-PFC has a test-deck (data files for which are in the smiter-aux repo),
-!! see \ref sec3 for more details, which should be used to check the installation.
+!! better \Bold{smpfcint} integration) as described in \ref sec2paraview .
+!! \arg SMARDDA-PFC has test-decks (data files for which are in the smiteraux repo),
+!! see \ref sec4 for more details, which should be used to check the installation.
 !!
 !! It may be helpful to note also that
 !! \arg the commands \n
 !! ./exec/decompile and ./exec/compile \n
 !! are provided for use after modifying source and/or when changing compilers
 !! \arg after the initial build, the compiler may be changed by going to
-!! the ./config directory and creating a new config.inc file (link), thus \n
+!! the ./config directory and creating a new (link to a) config.inc file, thus \n
 !! cd ./config;ln -sf config_new-compiler.inc config.inc
 !! 
 !!
@@ -557,6 +609,24 @@
 !! the usage of the variables in each
 !! namelist may be referenced in the online documentation, as data types
 !! at ./smardda/smardda-pfc/doc/srcdoc/html/classes.html.
+!!
+!! \subsection sec2antest antest code
+!!
+!! Program antest is designed to test a single 'antenna', viz. a hemisphere of launch
+!! directions from one surface element. However, the description of the geometry by
+!! .vtk file means that in effect any number of elements can be tested in a single computation.
+!! The simpler option examines only the geometrical alignment of the antenna and rays,
+!! the more complicated performs a radiative power deposition calculation.
+!!
+!! Namelist order in .ctl is as follows
+!! \arg progfiles
+!! \arg miscparameters
+!! \arg plotselections
+!! \arg antestparameters
+!! \arg antennaparameters
+!! \arg radnsourceparameters
+!! \arg rayparameters
+!! \arg beqparameters
 !!
 !! \subsection sec2ctlgen ctlgen code
 !! This code is not expected to be run directly by the user.
@@ -584,7 +654,7 @@
 !! \Emph{C=t} output as triangles in STL format (suppress block information) \n
 !! e.g. datvtk -vxt FW34.vtk (x as spacer).
 !!
-!! Note that datvtk accepts only the .dat Small and Large Field Formats,
+!! Note that datvtk accepts directly only the .dat Small and Large Field Formats,
 !! and not the Free Field Format, as described
 !! in the MSC Nastran 2013 Quick Reference Guide. (Unfortunately this
 !! document may be obtained only after
@@ -617,12 +687,12 @@
 !! \arg SENS.ctl -> vtktfm,  transform parts of .vtk format geometry
 !! \arg SMAN.ctl -> smanal, analysis of results defined in .vtk file by row or otherwise
 !! \arg VTKF.ctl -> vtktfm,  transform .vtk format geometry from mm to m \n
-!! The use of other .ctl and .sgo files by the test-deck is described in detail
-!! in the README for smiter-aux.
+!! The use of other .ctl and .sgo files by the test-decks is described in detail
+!! in the README for smiteraux.
 !!
 !! \subsection sec2geoq geoq code
 !! The geoq code may be used to analyse the flux function \f$ \psi \f$,
-!! usually defined in a .eqdsk file. (A good of effort has been exerted to
+!! usually defined in a .eqdsk file. (A good deal of effort has been exerted to
 !! ensure that SMARDDA-PFC can read the many variants of the EQDSK G "standard".)
 !! To aid understanding, geoq produces as output .gnu files which may be plotted using the
 !! \Bold{geoqgnu} script (from the smardda/smardda-pfc/Extras directory). Running geoq makes it possible to
@@ -644,8 +714,9 @@
 !! the variable equil_input_file has a suffix .ana, this file must
 !! contain namelists as set out below.
 !! The suffix .equ is also recognised and corresponds to an output
-!! format related to that produced by the FIESTA code, see example
-!! the MAST-U test case \ref sec3T2.
+!! format related to that produced by the FIESTA code by use of
+!! edit commands in smalib/Extra/equ.ed, see example
+!! the MAST-U test case \ref sec4T2.
 !!
 !! A further addition is the ability to add a 'skylight' for divertor
 !! discharges, ie. a set consisting of surfaces which if fieldlines reach 
@@ -667,11 +738,66 @@
 !! \arg equilparameters 
 !! \arg meshparameters 
 !!
+!! \subsection sec2hdsgen hdsgen code
+!! This computes the multi-octree HDS introduced in \ref sec1alg,
+!! which is designed to accelerate the computation of track/ray-triangle intersection.
+!! The user should not normally need to be concerned with details of
+!! hdsgen operation, except for the need to increase the parameter limit_geobj_in_bin for
+!! geometries with a large number of triangles, i.e. greater than
+!! approximately 100000 triangles, depending on their degree of clustering.
+!!
+!! Namelist order in .ctl as follows
+!! \arg inputfiles 
+!! \arg hdsgenparameters 
+!! \arg btreeparameters 
+!! \arg positionparameters 
+!! \arg plotselections 
+!! 
+!! \subsection sec2magtfm magtfm code
+!! The vacuum magnetic field is defined in a .txt file, in what will be referred to as mag format. Details of the 
+!! required contents may be deduced by inspection of the example file 
+!! ./smiteraux/Data/Equilibrium/testov5.txt, given that:
+!!
+!! mag format data has to overlap in toroidal angle  \f$ \zeta \f$, i.e. field data for the 
+!! first point in  \f$ \zeta \f$  is repeated on the last point.  Note that  \f$ \zeta \f$  is 
+!! the negative of the usual cylindrical angle coordinate, so that  \f$ \zeta \f$  
+!! increasing from zero implies the toroidal sector in negative \f$ Y \f$
+!! adjoining \f$ X=0\f$. The mesh used is a direct product mesh, i.e. specified 
+!! by one set of sample points in each coordinate direction  \f$ \zeta \f$, \f$ R \f$ and \f$ Z \f$.
+!! The sampling of  \f$ \zeta \f$  must be uniform, units radians, the \f$ R \f$ and \f$ Z \f$ sample 
+!! points are specified in metres, one sample value per line. Field \f${\bf  B}\f$ is 
+!! given in Cartesian components \f$ (X,Y,Z) \f$, one vector per line. The \f${\bf  B}\f$ 
+!! vectors are ordered with  \f$ \zeta \f$  varying the fastest, \f$ R \f$ next and then \f$ Z \f$ 
+!! varying the slowest. Each of the 4 items ( \f$ \zeta \f$  grid, \f$ R \f$ grid, \f$ Z \f$ grid, \f${\bf  B}\f$) in the 
+!! file is separated from the next by a blank line, each item starts with 
+!! a description line, followed by the array size, except in the case of \f${\bf  B}\f$.
+!!
+!! Namelist order in .ctl as follows
+!! \arg magfiles 
+!! \arg plotselections 
+!! \arg miscparameters 
+!! 
+!! \subsection netcdfinput nceqdskonv code
+!!
+!! A netcdf (.nc) file can be used to define the equilibrium properties of the plasma,
+!! but first has to be converted to .eqdsk format. Provided
+!! the HDF5 library is available locally, an 
+!! executionable will have been compiled for this purpose
+!! during the installation (build) process, to be
+!! used as follows:
+!!
+!! \code
+!! nceqdskonv input_file.nc output_file.eqdsk
+!! \endcode
+!!
+!! The resulting eqdsk file can then be used exactly as described as in \ref sec1work.
+!!
 !! \subsection sec2powcal powcal code
 !! This is the code that actually performs the power surface deposition
-!! calculation, following fieldlines using transformed geometry from geoq and the HDS from
+!! calculation, following fieldlines and/or rays using transformed geometry from geoq and the HDS from
 !! hdsgen. There is the capability to select from a range of power
-!! deposition profiles, and even define new ones, provided by namelist
+!! deposition profiles (in 1-D for particle and in 2-D for radiative power),
+!! and even define new ones, provided by namelist
 !! edgprofparameters (see the documentation for namelist edgprofparameters).
 !! For global calculations, a wide range of fieldline
 !! termination criteria may be set using namelist termplaneparameters,
@@ -694,29 +820,36 @@
 !! a file root_powlenx.vtk. Alternatively the _powx.vtk file contains \f$ L \f$ as a
 !! scalar field defined for all triangles.
 !!
+!! Radiative power deposition
+!! on the surface of PFCs is calculated using a ray tracing
+!! approach whereby rays are launched in a hemisphere of directions from each element
+!! of a surface mesh. The hemisphere itself could be generated by ParaView as a 'source',
+!! but in the light of changes to the 'legacy .vtk' format with releases 5 and 6, continuity
+!! is provided by using geofil with the 'antenn' or 'antena' options to generate a hemispherical
+!! meshing that can be 'attached' to the barycentre of each PFC element. 
+!! The number of rays launched from each element depends on how finely the 
+!! hemisphere is meshed.
+!! Rays accumulate power as an integral along the length of a ray through
+!! a scalar radiation intensity field defined on a 2-D \f$ (R,Z) \f$ cross-section.
+!! assumed to be toroidally symmetric. 
+!! The radiation field can
+!! be user-defined via a data file input or alternatively described by an
+!! analytical function of \f$ \psi \f$ or \f$ (R,Z) \f$. The radiative power 
+!! is optionally calculated
+!! separately from the particle power code according to the variables set by
+!! by use of the powcalparameters namelist.
+!!
 !! Namelist order in .ctl as follows
 !! \arg inputfiles 
 !! \arg miscparameters 
 !! \arg plotselections 
-!! \arg powcalparameters 
+!! \arg powcalparameters
 !! \arg (termplaneparameters if termination_planes=T)
 !! \arg (edgprofparameters if more_profiles=T)
-!! \arg odesparameters 
-!! 
-!! \subsection sec2hdsgen hdsgen code
-!! This computes the multi-octree HDS introduced in \ref sec1alg,
-!! which is designed to accelerate the computation of track/ray-triangle intersection.
-!! The user should not normally need to be concerned with details of
-!! hdsgen operation, except for the need to increase the parameter limit_geobj_in_bin for
-!! geometries with a large number of triangles, i.e. greater than
-!! approximately 100000 triangles, depending on their degree of clustering.
-!!
-!! Namelist order in .ctl as follows
-!! \arg inputfiles 
-!! \arg hdsgenparameters 
-!! \arg btreeparameters 
-!! \arg positionparameters 
-!! \arg plotselections 
+!! \arg odesparameters
+!! \arg antennaparameters
+!! \arg radnsourceparameters (for defining radiation field)
+!! \arg rayparameters (ray characteristics for radiation calculations)
 !! 
 !! \subsection sec2smpfcint smpfcint script
 !! \Bold{smpfcint} is the main GUI for SMARDDA-PFC, designed to help the beginning user:
@@ -854,30 +987,6 @@
 !! trackm.\Emph{n}01.vtk track in mapped coordinates corresponding to element \Emph{n-1} \n
 !! trackx.\Emph{n}01.vtk track in Cartesian coordinates corresponding to element \Emph{n-1} \n
 !! wall.txt (R,Z) coordinates of ITER silhouette, cold wall
-!! 
-!! \subsection sec2magtfm magtfm code
-!! The vacuum magnetic field is defined in a .txt file, in what will be referred to as mag format. Details of the 
-!! required contents may be deduced by inspection of the example file 
-!! ./smiter-aux/Data/Equilibrium/testov5.txt, given that:
-!!
-!! mag format data has to overlap in toroidal angle  \f$ \zeta \f$, i.e. field data for the 
-!! first point in  \f$ \zeta \f$  is repeated on the last point.  Note that  \f$ \zeta \f$  is 
-!! the negative of the usual cylindrical angle coordinate, so that  \f$ \zeta \f$  
-!! increasing from zero implies the toroidal sector in negative \f$ Y \f$
-!! adjoining \f$ X=0\f$. The mesh used is a direct product mesh, i.e. specified 
-!! by one set of sample points in each coordinate direction  \f$ \zeta \f$, \f$ R \f$ and \f$ Z \f$.
-!! The sampling of  \f$ \zeta \f$  must be uniform, units radians, the \f$ R \f$ and \f$ Z \f$ sample 
-!! points are specified in metres, one sample value per line. Field \f${\bf  B}\f$ is 
-!! given in Cartesian components \f$ (X,Y,Z) \f$, one vector per line. The \f${\bf  B}\f$ 
-!! vectors are ordered with  \f$ \zeta \f$  varying the fastest, \f$ R \f$ next and then \f$ Z \f$ 
-!! varying the slowest. Each of the 4 items ( \f$ \zeta \f$  grid, \f$ R \f$ grid, \f$ Z \f$ grid, \f${\bf  B}\f$) in the 
-!! file is separated from the next by a blank line, each item starts with 
-!! a description line, followed by the array size, except in the case of \f${\bf  B}\f$.
-!!
-!! Namelist order in .ctl as follows
-!! \arg magfiles 
-!! \arg plotselections 
-!! \arg miscparameters 
 !!
 !! \subsection sec2vtktfm vtktfm code
 !! The code transforms and/or combines .vtk format surface geometry files (ASCII format).
@@ -926,7 +1035,7 @@
 !! \subsection sec2paraview ParaView and SMARDDA-PFC
 !! The initial chapters of the official guide explain basic concepts such as the 
 !! graphics pipeline and should be at least skim-read before reading these
-!! SMARDDA-PFC-specific hints. (As of 5.2, there is an initial pop-up window
+!! SMARDDA-PFC-specific hints. (As of Version 5.2, there is an initial pop-up window
 !! with information for the beginner.) This preliminary should help the user  acquire
 !! the necessary familiarity with basic ParaView GUI 
 !! layout, knowledge of when to use the "Apply" button, and thereby avoid
@@ -956,9 +1065,13 @@
 !! Selection" icon which is on the menu bar just above the Select Cells icons,
 !! should be clicked upon. File->Save data can then be used
 !! to save the selection to a Legacy vtk (.vtk) format file, using the 
-!! options to save all timesteps to the Ascii file type. The new .vtk file
-!! thereby produced can be used as an input to a new SMARDDA-PFC run with
-!! field-line plotting activated in the .ctl file.
+!! options to save all timesteps to the Ascii file type and expand geometry.
+!! The new .vtk file
+!! thereby produced can be used as an input to a new SMARDDA-PFC run,
+!! although since the 'legacy' format has been extended with metadata,
+!! deletions to restore SMARDDA compatibility may be required.
+!! Note that the new SMARDDA-PFC run will require
+!! field-line plotting to be activated in the .ctl file.
 !! datvtk preserves block information from each .dat file when it
 !! is converted to .vtk (unfortunately it is discarded in subsequent
 !! processing). If block numbers are known, or identified from
@@ -975,7 +1088,7 @@
 !! on variables of the same data type.
 !! \arg Cell centres, when producing spread-sheet .csv output.
 !! \arg Generate Ids, to help locate elements and points on the surface.
-!! \arg Append attributes, enables data from different vtk files with same
+!! \arg Append attributes, enables data from different .vtk files with same
 !! geometry to be combined.
 !! \arg Plot on intersection curves, for line plots of data as functions
 !! of arclength on surface, see "Line plots" below.
@@ -1019,6 +1132,12 @@
 !!
 !! \subsection sec2sensit Sensitivity studies using SMARDDA-PFC
 !!
+!! The sensitivity considered here is that to misalignments of the first wall
+!! panels, as described by \n
+!! https://scientific-publications.ukaea.uk/wp-content/uploads/STRATEGY-FOR-SENSITIVITY-ANALYSIS-OF-DEMO-FIRST-WALL.PDF \n
+!! Links to work on sensitivity to numerical effects (the meshing of surface geometry and the magnetic equilibrium)
+!! are given in \ref sec1surf, these effects will be assumed negligible here.
+!!
 !! A file SMLAB.ctl is provided in directory $SMARDDA-PFC_DIR/Extras to enable smanal
 !! to produce an _ansmx.vtk file which displays labels 
 !! of bodies or surfaces useful for sensitivity work. 
@@ -1051,7 +1170,7 @@
 !! to encode information about the geometrical data contained, as to
 !! which coordinate system and units are used therein. In a few cases, it
 !! may help the user to know the format of these headers, hence a
-!! description follows. There are numerous examples in the test deck
+!! description follows. There are numerous examples in the test-decks.
 !! 
 !! For gnu dat files, the header should begin with '#', then \f$29\f$ characters
 !! of free format, non-blank description terminated by space. After the
@@ -1085,15 +1204,675 @@
 !! 6. (number of transforms applied) - (number of inverse transforms applied)
 !!
 !!
-!! \section sec3 Test-Deck
+!! \section sec3 Building and running SMARDDA-PFC with MPI
+!!
+!! SMARDDA-PFC can be built and run using MPI (Message Passing Interface).
+!! MPI is a portable message-passing standard for distributed-memory parallel 
+!! programming, while an MPI implementation, such as Open MPI or MPICH, 
+!! provides the compiler wrappers, libraries and launch commands required to build
+!! and run MPI applications.
+!!
+!! Building SMARDDA-PFC with MPI requires a Fortran compiler and MPI implementation
+!! which are compatible with each other. Together these form the compiler/MPI 
+!! toolchain. The MPI Fortran wrapper provided by this toolchain invokes the underlying 
+!! Fortran compiler and adds the compiler and linker options required for MPI.
+!!
+!! The currently tested SMARDDA-PFC MPI toolchain uses GNU Fortran  (\c gfortran) 
+!! with Open MPI:
+!!
+!! \code{.sh}
+!! Fortran compiler      : gfortran
+!! MPI implementation    : Open MPI
+!! MPI Fortran wrapper   : mpifort
+!! \endcode
+!!
+!! The same GNU Fortran/Open MPI toolchain is reproduced by the GitLab CI
+!! MPI job.
+!!
+!! The SMARDDA-PFC MPI build and execution workflow has been tested on local 
+!! systems and on HPC systems, including the UKAEA Cumulus cluster and the 
+!! Durham University HPC cluster. It is also exercised  automatically by the GitLab 
+!! CI pipeline by running with MPI the regression case \ref sec4T3g from \ref sec4.
+!!
+!! Other compiler/MPI toolchains may also be suitable for SMARDDA-PFC, but they
+!! have not yet been tested. Support for additional toolchains is planned as future work.
+!!
+!! \subsection sec3_mpi_environment MPI software environment
+!!
+!! The compiler/MPI environment used to build and the run SMARDDA-PFC depends on
+!! the system.
+!!
+!! \subsubsection mpi_local Local systems
+!!
+!! On a local system the required compiler and MPI implementation  (for example 
+!! Open MPI or MPICH) must be installed and available before building SMARDDA-PFC
+!! with MPI.
+!!
+!! Open MPI is used by the currently tested SMARDDA-PFC MPI toolchain and is
+!! also a suitable choice on Ubuntu/WSL. 
+!!
+!! On Ubuntu/WSL, Open MPI can be installed with
+!!
+!! \code{.sh}
+!! sudo apt install openmpi-bin libopenmpi-dev
+!! \endcode
+!!
+!! On macOS using MacPorts, OpenMPI can be installed with
+!!
+!! \code{.sh}
+!! sudo port install openmpi
+!! \endcode
+!!
+!! Other MPI implementation, such as MPICH, may also be used.
+!!
+!! The active MPI Fortran compiler wrapper can be checked with
+!!
+!! \code{.sh}
+!! which mpifort
+!! mpifort --version
+!! \endcode
+!!
+!! For Open MPI, the underlying compiler and MPI compile/link options  added by
+!! the wrapper can be inspected with
+!!
+!! \code{.sh}
+!! mpifort --showme
+!! \endcode
+!!
+!! \subsubsection mpi_hpc HPC systems
+!!
+!! On HPC systems, the required compiler and MPI implementation are  normally provided
+!!  as part of the system software environment and selected through the \c module 
+!! system.
+!!
+!! An example of SLURM script for running SMARDDA with MPI  o the UKAEA Cumulus 
+!! cluster is provided in
+!! \c $SMITER_DIR/smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm.
+!!
+!! This example uses the GNU \c foss/2022a toolchain:
+!!
+!! \code{.sh}
+!! module purge
+!! module load foss/2022a
+!! \endcode
+!!
+!! The exact module selection is system dependent and should therefore be checked
+!! for the HPC system being used.
+!!
+!! \subsection mpi_build Building SMARDDA with MPI
+!!
+!! Once a suitable compiler/MPI environment is available, SMARDDA-LIB and 
+!! SMARDDA-PFC can be built using the MPI build option.
 !! 
-!! \subsection sec3intro Introduction
+!! For the GNU/Open MPi build currently supported and tested, both are built by
+!! passing \c gfortranmpi to the two build scripts:
+!!
+!! \code{.sh}
+!! bash $SMALIB_DIR/exec/build gfortranmpi
+!! bash $SMITER_DIR/exec/build gfortranmpi
+!! \endcode
+!!
+!! The \c gfortranmpi build option  invokes the active \c mpifort wrapper.
+!!
+!! The corresponding debug MPI build option is \c gfortranmpi_dbg
+!!
+!! \code{.sh}
+!! bash $SMALIB_DIR/exec/build gfortranmpi_dbg
+!! bash $SMITER_DIR/exec/build gfortranmpi_dbg
+!! \endcode
+!!
+!!
+!! The same build commands are used on local and HPC systems. What differs is 
+!! how the compiler/MPI toolchain is provided: by a locally
+!! installed MPI implementation on a local system, or by the compiler/MPI
+!! toolchain selected on the HPC system.
+!! The GNU/Open MPI build shown above is also exercised by the GitLab CI MPI
+!! job.
+!!
+!! \subsection sec3mpirun Running SMARDDA-PFC with MPI
 !! 
-!! The test-deck, including the validation test cases,  is designed to
-!! demonstrate correct functioning of all the commonly used parts of
-!! SMARDDA-PFC. Data for the test-deck is in the smiter-aux directory,
+!! \subsubsection mpi_case_preparation Preparing a case for the monolithic SMITER
+!!
+!! For MPI execution, SMARDDA-PFC provides the monolithic \c smiter executable,
+!! which combines the GEOQ, HDSGEN and POWCAL stages in a single program. The 
+!! program smiter takes the four corresponding control files on the command line:
+!!
+!! \code{.sh}
+!! S/<shadow>.ctl G/<results>.ctl H/<hdsgen>.ctl P/<powcal>.ctl
+!! \endcode
+!!
+!! The executable is run from the top-level case directory, above the
+!! S/, G/, H/ and P/ directories.
+!!
+!! !! In this directory structure:
+!!
+!! - S contains the GEOQ control file for the shadowing geometry;
+!! - G contains the GEOQ control file for the results geometry;
+!! - H contains the HDSGEN control file;
+!! - P contains the POWCAL control file.
+!!
+!! (See \ref sec4intro for further details). 
+!!
+!! This differs from the original serial workflow, in which \c geoq, \c hdsgen
+!! and \c powcal are run separately from their respective directories.
+!! Consequently, relative paths in the control files may need to be adjusted 
+!! for execution from the top-level directory. For example,
+!!
+!! \code{.sh}
+!! ../S/jetbeam_geoqm.vtk
+!! \endcode
+!!
+!! becomes
+!!
+!! \code{.sh}
+!! S/jetbeam_geoqm.vtk
+!! \endcode
+!!
+!! Geometry, equilibrium and other auxiliary input files  must also be accessible
+!! from the top-level run directory, either by creating links there or by 
+!! modifying the corresponding paths in the control files.
+!! 
+!! The MPI execution scripts described below automate this preparation and
+!! can also be used as examples for preparing other monolithic SMITER cases.
+!!
+!! \subsubsection mpi_running_local Local MPI execution
+!!
+!! Once a case has been prepared for execution by the monolithic
+!! \c smiter executable, it can be run using the launcher provided by the active
+!! MPI implementation. The exact launcher command may depend on the MPI 
+!! implementation and system.
+!!
+!! For example, on a local system with Open MPI environment, four MPI processes of 
+!! SMITER can be launched with:
+!!
+!! \code{.sh}
+!! mpiexec -np 4 $SMITER_DIR/exec/smiter \
+!!     S/<shadow>.ctl \
+!!     G/<results>.ctl \
+!!     H/<hdsgen>.ctl \
+!!     P/<powcal>.ctl
+!! \endcode
+!!
+!! The EQX40-shado14r-resf14r-3g regression test of \ref sec4 described in \ref sec4T3g
+!! is automated by
+!!
+!! \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash
+!!
+!! The script creates the top-level MPI run directory and its S/, G/, H/ and
+!! P/ subdirectories, prepares the required control files and input links, and
+!! runs the monolithic \c smiter executable.
+!!
+!! When run outside Slurm, the supplied script uses \c mpiexec and defaults to
+!! four MPI processes.
+!!
+!! Additional examples of parallel execution with MPI are provided in Test-Deck 2 
+!! for \c ITER-valid (see \ref sec5Ivalid) and \c JET-radn (see \ref sec5Jrad),
+!!  using
+!!
+!! \c smiteraux-full/test_mpi_ITER-valid.bash and
+!!
+!! \c smiteraux-full/test_mpi_JET-radn.bash.
+!!
+!! These scripts can therefore be used as an example/template for preparing other 
+!! monolithic SMITER MPI cases on a local system.
+!!
+!! \subsubsection mpi_running_hpc HPC execution
+!!
+!! On an HPC system, computational resources are normally allocated through
+!! the batch scheduler. The compiler/MPI environment, number of MPI tasks,
+!! task placement and other resource settings depend on the HPC system.
+!!
+!! A Slurm launcher for the EQX40-shado14r-resf14r-3g regression test is 
+!! provided in
+!!
+!! \c $SMITER_DIR/smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm
+!!
+!! This launcher was written for the UKAEA Cumulus HPC cluster. It:
+!!
+!! - requests the required HPC resources from Slurm;
+!! - loads the compiler/MPI toolchain using the module system;
+!! - sets the SMARDDA environment variables;
+!! - runs the MPI test 
+!! \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash , the same test script
+!! used for local execution and described in \ref mpi_running_local.
+!!
+!! When executed under Slurm,  the Bash script detects \c SLURM_NTASKS and
+!! uses the number of MPI tasks allocated by the scheduler.
+!!
+!! In the supplied Cumulus launcher, one node with six MPI tasks is requested,
+!! and SMITER is launched with \c mpirun.
+!!
+!! In the supplied Cumulus launcher, one node with six MPI tasks is requested
+!! and SMITER is launched with \c mpirun.
+!!
+!! The compiler/MPI module selection, Slurm partition, number of nodes and tasks, 
+!! run-time limit and SMARDDA installation paths in this example are system dependent
+!! and should be adapted to the HPC system being used.
+!!
+!! The job is then submitted to Slurm from the \c smiteraux directory with
+!!
+!! \code{.sh}
+!! sbatch test_mpi_EQX40-shado14r-resf14r-3g.slurm
+!! \endcode
+!!
+!!
+!! \section sec_swverification Software verification and regression testing
+!!
+!! As indicated in \ref sec4, visual
+!! inspection of test deck results is often adequate to establish that the 
+!! SMARDDA-PFC software has been successfully ported. This examination is not
+!! especially onerous for a first-time user who will often anyway want to be identifying
+!! a test problem close to their particular case.  
+!! Gross errors, such as incorrect surface orientation or use of metres instead
+!! of mm in meshing, may be identified using the ParaView sum function (see \ref sec2paraview) to check
+!! that total energy deposition, allowing for any use of symmetry, is as specified.
+!!
+!! Unfortunately, in all situations where particle tracking is involved, which includes ones
+!! where fieldlines are followed, tiny errors due to different numerical roundoff
+!! and order of execution on different processors/parallel machines
+!! typically lead to the move of a small number of elements of the surface triangulation
+!! from shadow to illumination and vice versa, making detailed numerical
+!! comparison of results from different ports a challenge.
+!! The rest of this section is concerned with the tools provided and their employment
+!! to meet this challenge quantitatively, whilst minimising the need for user intervention.
+!! The first test-deck follows as \ref sec4 .
+!!
+!! \subsection sec_regression Automated regression testing
+!!
+!! Automated regression testing is used in the GitLab Continuous Integration (CI)
+!! pipeline to check newly generated simulation results against accepted
+!! non-regression reference files whenever software changes are pushed,
+!! providing rapid feedback and supporting further analysis. 
+!!
+!! At present, 
+!! automated non-regression testing covers only particle power-deposition
+!! calculations through the test suite Test-Deck 1 (see \ref sec4). The regression
+!! suite should be extended to cover other SMARDDA-PFC calculation paths.
+!!
+!! The Test-Deck 1 cases are executed by the test deck runner 
+!! $SMITER_DIR/smiteraux/\Bold{tests.bash},
+!! which generates the serial simulation results to be checked. The  non-regression 
+!! reference files are stored in $SMITER_DIR/smiter-aux-results. 
+!!
+!! The generated serial results are compared 
+!! with the reference results using the non-regression comparison driver 
+!! $SMITER_DIR/Extras/\Bold{tests_diff.bash}.
+!!
+!! A separate CI job builds SMARDDA-PFC with MPI support and runs 
+!! \Bold{test_mpi_EQX40-shado14r-resf14r-3g.bash}.
+!! At present,
+!! this executes the Test-Deck 1 case \ref sec4T3g using four MPI processes
+!! and compates the generated P/ VTK results against the reference result
+!! using \Bold{vtk_folder_compare.py}.
+!!
+!! The regression testing part of the CI workflow can be reproduced  manually with:
+!!
+!! \code
+!! cd $SMITER_DIR/smiteraux
+!! bash ./tests.bash
+!! cd $SMITER_DIR
+!! tar -xf smiter-aux-results/smiteraux.tar.xz -C smiter-aux-results
+!! bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
+!! \endcode
+!!
+!! The same workflow can also be run manually to investigate the effect of 
+!! changes in the execution environment, such as compiler, hardware architecture,
+!! or the number of MPI processes.
+!!
+!! $SMITER_DIR/Extras/\Bold{tests_diff.bash} compares
+!! several types of simulation output, including .log, .out, .hds, .ps and .vtk files,
+!! using the appropriate comparison method for each file type.
+!!
+!! In the CI pipeline, \Bold{tests_diff.bash} uses the default tolerances. When run
+!! manually, different tolerances can be specified for diagnostic or verification
+!! purposes
+!!
+!! For VTK results processed by \Bold{tests_diff.bash}, which contain the main
+!! numerical simulation fields, the regression-testing workflow can be 
+!! summarized as:
+!!
+!!
+!! \code
+!!                  Newly generated VTK results
+!!                            |
+!!                            v
+!! Accepted reference ---> comparison
+!!       VTK results          |
+!!                            v
+!!                  bitwise identical?
+!!                     /             \
+!!                   yes              no
+!!                    |                |
+!!                    v                v
+!!                  PASS       numerical comparison
+!!                              with tolerances
+!!                                    |
+!!                                    v
+!!                         PASS / WARNING / FAIL
+!! \endcode
+!!
+!! VTK files are first checked for bitwise identity. Bitwise identity provides
+!! a fast and unambiguous indication that no numerical change has occurred
+!! in the stored result. However, exact binary agreement is configuration-dependent 
+!! and is not by itself a measure of numerical correctness. Results produced with 
+!! different compilers, optimisation options, hardware architectures or parallel 
+!! execution configurations may differ at floating-point level while remaining 
+!! numerically equivalent.
+!! Files that are not bitwise identical
+!! are compared using the Python VTK diagnostic tools in $SMITER_DIR/tools:
+!!
+!! - \ref sec_vtk_fieldcompare 
+!! - \ref sec_vtk_mesh_compare
+!! - \ref sec_vtk_folder_compare 
+!!
+!! which  provide field and mesh comparisons using configurable tolerances,
+!! and can also be run independently on selected files or directories for
+!! detailed investigation.
+!!
+!! The VTK regression tools described below are designed for the legacy
+!! VTK format produced by SMARDDA-PFC. This is an implementation choice
+!! and support for other VTK formats could be added if needed.
+!!
+!! \subsubsection sec_vtk_fieldcompare vtk_fieldcompare.py
+!!
+!! The tool $SMITER_DIR/tools/\Bold{vtk_fieldcompare.py} compares two
+!! legacy VTK files field by field using two configurable tolerances,
+!! the absolute tolerance atol and the relative tolerance rtol. It is 
+!! based on the open-source Python package fieldcompare developed 
+!! for regression testing of complex numerical simulation results: see 
+!! https://joss.theoj.org/papers/10.21105/joss.04905  and
+!! https://gitlab.com/dglaeser/fieldcompare.
+!!
+!! Command line usage and available options can be displayed using:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_fieldcompare.py --help
+!! usage: vtk_fieldcompare.py [-h] [--atol ATOL] [--rtol RTOL] [--strict] file_a file_b
+!!
+!! Compare two legacy .vtk files: filecmp first, then fieldcompare with tolerances.
+!!
+!! positional arguments:
+!!   file_a       Reference .vtk file (path can be relative)
+!!   file_b       Candidate .vtk file (path can be relative)
+!!
+!! options:
+!!   -h, --help   show this help message and exit
+!!   --atol ATOL  absolute tolerance (default = 1e-10)
+!!   --rtol RTOL  relative tolerance (default = 1e-06)
+!!   --strict     fails if any field fails (default: fails only if Q or radn fails)
+!! \endcode
+!!
+!! For example:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_fieldcompare.py  \
+!!      reference.vtk candidate.vtk
+!! \endcode
+!! uses the default tolerances, while 
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_fieldcompare.py \
+!!      --atol 1e-6 --rtol 1e-4 \
+!!      reference.vtk candidate.vtk
+!! \endcode
+!! uses the specified tolerances.
+!!
+!! Values are considered within tolerance when 
+!!
+!! \f[
+!! |a-b| \leq \max\left(rtol \cdot \max(|a|,|b|),\,atol\right)
+!! \f]
+!!
+!! where a and b are corresponding scalar values in the reference and
+!! candidate fields, respectively.
+!! 
+!! \subsubsection sec_vtk_mesh_compare vtk_mesh_compare.py
+!!
+!! For the legacy .vtk format produced by SMARDDA-PFC, fieldcompare
+!! uses meshio for file reading.
+!! Some SMARDDA-PFC legacy VTK files contain cell structures that
+!! meshio cannot read reliably.
+!! So far this has occurred only for some legacy VTK files under folder H,
+!! which do not contain scalar or vector fields to compare. 
+!!
+!! The tool $SMITER_DIR/tools/\Bold{vtk_mesh_compare.py} therefore uses
+!! the VTK Python bindings and provides a robust fallback for mesh and topology
+!! comparison when the fieldcompare/meshio reading path fails.
+!! Point coordinates are compared using configurable absolute and relative
+!! tolerances. 
+!! The \c --skip-points option can be used to skip the coordinate comparison and check only the
+!! mesh topology.
+!!
+!! Command line usage and available options can be displayed using:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_mesh_compare.py --help
+!! usage: vtk_mesh_compare.py [-h] [--atol ATOL] [--rtol RTOL] [--skip-points] mesh_a mesh_b
+!!
+!! Compare VTK UnstructuredGrid meshes using VTK Python bindings
+!! (more robust than meshio-based readers)
+!!
+!! positional arguments:
+!!   mesh_a         First mesh file
+!!   mesh_b         Second mesh file
+!!
+!! options:
+!!   -h, --help     show this help message and exit
+!!   --atol ATOL    absolute tolerance (default = 1e-08)
+!!   --rtol RTOL    relative tolerance (default = 1e-05)
+!!   --skip-points  Skip coordinate comparison (only topology check).
+!! \endcode
+!!
+!! For example:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_mesh_compare.py \
+!!      reference.vtk candidate.vtk
+!! \endcode
+!!
+!! compares the mesh geometry and topology using the default tolerances.
+!!
+!! \subsubsection sec_vtk_folder_compare vtk_folder_compare.py
+!!
+!! The tool $SMITER_DIR/tools/\Bold{vtk_folder_compare.py} compares VTK files
+!! contained in two directories, typically a directory containing accepted
+!! reference results and a directory containing newly computed results.
+!! Corresponding VTK files are first checked for bitwise identity.
+!! VTK files that differ are then compared using the \Bold{vtk_fieldcompare.py}
+!! tool with tolerances. The tool \Bold{vtk_mesh_compare.py} provides a
+!! more robust fallback when the fieldcompare/meshio reading path fails.
+!! 
+!! Command line
+!! usage and available options can be displayed using:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_folder_compare.py --help
+!! usage: vtk_folder_compare.py [-h] [--files FILES [FILES ...]] [--atol ATOL] [--rtol RTOL] [--strict] dir_a dir_b
+!!
+!! Compare all .vtk files recursively between two folders: diff -q first,
+!! then mesh compare or fieldcompare with tolerances.
+!!
+!! positional arguments:
+!!   dir_a                 Reference folder
+!!   dir_b                 Test folder
+!!
+!! options:
+!!   -h, --help            show this help message and exit
+!!   --files FILES [FILES ...]
+!!                         list of VTK files to compare
+!!   --atol ATOL           field absolute tolerance (default = 1e-08)
+!!   --rtol RTOL           field relative tolerance (default = 1e-05)
+!!   --strict              fails if any field fails (default: fails only if Q or radn fails)
+!! \endcode
+!!
+!! For example:
+!!
+!! \code
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_folder_compare.py \
+!!      --atol 1e-8 --rtol 1e-5 \
+!!      reference_folder candidate_folder
+!! \endcode
+!!
+!! compares all the corresponding files in the two directory trees using the
+!! specified tolerances.
+!!
+!! The default tolerances used by \Bold{vtk_folder_compare.py} are those
+!! adopted for folder-level regression comparison and are less strict than
+!! the defaults of the standalone \Bold{vtk_fieldcompare.py} diagnostic tool.
+!!
+!!
+!! \subsection sec_vtkinterpretation Interpreting VTK comparison results
+!!
+!! For SMARDDA-PFC VTK results, Q and radn are treated as critical scalar
+!! fields. By default, these fields determine the overall outcome of the
+!! comparison between two VTK files, while the other fields are still
+!! compared and reported for diagnostic purposes.
+!! The comparison of two VTK files can produce four overall outcomes:
+!!
+!! - PASSED - bitwise identical
+!! - PASSED - all fields within tolerance
+!! - FAILED - Q or radn is outside tolerance
+!! - WARNING - Q/radn are within tolerance but other fields are outside tolerance
+!!
+!! When  the \c --strict option is used, any field outside tolerance causes
+!! the comparison to fail.
+!!
+!! The standard \Bold{fieldcompare} report identifies the first out-of-tolerance
+!! value for each failed field.
+!! The tool \Bold{vtk_fieldcompare.py} extends this report by analysing all
+!! out-of-tolerance values and providing additional diagnostics, including:
+!!
+!! - the number of values for which |a - b| is outside tolerance;
+!! - the cell containing the maximum |a - b|, together with the values a and  b;
+!! - the maximum tolerance ratio xTol and its cell, together with the values a and b; 
+!! - the distribution of out-of-tolerance values over different xTol ranges.
+!!
+!! The tolerance ratio is defined as
+!!
+!! \f[
+!! xTol = \frac{|a-b|}
+!!              {\max\left(rtol \cdot \max(|a|,|b|),\,atol\right)}
+!! \f]
+!!  It can be
+!! interpreted as a multiple of the allowed local tolerance:
+!! - xTol = 1 means that the difference is exactly at the tolerance limit;
+!! - xTol = 2 means that the difference is twice the allowed tolerance;
+!! - xTol = 10 means that the difference is ten times the allowed tolerance.
+!!
+!! Thus xTol <= 1 is within tolerance, while xTol > 1 is outside tolerance.
+!!
+!!
+!! The following examples illustrate the different outcomes of a VTK field
+!! comparison, from results that are fully within tolerance to results requiring
+!! progressively more detailed investigation.
+!! The examples also show that the choice of numerical tolerance is part of the
+!! verification process. The default values provide a starting point for
+!! regression testing. Suitable tolerances should be large enough to avoid false
+!! failures caused by insignificant machine precision issues, but small 
+!! enough to detect significant deviations for the quantities of interest.
+!!
+!! \image html passed.png "A comparison in which all fields are within tolerance is reported as PASSED" width=75%
+!!
+!!
+!! \image html warning.png "Example of a WARNING: critical fields are within tolerance but other fields are outside tolerance" width=75%
+!!
+!! When a critical field (Q or radn) is out-of-tolerance, the comparison is
+!! reported as FAILED. 
+!!
+!! The three examples below show how to interpret the report information and how
+!! the xTol diagnostics can be used to assess the size of the 
+!! differences and to estimate the effect of changing the selected tolerances.
+!!
+!! \image html vtk_fieldcompare_marginal.png  "Example of a marginal tolerance exceedance"  width=75%
+!!
+!! In this first example, atol=1e-6 and rtol=1e-4 are used. For the critical
+!! Q field, 12 of 879 cells are outside tolerance and the maximum xTol is 2.52.
+!! Of the 12 failed values, eight have 1 < xTol <= 2 and four have 2 < xTol <= 10;
+!! there are no larger discrepancies. Without rerunning the comparison with more
+!! permissive tolerance, we can infer that if both atol and rtol were increased
+!! by a factor of 10, xTol would decrease by the same factor. The maximum Q xTol 
+!! would therefore decrease from 2.52 to 0.25 and all Q values would fall within 
+!! tolerance. This indicates a relatively small tolerance exceedance. However
+!! whether the wider tolerances are acceptable must still be agreed with the modeller.
+!!
+!!
+!! \image html vtk_fieldcompare_not_marginal.png "Example of a large out-of-tolerance exceedance" width=75%
+!! 
+!! In this second example the default values atol=1e-8 and rtol=1e-5 are used.
+!! For the critical Q field, 153 of 5088 cells are outside tolerance and
+!! maximum xTol is 196. The distribution also shows that five Q values
+!! have xTol > 100. If both tolerances were increased by a factor of 100
+!! (atol=1e-6 and rtol=1e-3) all values with the original xTol<=100 would move
+!! within tolerance, while the five values with xTol>100 could remain outside.
+!! The distribution therefore predicts that five Q values will still fail. 
+!! Increasing both tolerances sufficiently would eventually make all values pass
+!! the numerical comparison, but this does not by itself demonstrate that the
+!! computational results are physically equivalent.
+!! The choice of tolerance must still be agreed with the modeller.
+!! 
+!!
+!! \image html vtk_fieldcompare_shdw-noshdw.png "Example of a localized discrepancy requiring investigation beyond tolerance adjustment" width=75%
+!!
+!! In this third example, atol=1e-06 and rtol=1e-4 are used. Only one of
+!! the 879 Q values is out of tolerance, but the discrepancy is qualitatively
+!! different from the previous examples. At cell 624 Q is 0 in the reference
+!! result and 307.756 in the candidate result, giving xTol=1e4. Also, all
+!! the other fields show large tolerance exceedances at the same cell.
+!! In particular, Msign changes from 0 in the reference results to 
+!! -1 in the candidate results. The concentration of these differences
+!! at the same cell, together with the significant change from zero to non-zero Q,
+!! may indicate a change in a discrete part of the calculation,
+!! for example whether an element is classified as illuminated or shadowed.
+!! Such discrepancy should not be accepted simply by relaxing the tolerance.
+!! Whether such a localised difference affecting only one cell may be considered
+!! negligible or requires further investigation must ultimately be assessed
+!! with the modeller. For a discrete change like this, simply increasing the
+!! tolerance or replacing the reference result may not solve the problem.
+!! Ambiguous results may need to be excluded from the automated comparison or
+!! treated with a rule agreed with the modeller.
+!!
+!! The examples above show how automated regression testing with numerical
+!! tolerances, embedded in a Continuous Integration workflow, contributes to
+!! software verification by helping to distinguish expected floating-point
+!! variations from changes that require further investigation.
+!! The diagnostic tools also help to identify large discrepancies localised
+!! in a small number of cells that may therefore be difficult to detect by
+!! visual inspection alone.
+!!
+!!
+!! 
+!! \section sec4 Test-Deck 1
+!! 
+!! \subsection sec4intro Introduction
+!! 
+!! The first test-deck, including the validation test cases, is designed to
+!! demonstrate correct functioning of all the parts of
+!! SMARDDA-PFC commonly used for particle power deposition, including
+!! software parallelism using MPI.
+!! Data for the test-deck is in the smiteraux directory,
 !! together with files "_notes.txt" on how to produce geometry for the validation
 !! test cases.
+!!
+!! A second test-deck smiteraux2 is concerned with double-null equilibria
+!! and radiative power deposition,and also includes testing of software
+!! paralellism using MPI (see \ref sec5).
+!!
+!! It is worth pointing out that for the tests involving fieldines, adjacent energy paths
+!! diverge exponentially so that tiny errors due to different numerical roundoff
+!! and order of execution on different processors/parallel machines are magnified
+!! and may lead to the illumination or shadowing of a small number of different
+!! triangles, and in any event to small changes in the value of power deposited.
+!! The scripts provided for detailed automatic analysis of the numerical results have been
+!! designed with this difficulty in mind. Nonetheless as discussed in \ref sec_swverification 
+!! agreement upon visual inspection of deck output with the images presented below 
+!! usually indicates a satisfactory test outcome.
 !!
 !! The .sgo scripts have extensive internal documentation (q.v.).
 !! It is here noted that the .sgo scripts in ./smardda/smardda-pfc/Extras arrange
@@ -1105,7 +1884,7 @@
 !! since geoq has to be run separately for results and shadowing geometry,
 !! "S" is used for the latter.
 !!
-!! \subsection sec3cases Test and Validation Cases
+!! \subsection sec4cases Test and Validation Cases
 !! A brief description of each case follows so that the
 !! user may determine which is closest to the problem of current
 !! interest and therefore might be most easily modified to solve it. 
@@ -1116,22 +1895,22 @@
 !! the results geometry respectively. An optional 4th component
 !! indicates whether a local or global problem was solved.
 !! Thus the geometries may be easily identified among the .vtk files
-!! in ./smiter-aux/Data/VTK and visualised using ParaView, although note that
+!! in ./smiteraux/Data/VTK and visualised using ParaView, although note that
 !! the .vtk files for the validation cases have to be generated from the
-!! .dat files in ./smiter-aux/Data/Geometry.
+!! .dat files in ./smiteraux/Data/Geometry.
 !!
 !! For the two ITER test cases, the first wall silhouette is used to determine
 !! the position of the contact point, hence the value of flux \f$ \psi \f$
 !! of the last closed flux-surface (LCFS) and thence the power normalisation.
-!! In the MAST-U test case \ref sec3T2 , the LCFS is known to correspond
+!! In the MAST-U test case \ref sec4T2 , the LCFS is known to correspond
 !! to \f$ \psi=0 \f$. In the validation work, the \f$ \psi \f$ of the LCFS
-!! is taken from the eqdsk file, except for \ref sec3V1g, the LCFS is 
+!! is taken from the eqdsk file, except for \ref sec4V1g, the LCFS is 
 !! determined using the displaced geometry, hence is closer to the centre
 !! of the plasma increasing the peak power deposition by a factor of two.
 !! In the original VDE validation case, there was an issue regarding
 !! mesh resolution, hence the examination of a much finer grid.
 !!
-!! \subsubsection sec3T1 Test-EQ3-inrshad1-inres1
+!! \subsubsection sec4T1 Test-EQ3-inrshad1-inres1
 !! \image html 1.png
 !! \image latex 1.eps "Power deposition on inres1 geometry" width=10cm
 !! This test-case is taken from the AFWS project,
@@ -1149,7 +1928,7 @@
 !! wall to obtain the limiter flux value.
 !!
 !!
-!! \subsubsection sec3T2 Test-MNEW8-sha12-res12
+!! \subsubsection sec4T2 Test-MNEW8-sha12-res12
 !! \image html 2.png
 !! \image latex 2.eps "Power deposition on res12 geometry" width=10cm
 !! This test-case is taken from the MAST-U project, which saw the development
@@ -1166,7 +1945,7 @@
 !! only followed up to Z=-1.29, whence it is assumed that they will act as
 !! conduits of power from the midplane.
 !!
-!! \subsubsection sec3T3g Test-EQX40-shado14r-resf14r-3g
+!! \subsubsection sec4T3g Test-EQX40-shado14r-resf14r-3g
 !! \image html 3.png
 !! \image latex 3.eps "Power deposition on resf14r geometry" width=10cm
 !! This test-case is taken from the AFWS project, which saw the development
@@ -1180,17 +1959,29 @@
 !! performed to validate the axisymmetric field solver introduced in the
 !! original smiter development project.
 !!
-!! \subsubsection sec3T3l Test-EQX40-shado14r-resf14r
+!! \paragraph sec4T3g_mpi MPI execution
+!!
+!! This test is also used to test software parallelism using MPI.
+!! An example script for running  the case directly  with MPI 
+!! is \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash.
+!! For execution through the Slurm batch scheduler, an example of launcher
+!! is \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm,
+!! which invokes the same Bash script.
+!!
+!! The same MPI case is also run as part of the Gitlab CI MPI regression  test.
+!! See \ref sec3 for the MPI build and execution workflow.
+!!
+!! \subsubsection sec4T3l Test-EQX40-shado14r-resf14r
 !! \image html 4.png
 !! \image latex 4.eps "Power deposition on resf14r geometry" width=10cm
 !! This test-case is taken from the AFWS project, which saw the development
 !! of SMARDDA primarily for ITER limiter problems,
 !! but this example demonstrates just how small the deposited power is if
 !! the discharge is detached.
-!! The difference between this case and that of \ref sec3T3g is that this is a local
+!! The difference between this case and that of \ref sec4T3g is that this is a local
 !! calculation, using flux coordinates.
 !!
-!! \subsubsection sec3V1l Val-F11-fw264t-fw4t-1l
+!! \subsubsection sec4V1l Val-F11-fw264t-fw4t-1l
 !! \image html 5.png
 !! \image latex 5.eps "Power deposition on fw4t geometry" width=10cm
 !! This represents the power deposited on slightly misaligned panel 4 geometry
@@ -1200,17 +1991,17 @@
 !! on the target.
 !! This is a local calculation using flux coordinates.
 !!
-!! \subsubsection sec3V1g Val-F11-fw264t-fw4t
+!! \subsubsection sec4V1g Val-F11-fw264t-fw4t
 !! \image html 6.png
 !! \image latex 6.eps "Power deposition on fw4t geometry" width=10cm
-!! The difference between this case and that of \ref sec3V1l is that this
+!! The difference between this case and that of \ref sec4V1l is that this
 !! calculation uses cylindrical coordinates and is a
 !! global calculation requiring fieldlines to rise to a z=+3 "midplane"
 !! (strictly termination plane or termplane).
 !! The difference in peak power is explained by the different assumption
 !! used to determine the LCFS (by the displaced geometry here).
 !!
-!! \subsubsection sec3V3 Val-vde-bot-baf
+!! \subsubsection sec4V3 Val-vde-bot-baf
 !! \image html 7.png
 !! \image latex 7.eps "Power deposition on baf geometry" width=10cm
 !! This involves a VDE equilibrium on grid of \f$ 65 \times 129 \f$ which is limited
@@ -1219,23 +2010,23 @@
 !! This is a global calculation, using cylindrical coordinates,
 !! in a 20 degree toroidal sector, i.e. 18-fold symmetry.
 !!
-!! \subsubsection sec3V3sy Val-vde-botsy-baf
+!! \subsubsection sec4V3sy Val-vde-botsy-baf
 !! \image html 8.png
 !! \image latex 8.eps "Power deposition on baf geometry" width=10cm
-!! The difference between this case and that of \ref sec3V3 is that this
+!! The difference between this case and that of \ref sec4V3 is that this
 !! calculation uses a 60 degree toroidal sector, i.e. sixfold symmetry.
 !!
-!! \subsubsection sec3V4 Val-HR-bott-baff
+!! \subsubsection sec4V4 Val-HR-bott-baff
 !! \image html 9.png
 !! \image latex 9.eps "Power shadow on baff/align geometry" width=10cm
 !! This uses a VDE equilibrium on a fine grid of \f$ 257 \times 513 \f$
 !! originally from Y.Gribov https://user.iter.org/?uid=2V2XYR,
 !! supplied by Carpentier-Chouchana in January 2016.
-!! It is used on a geometry identical to that of \ref sec3V3 except without
+!! It is used on a geometry identical to that of \ref sec4V3 except without
 !! misalignment, in a global calculation, using cylindrical coordinates,
 !! in a 20 degree toroidal sector, i.e. 18-fold symmetry.
 !!
-!! \subsubsection sec3sm Val-smanal-mjg
+!! \subsubsection sec4sm Val-smanal-mjg
 !! \image html 10.png
 !! \image latex 10.eps "Max power per row on reactor geometry" width=10cm
 !! This processes data from a reactor model, further details of which
@@ -1249,3 +2040,129 @@
 !! appropriate cell label, e.g. "max", a good cell label format is "%4.3e".
 !! (May be set using the gear-wheel in the Selection Display Inspector
 !! which gives boxes for setting "Selection Label Properties".)
+!!
+!! \section sec5 Test-Deck 2
+!! 
+!! \subsection sec5intro Introduction
+!! 
+!! This deck contains a set of tests designed to test correct functioning of new features of the
+!! SMARDDA software, namely \n
+!! \arg calculation of particle power deposition in so-called double-null
+!! magnetic field configurations, where there may be different profiles of deposition depending on
+!! the magnetic structure outside the LCFS or last closed flux surface
+!! \arg calculations of radiative
+!! power deposition, in addition to or instead of, the calculations of particle power falling on PFCs
+!! examined in \ref sec4. SMARDDA-PFC has facilities to define a toroidally axisymmetric, but otherwise
+!! general 2-D radiation field which is sampled by rays cast from the centroids of the triangles 
+!! discretising the PFC geometry. Conceptually an 'antenna' is located at each centroid, 
+!! viz. a meshed hemisphere giving launch directions distributed uniformly in latitude and longitude.
+!!
+!! Selected cases are also used to test software parallelism using the
+!! Message Passing Interface (MPI).
+!!
+!! \subsection sec5cases Test Cases
+!! The cases are labelled using a notation which emphasises the nature of the test and the machine
+!! geometry employed. \n
+!! The deck is executed using the script tests.bash in the smiteraux-full directory (previous outputs
+!! should first be removed using the tests_clean.bash script).
+!! Alternatively, each case may be separately invoked by
+!! \code
+!! (cd <test-case>;./case.bash)
+!! \endcode
+!! and all should complete within a few minutes, although they will take up 13 GByte of disc
+!!
+!! \subsubsection sec5Ddnull DEMO-double_null
+!! Double-null (DN) and Symmetric double-null (SDN) discharges have poloidal-magnetic flux topology
+!! as described in \ref sec1dnull. The figure illustrates two possibilities for DN. The one to the left
+!! is European DEMO equilibrium \n
+!! Dyn_sim_SN_k95_1d65_delta95_0d33_MD_no_p_2NKLP2_v1_0_t_0d44_CQ2.eqdsk \n
+!! or CQ2 for short, described further at https://idm.euro-fusion.org/?uid=2NX6LP.
+!! To the right is the vertical reflection of CQ2
+!! which is solely an artifice for testing purposes.
+!! The geometry employed is a complete toroidally axisymmetric
+!! representation of a DEMO first wall without limiters, calculating particle power deposition
+!! on a \f$1^o\f$ target section. 
+!! \image html Ddns.png
+!! \image latex Ddns.eps "Contours of poloidal magnetic flux  superimposed on PFC silhouette" width=10cm
+!! The two cases were each run with a single decaying exponential power flux on the midplane, split
+!! between two regions both on the high-field and low-field sides of the device. This 
+!! recovers previous results obtained under the assumption of a simple exponential decay outward from the LCFS,
+!! i.e. ignoring the presence of the second singular surface.
+!! \image html DdnsQ_red.png
+!! \image latex DdnsQ_red.eps "Particle power deposition on DEMO geometry" width=10cm
+!!
+!! \subsubsection sec5Jant JET-ant
+!! This simple test tracks rays without regard to intersection with geometry, terminating when
+!! they intersect the LCFS.  Rays are launched from a region of ten degrees in extent toroidally
+!! at the top of the divertor (T5 tile) illustrated with a plot of power deposition produced
+!! by a model of plasma emission using atomic data from ADAS https://www.adas.ac.uk,
+!! (file kprad_00224_6.txt supplied as kprad_rad_00224_6 by Oliver Bardsley 21/5/21)
+!! constant on flux surfaces of an EFIT reconstruction of the JET equilibrium #89297 at t=45.011
+!! (file jet297.eqdsk supplied as g_p89297_t45_011.eqdsk by Gabor Szepesi 16/8/17).
+!! The launch region is shown in cross-section as the short green line towards the bottom of the ray plot. 
+!! \image html Japowx.png
+!! \image latex Japowx.eps "Power deposition on tip of divertor" width=10cm
+!!
+!! The convention employed is that rays starting 
+!! within the private flux region are allowed to continue
+!! after crossing the separatrix and thereafter enter the plasma. Rays from two elements are visualised
+!! in the plot. The ray plot highlights the importance of
+!! the geometry test, since its absence allows a fraction of the rays to transit a usually inaccessible
+!! volume with small values of \f$ R \f$ and appear to come from HFS. 
+!! \image html beq+rays.png
+!! \image latex beq+rays.eps "Rays within plasma boundary superimposed on plot of magnetic flux with LCFS in blue" width=10cm
+!!
+!! \subsubsection sec5Jrad JET-radn
+!! Three different tests are illustrated for different sources of radiation, as illustrated from
+!! left to right: 
+!! - analytical function of \f$ \psi \f$, 
+!! - constant on circles in \f$(R,Z)\f$ coordinates,
+!! - user-defined dataset. \n
+!! The resulting radiative power deposition is calculated for a one degree wide strip of JET
+!! wall consisting of quadrilaterals made by extrusion in the toroidal direction of a "silhouette"
+!! jwall.txt supplied as 003 by Oliver Bardsley 21/5/21
+!! to jetwall_RZ.dat in Data/Geometry , removing first line, copying 2nd to end.
+!! The radiative power deposition is plotted 
+!! \image html radn3.png
+!! \image latex radn3.eps "Contours of radiation field superimposed on PFC silhouette" width=10cm
+!! \image html radnpfc3_red.png
+!! \image latex radnpfc3_red.eps "Radiative power deposition on JET geometry" width=10cm
+!!
+!! \paragraph sec5JradMPI MPI execution
+!!
+!! This test case is also used to test software parallelism using MPI.
+!!
+!! An example script for running the case directly with MPI is
+!! \c smiteraux-full/test_mpi_JET-radn.bash.
+!!
+!! The script performs the three JET-radn radiation calculations using the monolithic
+!! \c smiter executable. 
+!! The script creates a separate \c JET-radn_MPI run directory containing
+!! the results of the MPI execution.
+!!
+!! See \ref sec3 for the MPI build and execution workflow.
+!!
+!! \subsubsection sec5Ivalid ITER-valid
+!!
+!! Cross-validation with work on the ITER ICRH antenna described by M. Brank et al.
+!! https://doi.org/10.1016/j.nme.2021.101021
+!! The shadow geometry consists of selected panels representing the ITER first wall
+!! plus 3/4 of the ICRH antenna, whereas the target is a fine meshing of the
+!! 1/4 top right of the antenna.
+!! Three values of radiated power density (\f$ W/m^2 \f$) are shown superimposed on
+!! the corresponding triangles at the top left corner of the top left antenna
+!! grille bar, orientation indicated by picture at right.
+!! (The plot demonstrates agreement with detailed results supplied by M. Brank.)
+!! \image html Iant3_red.png
+!! \image latex Iant3_red.eps
+!!
+!! \paragraph sec5IvalMPI MPI execution
+!! This test case is also used to test software parallelism using MPI.
+!!
+!! An example script for running the case directly with MPI is
+!! \c smiteraux-full/test_mpi_ITER-valid.bash.
+!!
+!! The script creates a separate \c ITER-valid_MPI run directory containing
+!! the results of the MPI execution.
+!!
+!! See \ref sec3 for the MPI build and execution workflow.

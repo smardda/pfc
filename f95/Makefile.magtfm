@@ -1,5 +1,6 @@
 # basic Makefile
 
+$(info >>> ENTERING $(lastword $(MAKEFILE_LIST)))
 # config file.
 include ../config/config.inc
  
@@ -9,8 +10,8 @@ include ../config/path.inc
 SOURCES = \
 apb_h.f90 \
 apb_m.f90 \
-smitermpi_m.f90 \
 mcontrol_m.f90 \
+smitermpi_m.f90 \
 magtfm.f90
  
 PROG = magtfm
@@ -20,7 +21,10 @@ VPATH=$(SMAPATH)
 
 MODULES=$(SOURCES:.f90=.mod)
 
+EXTRA_MODULES = magtfm_p.mod
+
 OBJECTS=$(SOURCES:.f90=.o)
+
 
 $(PROG) : lib $(OBJECTS)
 	$(F90) $(F90FLAGS) -o $(PROG) $(OBJECTS) $(LIBF90) $(LIBS)
@@ -32,7 +36,7 @@ $(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
-	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_CLEAN_FILES)
+	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_MODULES) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
 	rm -f $(PROG)
@@ -41,66 +45,24 @@ lib :
 	cd $(SMAPATH)/LIB && $(MAKE) 
 	cd $(SMAPATH) && $(MAKE) -f Makefile.lib lib
 
+deepclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) clean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib clean
+
+deeplibclean : clean
+	cd $(SMAPATH)/LIB && $(MAKE) libclean
+	cd $(SMAPATH) && $(MAKE) -f Makefile.lib libclean
+
 txt:
 	cat Makefile.$(PROG) $(SOURCES) > $(PROG).txt
 
-.PHONY : clean distclean lib
+.PHONY : clean distclean lib deepclean deeplibclean
 
-
-magtfm.f90 : const_kind_m.mod
-magtfm.f90 : const_numphys_h.mod
-magtfm.f90 : date_time_m.mod
-magtfm.f90 : mcontrol_h.mod
-magtfm.f90 : dcontrol_h.mod
-magtfm.f90 : apb_h.mod
-magtfm.f90 : log_m.mod
-magtfm.f90 : misc_m.mod
-magtfm.f90 : clock_m.mod
-magtfm.f90 : position_h.mod
-magtfm.f90 : fmesh_h.mod
-magtfm.f90 : beq_h.mod
-magtfm.f90 : posang_h.mod
-magtfm.f90 : posang_m.mod
-magtfm.f90 : apb_m.mod
-magtfm.f90 : gfile_m.mod
-magtfm.f90 : spl3d_m.mod
-magtfm.f90 : spl2d_m.mod
-magtfm.f90 : position_m.mod
-magtfm.f90 : mcontrol_m.mod
-magtfm.f90 : moutfile_m.mod
-magtfm.f90 : vfile_m.mod
-magtfm.f90 : fmesh_m.mod
-magtfm.f90 : beqart_h.mod
-magtfm.f90 : beqart_m.mod
-apb_h.f90 : const_kind_m.mod
-apb_m.f90 : const_kind_m.mod
-apb_m.f90 : log_m.mod
-apb_m.f90 : misc_m.mod
-apb_m.f90 : fmesh_h.mod
-apb_m.f90 : fmesh_m.mod
-apb_m.f90 : mcontrol_h.mod
-apb_m.f90 : mcontrol_m.mod
-apb_m.f90 : date_time_m.mod
 apb_m.f90 : apb_h.mod
-mcontrol_m.f90 : const_kind_m.mod
-mcontrol_m.f90 : log_m.mod
-mcontrol_m.f90 : misc_m.mod
-mcontrol_m.f90 : position_h.mod
-mcontrol_m.f90 : mcontrol_h.mod
-mcontrol_m.f90 : position_m.mod
-beqart_h.f90 : const_kind_m.mod
-beqart_h.f90 : fmesh_h.mod
-beqart_m.f90 : const_kind_m.mod
-beqart_m.f90 : const_numphys_h.mod
-beqart_m.f90 : position_m.mod
-beqart_m.f90 : posang_h.mod
-beqart_m.f90 : log_m.mod
-beqart_m.f90 : misc_m.mod
-beqart_m.f90 : fmesh_h.mod
-beqart_m.f90 : beqart_h.mod
-beqart_m.f90 : beq_h.mod
-beqart_m.f90 : fmesh_m.mod
-beqart_m.f90 : vfile_m.mod
-beqart_m.f90 : spl2d_m.mod
-beqart_m.f90 : posang_m.mod
-
+apb_m.f90 : mcontrol_m.mod
+smitermpi_m.f90 : powcal_h.mod
+smitermpi_m.f90 : powres_h.mod
+magtfm.f90 : apb_h.mod
+magtfm.f90 : apb_m.mod
+magtfm.f90 : mcontrol_m.mod
+magtfm.f90 : smitermpi_m.mod

@@ -1,5 +1,4 @@
 module powcal_h
-
   use const_kind_m
   use geobjlist_h
   use geobj_m
@@ -13,6 +12,10 @@ module powcal_h
   use spl2d_m
   use spl3d_m
   use pcontrol_h
+  use prcontrol_h
+  use radnsource_h
+  use antenna_h
+  use ray_m
   use termplane_h
   use smitermpi_h
 
@@ -29,9 +32,14 @@ module powcal_h
      type(powres_t) :: powres !< powres
      type(edgprof_t) :: edgprof !< edgprof
      type(powlau_t) :: powlau !< powlau
+     type(antenna_t) :: antenna !< antenna
+     type(radnsource_t) :: radnsource !< radnsource
+     type(ray_t) :: ray !< ray
      type(odes_t) :: odes !< odes
-     type(pnumerics_t) :: n !< control  parameters
+     type(pxnumerics_t) :: n !< control  parameters
      type(decomp_t) :: decomp !< MPI parameters
   end type powcal_t
+  
 
 end module powcal_h
+

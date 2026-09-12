@@ -1,5 +1,4 @@
 module smitermpi_m
-
   use smitermpi_h
   use log_m
   use powcal_h
@@ -38,7 +37,8 @@ module smitermpi_m
        bcast_hds, &        !> broadcasts hds values for powcal
        bcast_position, &   !> broadcasts position values for powcal and hdsgen
        bcast_skyl, &       !> broadcasts skylight_t values for powcal and hdsgen
-       smitermpi_barrier !>
+       smitermpi_barrier, & !>
+       smiter_wctime        !> wall-clock timer (MPI_Wtime or system_clock)
 
   character(*), parameter :: m_name='smitermpi_m' !< module name
   integer :: status !< .
@@ -46,18 +46,19 @@ module smitermpi_m
 contains
 
   !!-----------------------------------------------------------------------------------
-  !! Initialisationa and decomposition routines
+  !! Initialisation and decomposition routines
   !!-----------------------------------------------------------------------------------
 
-  !> calls mpi_init and defines decomp structure
+  !> Initialises MPI and populates the decomp structure
   subroutine smitermpi_init(self)
 
+    type(decomp_t), intent(out) :: self !< decomp data structure
+
+
+#ifdef WITH_MPI
     integer :: ierr !< .
     logical :: init_flag !< .
 
-    type(decomp_t), intent(inout) :: self !< decomp data structure
-
-#ifdef WITH_MPI
     call MPI_Initialized(init_flag,ierr)
     if (.not. init_flag) call MPI_Init(ierr)
 
@@ -66,11 +67,10 @@ contains
 
     call MPI_Comm_rank(self%commsmiter,self%myrank,ierr)
     call MPI_Comm_size(self%commsmiter,self%nproc,ierr)
-    if (self%myrank==0) print*, "Initialised MPI with", self%nproc ,"processes"
-#else
-    self%myrank=0
-    self%nproc=1
+
+    if (self%myrank==0) print *, "Initialised MPI with", self%nproc ,"processes"
 #endif
+
     call smitermpi_control(self)
 
   end subroutine smitermpi_init
@@ -82,15 +82,19 @@ contains
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
     ! Booleans to control running of individual steps
-    if (self%nproc > 6) then
-       self%procgeoqshad = 0
-       self%procgeoqres = 1
-       self%prochdsgen = 2
-       if (self%myrank > 2) self%powcal = .true.
-       self%bcastpowcal=.true.
-       self%bcasthdsgen=.true.
-       call smitermpi_decomp(self)
-    else
+    ! self%commsmiter, self%my_rank, self%nproc already initialized 
+    ! Temporary commented - it doesn't work require refactoring
+    ! all self%nproc  value greater than 1 execute same code
+    !if (self%nproc > 6) then
+    !   self%procgeoqshad = 0
+    !   self%procgeoqres = 1
+    !   self%prochdsgen = 2
+    !   self%powcal = .false.
+    !   if (self%myrank > 2) self%powcal = .true.
+    !   self%bcastpowcal=.true.
+    !   self%bcasthdsgen=.true.
+    !   call smitermpi_decomp(self)
+    !else
        self%procgeoqshad = 0
        self%procgeoqres = 0
        self%prochdsgen = 0
@@ -99,21 +103,24 @@ contains
        self%commgeoqshad = self%commsmiter
        self%commgeoqres = self%commsmiter
        self%commhdsgen = self%commsmiter
+
        self%nprocgeoqshad = 1
        self%nprocgeoqres = 1
        self%nprochdsgen = 1
        self%nprocpowcal = self%nproc
+
        self%myrankgeoqshad = self%myrank
        self%myrankgeoqres = self%myrank
        self%myrankhdsgen = self%myrank
        self%myrankpowcal = self%myrank
-       if (self%nproc > 1) self%procgeoqres=1
+       self%bcasthdsgen = .false.
+       if (self%nproc > 1) self%procgeoqres = 1
        if (self%nproc > 2) then
-          self%prochdsgen=2
-          self%bcasthdsgen=.true.
+          self%prochdsgen = 2
+          self%bcasthdsgen = .true.
           call smitermpi_decomp(self,.true.)
        endif
-    endif
+    !endif
 
     ! now set the read and broadcast behaviour for powcal
     call powcalmpi_setio(self)
@@ -133,17 +140,15 @@ contains
 
     !! Arguments
     type(decomp_t), intent(inout) :: self !< decomp data structure
-    logical, optional :: hdsonly !< .
+    logical, intent(in), optional :: hdsonly !<  creates only the shadow-HDS communicator.
 
+#ifdef WITH_MPI
     integer(ki4) :: ierr !< .
     integer(ki4) :: groupsmiter,groupgeoqshad,groupgeoqres,grouphdsgen,grouppowcal !< .
     integer(ki4) :: grouppg,groupps,groupph,groupsh !< .
     integer(ki4) :: excl(3),incl(1) !< .
 
-#ifdef WITH_MPI
-    excl(1) = 0
-    excl(2) = 1
-    excl(3) = 2
+    excl = [0, 1, 2]
 
     ! Create groups and communicators for geoq, hdsgen, powcal bcasts
     call MPI_Comm_group(self%commsmiter,groupsmiter,ierr)
@@ -165,7 +170,9 @@ contains
     call MPI_Group_rank(groupsh,self%myrankshadhds,ierr)
     call MPI_Group_size(groupsh,self%nprocshadhds,ierr)
 
-    if (present(hdsonly)) return
+    if (present(hdsonly)) then
+      if(hdsonly) return
+    end if
 
     ! Now the rest of the unions
     ! powcal
@@ -184,7 +191,7 @@ contains
     call MPI_Comm_create(self%commsmiter,grouppg,self%commgeoqres,ierr)
     call MPI_Group_rank(grouppg,self%myrankgeoqres,ierr)
     call MPI_Group_size(grouppg,self%nprocgeoqres,ierr)
-    ! hdsgen and and powcal
+    ! hdsgen and powcal
     call MPI_Group_union(grouphdsgen,grouppowcal,groupph,ierr)
     call MPI_Comm_create(self%commsmiter,groupph,self%commhdsgen,ierr)
     call MPI_Group_rank(groupph,self%myrankhdsgen,ierr)
@@ -214,7 +221,7 @@ contains
 
     call MPI_Comm_rank(self%commpowcal,self%myrank,ierr)
     call MPI_Comm_size(self%commpowcal,self%nproc,ierr)
-    if (self%myrank==0) print*, "Initialised MPI with", self%nproc ,"processes"
+    if (self%myrank==0) print *, "Initialised MPI with", self%nproc ,"processes"
 #else
     self%myrank = 0
     self%nproc = 1
@@ -312,29 +319,29 @@ contains
   !> sets reading and broadcast flags for powcal
   subroutine powcalmpi_setio(self)
 
-    integer :: ierr !< .
 
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
-    self%bcastflag = .true.
-
     if (self%bcastflag) then 
+
        ! broadcasts are allowed in powcal
-       if (self%myrank == 0) print*,"Powcal data will be broadcasted."
        if (self%nprocpowcal > 1) then 
           ! If there is more than one powcal process bcasts are required
+          if (self%myrank == 0) print *, "Powcal data will be broadcasted."
           self%bcastpowcalcontrol = .true.
           self%bcastpowcaldata = .true.
        else                             ! Otherwise they aren't
           self%bcastpowcalcontrol = .false.
           self%bcastpowcaldata = .false.
        endif
+
        if (self%myrankpowcal == 0) then 
           ! powcal process 0 always reads the control data
           self%readpowcalcontrol = .true.
        else
           self%readpowcalcontrol = .false.
        endif
+       
        if (self%myrankpowcal == 0 .and. .not. self%bcastpowcal) then 
           ! When non combined broadcasts are used only powcal process 0 reads data
           self%readpowcaldata = .true.
@@ -359,7 +366,7 @@ contains
   !> assigns a set of starting points to each process
   subroutine powcalmpi_decomp(self,npowe,ng)
 
-    integer :: ierr !< .
+    !integer :: ierr !< .
     integer, intent(in) :: npowe,ng !< .
     type(decomp_t), intent(inout) :: self !< decomp data structure
 
@@ -448,6 +455,11 @@ contains
        call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
             self%powres%powa,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
             0,self%decomp%commpowcal,ierr)
+       if (self%n%radncalc /=0) then
+          call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
+              self%powres%powr,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
+              0,self%decomp%commpowcal,ierr)
+       end if
 
        if (allocated(self%powres%psista)) then
           call MPI_Gatherv(MPI_IN_PLACE,self%decomp%mynpowe,MPI_REAL, &
@@ -496,10 +508,15 @@ contains
        call MPI_Gatherv(self%powres%pows,self%decomp%mynpowe, &
             MPI_REAL,self%powres%pows,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
             0,self%decomp%commpowcal,ierr)
-
+            
        call MPI_Gatherv(self%powres%powa,self%decomp%mynpowe,MPI_REAL, &
             self%powres%powa,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
             0,self%decomp%commpowcal,ierr)
+       if (self%n%radncalc /=0) then
+          call MPI_Gatherv(self%powres%powr,self%decomp%mynpowe,MPI_REAL, &
+              self%powres%powr,self%decomp%localsize,self%decomp%localdisp,MPI_REAL, &
+              0,self%decomp%commpowcal,ierr)
+       end if
 
        if (allocated(self%powres%psista)) then
           call MPI_Gatherv(self%powres%psista,self%decomp%mynpowe,MPI_REAL, &
@@ -547,7 +564,7 @@ contains
 
     endif
 #endif
-end subroutine powcalmpi_collect
+  end subroutine powcalmpi_collect
 
 
   !!----------------------------------------------------------------------------------
@@ -555,43 +572,179 @@ end subroutine powcalmpi_collect
   !!----------------------------------------------------------------------------------
 
   !> broadcasts info from the control file
-  subroutine bcast_pcontrol(file,numerics,onumerics,edgprof,plot,rank,comm)
+  subroutine bcast_pcontrol(file,numerics,onumerics,antnumerics,radnumerics,raynumerics,edgprof,plot,rank,comm)
 
     !! arguments
-    type(pfiles_t), intent(inout) :: file !< file names ! Temporary
+    type(prfiles_t), intent(inout) :: file !< file names ! Temporary
 
-    type(pnumerics_t), intent(inout) :: numerics !< input numerical parameters
+    type(pxnumerics_t), intent(inout) :: numerics !< input numerical parameters
     type(onumerics_t), intent(inout) :: onumerics !< input ODE numerical parameters
     type(edgprof_t), intent(inout) :: edgprof !< input ODE numerical parameters
-    type(pplots_t), intent(out) :: plot !< vtk plot selectors
-    integer(ki4) , intent(in) :: rank,comm !< .
-
+    type(antnumerics_t), intent(inout) :: antnumerics !< input ODE antenna parameters
+    type(radnumerics_t), intent(inout) :: radnumerics !< radnsource parameters
+    type(raynumerics_t), intent(inout) :: raynumerics !< ray parameters
+    type(prplots_t), intent(inout) :: plot !< vtk plot selectors
+    integer(ki4) , intent(in) :: rank,comm !<.
+    
     call bcast_pnumerics(numerics,rank,comm)
-
+    edgprof%number_regions = numerics%number_regions
     call bcast_edgprof(edgprof,rank,comm)
-
     call bcast_odes(onumerics,rank,comm)
+  
+    if (numerics%radncalc/=0) then
+      call bcast_antnumerics(antnumerics,rank,comm)
+      call bcast_radnumerics(radnumerics,rank,comm)
+      call bcast_raynumerics(raynumerics,rank,comm)
+    end if
 
     call bcast_file(file,rank,comm) ! Temporary
-
     call bcast_pplot(plot,rank,comm)
 
   end subroutine bcast_pcontrol
+
+  
+  !> Calls MPI Bcast to distribute the rdnumeric structure to all aprocess
+  subroutine bcast_antnumerics(self,rank,comm)
+
+    !! Arguments
+    type(antnumerics_t), intent(inout) :: self !< input radiation numerical parameters
+    integer(ki4), intent(in) :: rank,comm !< .
+    
+
+#ifdef WITH_MPI
+    integer :: ierr !<.
+    call MPI_Bcast(self%ntheta,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nphi,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%formula,len(self%formula),MPI_CHARACTER,0,comm,ierr)
+    call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%nrpams,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nipams,1,MPI_INTEGER,0,comm,ierr)
+    
+    if (self%nrpams > 0)  then   
+      if (rank>0) allocate(self%rpar(self%nrpams), stat=status)
+      call MPI_Bcast(self%rpar,self%nrpams,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    end if
+    if (self%nipams > 0)  then 
+      if (rank>0) allocate(self%npar(self%nipams), stat=status)
+      call MPI_Bcast(self%npar,self%nipams,MPI_INTEGER,0,comm,ierr)
+    end if
+    
+
+#endif
+
+  end subroutine bcast_antnumerics
+
+  !> Calls MPI Bcast to distribute the rdnumeric structure to all aprocess
+  subroutine bcast_radnumerics(self,rank,comm)
+
+    !! Arguments
+    type(radnumerics_t), intent(inout) :: self !< input radiation numerical parameters
+    integer(ki4), intent(in) :: rank,comm !< .
+    
+
+#ifdef WITH_MPI
+    integer :: ierr !<.
+    call MPI_Bcast(self%formula,len(self%formula),MPI_CHARACTER,0,comm,ierr)
+    call MPI_Bcast(self%nrpams,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nipams,1,MPI_INTEGER,0,comm,ierr)
+    if (self%nrpams > 0)  then   
+      if (rank>0) allocate(self%rpar(self%nrpams), stat=status)
+      call MPI_Bcast(self%rpar,self%nrpams,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    end if
+    if (self%nipams > 0) then
+      if (rank>0) allocate(self%npar(self%nipams), stat=status)
+      call MPI_Bcast(self%npar,self%nipams,MPI_INTEGER,0,comm,ierr)
+    end if
+
+    call MPI_Bcast(self%zcen,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%rcen,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%psicen,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%psibdry,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%apar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%bpar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%ne,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%anpar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%bnpar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%te,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%atpar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%btpar,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%bmag,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%lte,1,MPI_LOGICAL,0,comm,ierr)
+    call MPI_Bcast(self%nswbrems,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nswcyclo,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nswrecomb,1,MPI_INTEGER,0,comm,ierr)
+
+    call MPI_Bcast(self%lplasbox,1,MPI_LOGICAL,0,comm,ierr)
+    call MPI_Bcast(self%plasbox,4,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%radndia,1,MPI_LOGICAL,0,comm,ierr)
+    call MPI_Bcast(self%powtot,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%q0,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+    call MPI_Bcast(self%nraorder,1,MPI_INTEGER,0,comm,ierr)
+#endif
+
+  end subroutine bcast_radnumerics
+
+  subroutine bcast_raynumerics(self,rank,comm)
+
+    !! Arguments
+    type(raynumerics_t), intent(inout) :: self !< input tay numerical parameters
+    integer(ki4), intent(in) :: rank,comm !<.
+
+
+#ifdef WITH_MPI
+    
+     integer :: ierr !<.
+
+     call MPI_Bcast(self%nsample,1,MPI_INTEGER,0,comm,ierr)
+     call MPI_Bcast(self%termdistance,1,MPI_REAL,0,comm ,ierr)
+     call MPI_Bcast(self%srcmin,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+     call MPI_Bcast(self%distfac,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+     call MPI_Bcast(self%sepnfac,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+     call MPI_Bcast(self%abssepn,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+     call MPI_Bcast(self%domeps,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+     call MPI_Bcast(self%distype,1,MPI_INTEGER,0,comm,ierr)
+     call MPI_Bcast(self%quadtype,1,MPI_INTEGER,0,comm,ierr)
+     call MPI_Bcast(self%srctype,1,MPI_INTEGER,0,comm,ierr)
+     call MPI_Bcast(self%formula,len(self%formula),MPI_CHARACTER,0,comm,ierr)
+     call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+#endif
+
+  end subroutine bcast_raynumerics
+    
 
   !> Calls MPI Bcast to distribute the pnumerics structure to all processes
   subroutine bcast_pnumerics(self,rank,comm)
 
     !! Arguments
-    type(pnumerics_t), intent(inout) :: self !< input numerical parameters
+    type(pxnumerics_t), intent(inout) :: self !< input numerical parameters
     integer(ki4) , intent(in) :: rank,comm !< .
 
     integer :: ierr !< .
+    integer(ki4) :: number_of_regions
+
 
 #ifdef WITH_MPI
+
+
+    call MPI_Bcast(self%number_regions,1,MPI_INTEGER,0,comm,ierr)
+    number_of_regions = self%number_regions
+
+    if (rank > 0) then 
+      allocate(self%lmid(number_of_regions))
+      allocate(self%ploss(number_of_regions))
+      allocate(self%sigma(number_of_regions))
+    endif
+
     call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%lmid,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%ploss,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%sigma,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%lmid,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%ploss,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%sigma,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%nlevel,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%shadow,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%qpara0,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
@@ -599,12 +752,22 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%mtrack,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%ntrack,1,MPI_INTEGER,0,comm,ierr)
 
+    call MPI_Bcast(self%pclecalc,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%radncalc,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%shadowr,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%mant,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nant,1,MPI_INTEGER,0,comm,ierr)
+
     ! Added during conversion to LIB/PFC structure
     call MPI_Bcast(self%usepsista,1,MPI_LOGICAL,0,comm,ierr)
 
     if (self%ntrack > 0) then
        if (rank>0) allocate(self%trackno(self%ntrack))
        call MPI_Bcast(self%trackno,self%ntrack,MPI_INTEGER,0,comm,ierr)
+    endif
+    if (self%nant > 0) then
+       if (rank>0) allocate(self%antno(self%nant))
+       call MPI_Bcast(self%antno,self%nant,MPI_INTEGER,0,comm,ierr)
     endif
 
     call MPI_Bcast(self%nanalau,1,MPI_INTEGER,0,comm,ierr)
@@ -658,16 +821,28 @@ end subroutine powcalmpi_collect
     !! Arguments
     type(edgprof_t), intent(inout) :: self !< input ODE numerical parameters
     integer(ki4) , intent(in) :: rank,comm !< .
-
+    integer(ki4) :: number_of_regions
     integer :: ierr
 #ifdef WITH_MPI
-    call MPI_Bcast(self%formula,80,MPI_CHARACTER,0,comm,ierr)
-    call MPI_Bcast(self%lmid,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+
+
+    number_of_regions = self%number_regions
+
+    if (rank > 0) then
+      allocate(self%formula(number_of_regions))
+      allocate(self%lmid(number_of_regions))
+      allocate(self%sigma(number_of_regions))
+      allocate(self%ploss(number_of_regions))
+      allocate(self%lmidnr(number_of_regions))
+    endif
+
+    call MPI_Bcast(self%formula,80*number_of_regions,MPI_CHARACTER,0,comm,ierr)
+    call MPI_Bcast(self%lmid,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%f,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%ploss,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%sigma,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%ploss,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%sigma,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%qpara0,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%lmidnr,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    call MPI_Bcast(self%lmidnr,number_of_regions,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%rqpara0,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%postype,80,MPI_CHARACTER,0,comm,ierr)
     call MPI_Bcast(self%npos,1,MPI_INTEGER,0,comm,ierr)
@@ -675,7 +850,7 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%nipams,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%fint,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
-    formula_allocate: select case (self%formula)
+    formula_allocate: select case (self%formula(1))
     case('samples')
        allocate(self%pos(self%npos), self%prof(self%npos), stat=status)
        call MPI_Bcast(self%pos,self%npos,MPI_DOUBLE_PRECISION,0,comm,ierr)
@@ -727,7 +902,7 @@ end subroutine powcalmpi_collect
   subroutine bcast_file(self,rank,comm)
 
     !! Arguments
-    type(pfiles_t), intent(inout) :: self !< file names
+    type(prfiles_t), intent(inout) :: self !< file names
     integer(ki4) , intent(in) :: rank,comm !< .
 
     integer :: ierr
@@ -737,6 +912,8 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%hdsdata,80,MPI_CHARACTER,0,comm,ierr)
     call MPI_Bcast(self%geoq,80,MPI_CHARACTER,0,comm,ierr)
     call MPI_Bcast(self%laudata,80,MPI_CHARACTER,0,comm,ierr)
+    call MPI_Bcast(self%antdata,80,MPI_CHARACTER,0,comm,ierr)
+    call MPI_Bcast(self%radata,80,MPI_CHARACTER,0,comm,ierr)
 #endif
   end subroutine bcast_file
 
@@ -744,7 +921,7 @@ end subroutine powcalmpi_collect
   subroutine bcast_pplot(self,rank,comm)
 
     !! Arguments
-    type(pplots_t), intent(inout) :: self !< vtk plot selectors
+    type(prplots_t), intent(inout) :: self !< vtk plot selectors
     integer(ki4) , intent(in) :: rank,comm !< .
 
     integer :: ierr !< .
@@ -791,7 +968,6 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%mz,1,MPI_INTEGER,0,comm,ierr)
     call MPI_Bcast(self%rmin,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%rmax,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%rmin,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%dr,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%zmin,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%zmax,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
@@ -803,10 +979,14 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%bpbdry,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%rxpt,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%zxpt,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
+    ! number of regions info
+    call MPI_Bcast(self%number_regions,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%number_xpoints,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%outer_xpoint,1,MPI_INTEGER,0,comm,ierr)
 
     ! btotbdry - need to check if
     call MPI_Bcast(self%btotbdry,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
-      call MPI_Bcast(self%nzets,1,MPI_INTEGER,0,comm,ierr)
+    call MPI_Bcast(self%nzets,1,MPI_INTEGER,0,comm,ierr)
     if (rank>0) allocate(self%f(self%mr+1), stat=status)
     call MPI_Bcast(self%f,self%mr+1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
@@ -844,7 +1024,7 @@ end subroutine powcalmpi_collect
        if (rank>0) allocate(self%ctrackrz(self%nctrack,2), stat=status)
        call MPI_Bcast(self%ctrackrz,self%nctrack*2,MPI_DOUBLE_PRECISION,0,comm,ierr)
     endif
-
+    
     call MPI_Bcast(self%rcenq,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%zcenq,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 #endif
@@ -920,7 +1100,6 @@ end subroutine powcalmpi_collect
     ! Allocate and bcast 2D spline coeffs
     splsize = self%n1p*self%n2p
     if (rank>0) allocate(self%sampl(self%n1p,self%n2p), stat=status)
-    call log_alloc_check(m_name,s_name,40,status)
     call MPI_Bcast(self%sampl,splsize,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
     if (rank>0) allocate(self%coeff(self%n1p,self%n2p), stat=status)
@@ -976,8 +1155,8 @@ end subroutine powcalmpi_collect
 
     ! list of nodes
     call MPI_Bcast(self%nnod,1,MPI_INTEGER,0,comm,ierr)
-    if (self%nnod .gt. 0) then
-       if (rank .gt.0) allocate(self%nodl(self%nnod), stat=status)
+    if (self%nnod > 0) then
+       if (rank > 0) allocate(self%nodl(self%nnod), stat=status)
        call MPI_Bcast(self%nodl,self%nnod,MPI_INTEGER,0,comm,ierr)
     endif
     call MPI_Bcast(self%np,1,MPI_INTEGER,0,comm,ierr)
@@ -986,13 +1165,13 @@ end subroutine powcalmpi_collect
 
     ! obj
     if (self%ngtype==1.OR.self%nwset/=0) then
-       if (rank .gt.0) allocate(self%obj(self%ng), stat=status)
+       if (rank > 0) allocate(self%obj(self%ng), stat=status)
        ! obj contains only 4 byte real weight
        call MPI_Bcast(self%obj%weight,self%ng,MPI_REAL,0,comm,ierr) ! alloc?
     endif
     ! nodl and obj2
     if (self%ngtype/=1) then
-       if (rank .gt.0) allocate(self%obj2(self%ng), stat=status)
+       if (rank > 0) allocate(self%obj2(self%ng), stat=status)
        ! In previous versions an MPI_TYPE was created here however this is simpler
        size = sizeof(self%obj2(1)) ! HJL !*WARNING*! NOT Fortran standard
        call MPI_Bcast(self%obj2,size*self%ng,MPI_CHARACTER,0,comm,ierr)
@@ -1203,7 +1382,6 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%geoml,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%psilts,8,MPI_DOUBLE_PRECISION,0,comm,ierr)
     call MPI_Bcast(self%psidelta,4,MPI_DOUBLE_PRECISION,0,comm,ierr)
-    call MPI_Bcast(self%geoml,1,MPI_DOUBLE_PRECISION,0,comm,ierr)
 
     call MPI_Bcast(self%dimbox,4,MPI_INTEGER,0,comm,ierr)
 
@@ -1286,5 +1464,24 @@ end subroutine powcalmpi_collect
     call MPI_Bcast(self%finpos,3,MPI_DOUBLE_PRECISION,0,comm,ierr)
 #endif
   end subroutine bcast_dnumerics
+
+  !> Returns the current wall-clock time in seconds.
+  !! Uses MPI_Wtime in MPI builds and system_clock in serial builds.
+  real (kr8) function smiter_wctime()
+    implicit none 
+
+#ifndef WITH_MPI
+    integer(ki8) :: ticks, ticks_per_second
+#endif
+
+#ifdef WITH_MPI
+    ! Can't use the inbuilt clock as it affects the clocks in each unit
+    smiter_wctime = MPI_Wtime()
+#else
+    call system_clock(ticks, ticks_per_second)
+    smiter_wctime = real(ticks, kr8)/real(ticks_per_second, kr8)
+#endif
+
+   end function smiter_wctime
 
 end module smitermpi_m

@@ -1,73 +1,71 @@
+!> Runs the SMITER workflow and coordinates the MPI decomposition
 program smiter
 
-#ifdef WITH_MPI
-  use mpi
-#endif
-
-  use date_time_m
-  use log_m
-  use clock_m
-  use geoq_p
-  use hdsgen_p
-  use powcal_p
-  use smitermpi_m
-  use smitermpi_h
+  use geoq_p,        only: geoq_sub
+  use hdsgen_p,      only: hdsgen_sub
+  use powcal_p,      only: powcal_sub
+  use smitermpi_m,   only: smitermpi_init, smiter_wctime, &
+                           smitermpi_barrier, smitermpi_finish
+  use smitermpi_h,   only: decomp_t
 
 
   implicit none
 
   type(decomp_t) :: decomp
-  integer(ki4) :: ierr
-  double precision :: smiterstarttime,starttime,shadtime,restime,hdstime,powtime
-  type(date_time_t) :: timestamp !< timestamp of run
-  character(len=80) :: fileroot !< reference name for all files output by run
-#ifdef WITH_MPI
-  integer(ki4) :: ready, status(MPI_STATUS_SIZE)
-#else
-  double precision :: MPI_Wtime, dummyarg
-  !MPI_Wtime(dummyarg)=0
-  MPI_Wtime()=0
-#endif
+  double precision :: smiterstarttime,starttime
+  double precision :: shadtime,restime,hdstime,powtime
 
-
-  ! Initialize MPI
+  ! Initialize MPI environment and assign work to ranks
   call smitermpi_init(decomp)
 
-  ! Can't use the inbuilt clock as it affects the clocks in each unit
-  smiterstarttime = MPI_Wtime()
+  smiterstarttime = smiter_wctime()
 
+  ! GEOQ shadow nad results are executed by their assigned rank
   if(decomp%myrank == decomp%procgeoqshad) then
-     starttime = MPI_Wtime()
-     call geoq_sub(1,.True.,decomp)
-     shadtime = MPI_Wtime() - starttime
-  endif
+     starttime = smiter_wctime()
+     call geoq_sub(1,.true.,decomp)
+     shadtime = smiter_wctime() - starttime
+  end if
 
   if(decomp%myrank == decomp%procgeoqres) then
-     starttime = MPI_Wtime()
-     call geoq_sub(2,.True.,decomp)
-     restime = MPI_Wtime() - starttime
-  endif
+     starttime = smiter_wctime()
+     call geoq_sub(2,.true.,decomp)
+     restime = smiter_wctime() - starttime
+  end if
 
+  ! HDSGEN is executed by its dedicated rank
   if(decomp%myrank == decomp%prochdsgen) then
-     starttime = MPI_Wtime()
-     call hdsgen_sub(3,.True.,decomp)
-     hdstime = MPI_Wtime() - starttime
-  endif
+     starttime = smiter_wctime()
+     call hdsgen_sub(3,.true.,decomp)
+     hdstime = smiter_wctime() - starttime
+  end if
 
+  ! Al ranks in the POWCAL communicator participate in POWCAL
   if(decomp%powcal) then
-     starttime = MPI_Wtime()
-     call powcal_sub(4,.True.,decomp)
-     powtime = MPI_Wtime() - starttime
-  endif
+     starttime = smiter_wctime()
+     call powcal_sub(4,.true.,decomp)
+     powtime = smiter_wctime() - starttime
+  end if
 
-  if(decomp%myrankpowcal == 1) print*,"powcal processes available after",MPI_Wtime()-smiterstarttime,"s"
+  if(decomp%myrankpowcal == 1) &
+     print '(a," = ",t50,g12.5,1x,a)', &
+         "powcal processes available after WC-time", smiter_wctime()-smiterstarttime, "s"
 
+  ! Synchronize all ranks before reporting timings
   call smitermpi_barrier(decomp%commsmiter)
-  if(decomp%myrank==0) print*, "smiter runtime = ", MPI_Wtime() - smiterstarttime
-  if(decomp%myrank == decomp%procgeoqshad) print*, "geoq shadow finished in",shadtime,"s"
-  if(decomp%myrank == decomp%procgeoqres) print*, "geoq results finished in",restime,"s"
-  if(decomp%myrank == decomp%prochdsgen) print*, "hdsgen finished in",hdstime,"s"
-  if(decomp%powcal .and. decomp%myrankpowcal == 0) print*, "powcal finished in",powtime,"s"
+
+  if(decomp%myrank==0) &
+     print '(a," = ",t50,g12.5,1x,a)',  "smiter runtime ", smiter_wctime() - smiterstarttime, "s"
+  if(decomp%myrank == decomp%procgeoqshad)  &
+     print '(a," = ",t50,g12.5,1x,a)', "geoq shadow wall-clock time (WCT)", shadtime,"s"
+  if(decomp%myrank == decomp%procgeoqres) &
+     print '(a," = ",t50,g12.5,1x,a)',  "geoq results wall-clock time (WCT)", restime,"s"
+  if(decomp%myrank == decomp%prochdsgen) &
+     print '(a," = ",t50,g12.5,1x,a)', "hdsgen wall-clock time (WCT)", hdstime,"s"
+  if(decomp%powcal .and. decomp%myrankpowcal == 0) &
+     print '(a," = ",t50,g12.5,1x,a)', "powcal total wall-clock time (WCT)", powtime,"s"
+  
+  ! Ensure all ranks have completed reporting before finalizing MPI
   call smitermpi_barrier(decomp%commsmiter)
 
   !--------------------------------------------------------------------------

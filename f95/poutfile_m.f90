@@ -1,10 +1,10 @@
 module poutfile_m
-
   use const_kind_m
   use const_numphys_h
   use log_m
   use misc_m
   use pcontrol_h
+  use prcontrol_h
   use date_time_m
   use position_h
   use position_m
@@ -43,7 +43,7 @@ module poutfile_m
 subroutine poutfile_init(file,timestamp)
 
   !! argument
-  type(pfiles_t), intent(in) :: file !< file names
+  type(prfiles_t), intent(in) :: file !< file names
   type(date_time_t), intent(in) :: timestamp !< timestamp of run
 
 

@@ -1,5 +1,4 @@
 module geoq_p 
-
   use const_kind_m
   use const_numphys_h
   use date_time_m
@@ -53,6 +52,13 @@ module geoq_p
   use gfile_m
   use dfile_m
   use geoq_h
+  use antenna_h
+  use prcontrol_h
+  use radnsource_h
+  use radnsource_m
+  use ray_m
+  use powcal_h
+  use powres_h
   use smitermpi_h
   use smitermpi_m
 
@@ -97,7 +103,7 @@ contains
 
     call date_time_init(timestamp)
     call clock_init(32)
-    call clock_start(1,'geoq run time')
+    call clock_start(1,'geoq run CPU-time')
     !--------------------------------------------------------------------------
     !! print header
 
@@ -124,7 +130,7 @@ contains
     !--------------------------------------------------------------------------
     !! read control file
 
-    call clock_start(2,'bcontrol_init time')
+    call clock_start(2,'bcontrol_init CPU-time')
     call bcontrol_init(fileroot)
     call bcontrol_read(file,numerics,geoq%skyl%n,plot)
     !! note bcontrol unit left open
@@ -138,7 +144,7 @@ contains
     !--------------------------------------------------------------------------
     !! beq data
 
-    call clock_start(3,'beq_init time')
+    call clock_start(3,'beq_init CPU-time')
     fileq=file%equil
     ifldspec=numerics%fldspec
     ! default flag for external code generating file defining axisymmetric field
@@ -180,7 +186,7 @@ contains
     !--------------------------------------------------------------------------
     !! read  geobjl data
 
-    call clock_start(4,'geobjlist_read time')
+    call clock_start(4,'geobjlist_read CPU-time')
     ! Values in geobjlist are initialised
     ! because valgrind reports them as being uninitialized.
     call geobjlist_cinit(geoq%objl)
@@ -192,14 +198,14 @@ contains
     !! initialise skylight construction
 
     if (numerics%skyl) then
-       call clock_start(5,'gfile_gnu time')
+       call clock_start(5,'gfile_gnu CPU-time')
        call skyl_init(geoq%skyl,geoq%beq,geoq%objl,fileroot)
        call clock_stop(5)
     end if
     !--------------------------------------------------------------------------
     !! do the main work
 
-    call clock_start(6,'beqs evaluation time')
+    call clock_start(6,'beqs evaluation CPU-time')
 
     select case (ifldspec)
     case (2)
@@ -251,7 +257,7 @@ contains
     !--------------------------------------------------------------------------
     !! gnu plot to check input
     if(plot%gnu) then
-       call clock_start(18,'gfile_gnu time')
+       call clock_start(18,'gfile_gnu CPU-time')
        call gfile_init(trim(file%gnu),'psi sample in R-Z space',nprint)
        call spl2d_writeg(geoq%beq%psi,'sampl',nprint)
        call gfile_close
@@ -326,7 +332,7 @@ contains
     !!plots
     !!plot cartesian B
     if(plot%geoqx) then
-       call clock_start(10,'vfile_geoqx time')
+       call clock_start(10,'vfile_geoqx CPU-time')
        call vfile_init(file%geoqx,'B in cartesian space mm',nplot)
        call beq_writev(geoq%beq,'cartesian',nplot)
        call vfile_close
@@ -335,7 +341,7 @@ contains
 
     !!plot cartesian all B
     if(plot%geoqvolx) then
-       call clock_start(11,'vfile_geoqvolx time')
+       call clock_start(11,'vfile_geoqvolx CPU-time')
        call vfile_init(file%geoqvolx,'cartesian B in cylinder volume mm',nplot)
        call beq_writev(geoq%beq,'allcartesian',nplot)
        call vfile_close
@@ -344,7 +350,7 @@ contains
 
     !!plot cartesian all B
     if(plot%geoqvolxyz) then
-       call clock_start(12,'vfile_geoqvolxyz time')
+       call clock_start(12,'vfile_geoqvolxyz CPU-time')
        call vfile_init(file%geoqvolxyz,'cartesian B in cuboid volume mm',nplot)
        call beq_writev(geoq%beq,'cubeallcartesian',nplot)
        call vfile_close
@@ -353,7 +359,7 @@ contains
 
     !!plots for psi-theta-zeta space
     if(plot%geoqvolm) then
-       call clock_start(16,'vfile_geoqvolm time')
+       call clock_start(16,'vfile_geoqvolm CPU-time')
        call vfile_init(file%geoqvolm,'fields in psi-theta space',nplot)
        call beq_writev(geoq%beq,'psi-theta',nplot)
        call vfile_close
@@ -362,7 +368,7 @@ contains
 
     !!plots for R-Z space
     if(plot%frzv) then
-       call clock_start(17,'vfile_frzv time')
+       call clock_start(17,'vfile_frzv CPU-time')
        call vfile_init(file%frzv,'fields in R-Z space',nplot)
        call beq_writev(geoq%beq,'R-Z',nplot) ! inert
        call vfile_close
@@ -370,7 +376,7 @@ contains
     end if
 
     if(plot%gnum) then
-       call clock_start(19,'gfile_gnum time')
+       call clock_start(19,'gfile_gnum CPU-time')
        call gfile_init(trim(file%gnu)//'_R','R sample in psi-theta space',nprint)
        call spl2d_writeg(geoq%beq%r,'sampl',nprint)
        call gfile_close
@@ -388,7 +394,7 @@ contains
 
     !!plot all geobjs
     if(plot%geoqm) then
-       call clock_start(20,'vfile_geoqm time')
+       call clock_start(20,'vfile_geoqm CPU-time')
        call geobjlist_makehedline(geoq%objl,mapfld,vtkdesc)
        call vfile_init(file%geoqm,vtkdesc,nplot)
        ! in mapped position space
@@ -399,14 +405,14 @@ contains
 
     !--------------------------------------------------------------------------
     !! output file
-    call clock_start(30,'outfile_init time')
+    call clock_start(30,'outfile_init CPU-time')
     call goutfile_init(file,timestamp)
     call goutfile_write(geoq,timestamp)
     call goutfile_close
     call clock_stop(30)
 
     if(plot%geofldx) then
-       call clock_start(22,'vfile_geofldx time')
+       call clock_start(22,'vfile_geofldx CPU-time')
        call geobjlist_makehedline(geoq%objl,'allcart',vtkdesc)
        call vfile_init(file%geofldx,vtkdesc,nplot)
        ibuf=geoq%beq%n%vacfile
@@ -420,7 +426,7 @@ contains
 
     !  if(plot%geofldxyz) then
     ! plot field in geometry coordinates on geometry in duct coordinates
-    !     call clock_start(27,'vfile_geofldxyz time')
+    !     call clock_start(27,'vfile_geofldxyz CPU-time')
     !     call geobjlist_makehedline(geoq%objl,'fxyz',vtkdesc)
     !     call vfile_init(file%geofldxyz,vtkdesc,nplot)
     !     call geoq_writev(geoq,'fxyz',nplot)
@@ -429,7 +435,7 @@ contains
     !  end if
 
     if(plot%frzzeta) then
-       call clock_start(23,'vfile_frzzeta time')
+       call clock_start(23,'vfile_frzzeta CPU-time')
        call geobjlist_makehedline(geoq%objl,'frzzeta',vtkdesc)
        call vfile_init(file%frzzeta,vtkdesc,nplot)
        call geoq_writev(geoq,'frzzeta',nplot)
@@ -439,7 +445,7 @@ contains
 
     !! silhouette of geometry in (R,Z)
     if(plot%gnusil) then
-       call clock_start(25,'vfile_gnusil time')
+       call clock_start(25,'vfile_gnusil CPU-time')
        call gfile_init(file%gnusil,'gnusil',nprint)
        call geoq_writeg(geoq,'gnusil',nprint,0)
        call gfile_close
@@ -448,7 +454,7 @@ contains
 
     !! silhouette of geometry in (psi,theta)
     if(plot%gnusilm) then
-       call clock_start(26,'vfile_gnusilm time')
+       call clock_start(26,'vfile_gnusilm CPU-time')
        call gfile_init(file%gnusilm,'gnusilm',nprint)
        call geoq_writeg(geoq,'gnusilm',nprint,0)
        call gfile_close
@@ -457,7 +463,7 @@ contains
 
     !! field format for beams calculation
     if(plot%geoqfldxyz) then
-       call clock_start(28,'vfile_geoqfldxyz time')
+       call clock_start(28,'vfile_geoqfldxyz CPU-time')
        call dfile_init(file%geoqfldxyz,nplot,1)
        ibuf=geoq%beq%n%vacfile
        call beq_writen(geoq%beq,'regular',nplot)
@@ -489,17 +495,20 @@ contains
 end module geoq_p
 
 #ifndef COMBINED
-!> @addtogroup groupname9
-!> @{
 program geoq
-!> @}
   use geoq_p
 
   type(decomp_t) :: decomp
+  real (kr8) :: t0, dt_wc   !start-time and wall-clock elapsed time
+
+  t0 = smiter_wctime()
 
   if(serialmpi_init()) call geoq_sub(1,.False.,decomp)
 
   call serialmpi_finish()
+  dt_wc = smiter_wctime()-t0
+
+  print '(" geoq TOTAL WC-time = ", t40, g12.5, "secs")', dt_wc
 
 end program geoq
 #endif

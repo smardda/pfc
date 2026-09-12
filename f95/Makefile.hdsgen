@@ -1,6 +1,7 @@
 # basic Makefile
 
 # config file.
+$(info >>> ENTERING $(lastword $(MAKEFILE_LIST)))
 include ../config/config.inc
  
 # Path and libraries
@@ -20,6 +21,8 @@ VPATH=$(SMAPATH)
 
 MODULES=$(SOURCES:.f90=.mod)
 
+EXTRA_MODULES = hdsgen_p.mod
+
 OBJECTS=$(SOURCES:.f90=.o)
 
 $(PROG) : lib $(OBJECTS)
@@ -32,7 +35,7 @@ $(MODULES): %.mod : %.f90
 	$(F90) $(F90FLAGS) -I$(SMAPATH) -c $<
 
 clean:
-	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_CLEAN_FILES)
+	rm -f $(OBJECTS) *$(MODULES) $(EXTRA_MODULES) $(EXTRA_CLEAN_FILES)
 
 distclean: clean
 	rm -f $(PROG)
@@ -116,6 +119,7 @@ smitermpi_m.f90 : log_m.mod
 smitermpi_m.f90 : powcal_h.mod
 smitermpi_m.f90 : powres_h.mod
 smitermpi_m.f90 : pcontrol_h.mod
+smitermpi_m.f90 : prcontrol_h.mod
 smitermpi_m.f90 : control_h.mod
 smitermpi_m.f90 : edgprof_h.mod
 smitermpi_m.f90 : odes_h.mod

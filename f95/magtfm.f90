@@ -1,10 +1,11 @@
 module magtfm_p
-
   use const_kind_m
   use const_numphys_h
   use date_time_m
   use mcontrol_h
   use dcontrol_h
+  use skyl_h
+  use skyl_m
   use apb_h
   use log_m
   use misc_m
@@ -18,6 +19,14 @@ module magtfm_p
   use gfile_m
   use spl3d_m
   use spl2d_m
+  use antenna_h
+  use prcontrol_h
+  use radnsource_h
+  use radnsource_m
+  use ray_m
+  use powcal_h
+  use powres_h
+
   use smitermpi_h
   use smitermpi_m
 
@@ -66,7 +75,7 @@ contains
 
     call date_time_init(timestamp)
     call clock_init(30)
-    call clock_start(1,'magtfm run time')
+    call clock_start(1,'magtfm run CPU-time')
     !--------------------------------------------------------------------------
     !! print header
 
@@ -92,7 +101,7 @@ contains
     !--------------------------------------------------------------------------
     !! read control file (nominally)
 
-    call clock_start(2,'mcontrol_init time')
+    call clock_start(2,'mcontrol_init CPU-time')
     call mcontrol_init(fileroot)
     call mcontrol_read(file,numerics,plot)
     call mcontrol_close
@@ -103,7 +112,7 @@ contains
     !--------------------------------------------------------------------------
     !! read  applied field data
 
-    call clock_start(4,'field_data_read time')
+    call clock_start(4,'field_data_read CPU-time')
     call apb_readmlab(apb,numerics,file%magdata)
     call apb_copy(apb,apbsave)
     call apb_checkperiod(apb)
@@ -115,7 +124,7 @@ contains
     if (trim(adjustl(file%magout))=='null') then
 
        if(plot%bcartx) then
-          call clock_start(5,'writecart_init time')
+          call clock_start(5,'writecart_init CPU-time')
           call moutfile_init(file%bcartx,numerics,'txt',nout)
           zpt(1)=numerics%rax
           zpt(2)=0.
@@ -133,7 +142,7 @@ contains
     end if
 
     !dbg21   if(plot%bcartx) then    !dbg21
-    !dbg21      call clock_start(5,'writecart_init time')    !dbg21
+    !dbg21      call clock_start(5,'writecart_init CPU-time')    !dbg21
     !dbg21      call moutfile_init(file%bcartx,numerics,'txt',nout)    !dbg21
     !dbg21      call apb_qartwrite(apb,numerics,nout)    !dbg21
     !dbg21      call moutfile_close()    !dbg21
@@ -143,7 +152,7 @@ contains
 
     !--------------------------------------------------------------------------
     !! do the conversion
-    call clock_start(6,'field transform time')
+    call clock_start(6,'field transform CPU-time')
     !     line below needed for debugging version to run
     !  write(*,*) 'this output helps gfortran sometimes',(apb%pos3(j),j=1,2)
     !     write(*,*) 'second',((numerics%panbod(i,j),i=1,2),j=1,9)
@@ -157,7 +166,7 @@ contains
     !--------------------------------------------------------------------------
     !! scale
 
-    call clock_start(7,'field scaling time')
+    call clock_start(7,'field scaling CPU-time')
     zpt(1)=numerics%rax
     zpt(2)=0.
     zpt(3)=0.
@@ -168,13 +177,13 @@ contains
     !--------------------------------------------------------------------------
     !! set up the mode mask
 
-    call clock_start(8,'mode masking time')
+    call clock_start(8,'mode masking CPU-time')
     call spl3d_mask(spl3d,numerics%cutoff,numerics%parity,numerics%ireq)
     call clock_stop(8)
     !--------------------------------------------------------------------------
     ! gnu plots
     if(plot%modes) then
-       call clock_start(9,'gfile_modes time')
+       call clock_start(9,'gfile_modes CPU-time')
        call gfile_init(trim(file%modes),'maximum mode numbers',nprint)
        if (minval(numerics%kmax)<0) then
           call spl3d_writeg(spl3d,'countout',nprint)
@@ -188,7 +197,7 @@ contains
     !! testing transform
 
     if(plot%testtfm) then
-       call clock_start(30,'spl3d_testtfm time')
+       call clock_start(30,'spl3d_testtfm CPU-time')
        call spl3d_testtfm(spl3d,apbsave%field,scalereq,iphchange)
        call clock_stop(30)
     end if
@@ -196,7 +205,7 @@ contains
     !!plots
     !! diagnostic gnu plots
     if(plot%gnuv) then
-       call clock_start(40,'gfile_gnuv time')
+       call clock_start(40,'gfile_gnuv CPU-time')
        call gfile_init(trim(file%gnuv),'field sample in R-Z space',nprint)
        call spl3d_writeg(spl3d,'sampl',nprint)
        call gfile_close
@@ -204,7 +213,7 @@ contains
     end if
 
     if(plot%gnu) then
-       call clock_start(42,'gfile_gnu time')
+       call clock_start(42,'gfile_gnu CPU-time')
        call gfile_init(trim(file%gnu),'field sample in k-space (Bzeta, BZ,BR)',nprint)
        call spl3d_writeg(spl3d,'strip',nprint)
        call gfile_close
@@ -212,7 +221,7 @@ contains
     end if
     !--------------------------------------------------------------------------
     !! output files
-    call clock_start(32,'moutfile_init time')
+    call clock_start(32,'moutfile_init CPU-time')
     call moutfile_init(file%magout,numerics,iched,nout)
     !     write(*,*) 'iched=',iched
     call spl3d_write(spl3d,nout)
@@ -235,10 +244,7 @@ contains
 end module magtfm_p
 
 #ifndef COMBINED
-!> @addtogroup groupname9
-!> @{
 program magtfm
-!> @} 
   use magtfm_p
   
   type(decomp_t) :: decomp

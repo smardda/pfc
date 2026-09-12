@@ -1,5 +1,4 @@
 program smanal_p
-
 #ifdef WITH_MPI
   use mpi
 #endif
@@ -77,7 +76,7 @@ program smanal_p
 
   call date_time_init(timestamp)
   call clock_init(20)
-  call clock_start(1,'smanal run time')
+  call clock_start(1,'smanal run CPU-time')
 
 !--------------------------------------------------------------------------
 !! print header
@@ -106,7 +105,7 @@ program smanal_p
 !--------------------------------------------------------------------------
 !! read control file
 
-  call clock_start(2,'scontrol_init time')
+  call clock_start(2,'scontrol_init CPU-time')
   call scontrol_init(fileroot)
   call scontrol_read(numerics,file,plot)
   call clock_stop(2)
@@ -114,14 +113,14 @@ program smanal_p
 !--------------------------------------------------------------------------
 !! initialise geobjl data from powcal output file
 
-  call clock_start(3,'geobjlist_init time')
+  call clock_start(3,'geobjlist_init CPU-time')
   call smanal_read(smanal,file,numerics)
   call clock_stop(3)
 
 !--------------------------------------------------------------------------
 !! main work
 
-  call clock_start(5,'analysis time')
+  call clock_start(5,'analysis CPU-time')
   call smanal_rekey(smanal)
   call smanal_stats(smanal)
   call clock_stop(5)
@@ -132,7 +131,7 @@ program smanal_p
 
 !! csv output of body statistics
   if(plot%gnu) then
-     call clock_start(25,'vfile_gnuanal time')
+     call clock_start(25,'vfile_gnuanal CPU-time')
      cmesg='Statistics of scalar field '//numerics%namescal
      call gfile_init(file%gnu,cmesg,nprint)
      call smanal_writeg(smanal,'gnuanal',nprint)
@@ -146,7 +145,7 @@ program smanal_p
 
 !! vtk output of body statistics (equivalent to a smanal_writev)
   if(plot%vtk) then
-     call clock_start(11,'vfile_analysis time')
+     call clock_start(11,'vfile_analysis CPU-time')
      cmesg='Statistics of '//numerics%namescal
      call geobjlist_makehedline(smanal%geobjl,cmesg,vtkdesc)
      call vfile_init(file%vtkfull,vtkdesc,nplot)
@@ -157,7 +156,7 @@ program smanal_p
 !! vtk output of body statistics as above but now small geobjl,
 !! corresponding to one point per body
   if(plot%vtksmall) then
-     call clock_start(12,'vfile_analysis time')
+     call clock_start(12,'vfile_analysis CPU-time')
      cmesg='Small statistics of '//numerics%namescal
      call geobjlist_makehedline(smanal%geobjl,cmesg,vtkdesc)
      call vfile_init(file%vtksmall,vtkdesc,nplot)
@@ -168,7 +167,7 @@ program smanal_p
 !!--------------------------------------------------------------------------
 !!! output file
 !
-  call clock_start(20,'outfile_init time')
+  call clock_start(20,'outfile_init CPU-time')
 !! just dictionaries for now
   call soutfile_init(file,timestamp)
   call soutfile_write(smanal)
