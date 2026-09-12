@@ -1,6 +1,5 @@
 #! /bin/bash
 #smardda-pfc specific setups
-echo "Warning - this script may invoke old/unavailable software and hardware"
 if [[ -z "$SMITER_DIR" ]] ; then
     export SMITER_DIR=$PWD
 fi
@@ -14,8 +13,8 @@ export dd_doc
 # Module handling
 mcfound=n
 if uname -n | grep -q iter; then
+echo "Warning - this script may invoke old/unavailable software and hardware"
 # ITER hpc
-if [ $? -eq 0 ] ; then
 mcfound=y
 . /usr/share/Modules/init/sh
 #module purge # can undefine SMITER_DIR
@@ -41,6 +40,7 @@ module load texlive/2015
 # module load Java/1.8.0_162 # For MDSplus compilation
 fi
 if uname -n | grep -q freia; then
+echo "Warning - this script may invoke old/unavailable software and hardware"
 mcfound=y
 #CCFE Scientific Linux fuslw->freia
 module load doxygen/1.8.9
