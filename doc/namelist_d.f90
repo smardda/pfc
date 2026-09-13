@@ -1924,7 +1924,7 @@ module namelist
 !! If there is more than one input file,
 !! then by default each file is treated as a single object with a body with
 !! number greater than 100. The numbering convention should be obvious
-!! from inspection of the examples in the smiteraux test deck,
+!! from inspection of the examples in the smiteraux test decks,
 !! the first file is numbered 101, the second 201, the third 301, etc.
 !! The number of copies may be specified for each file, default 1
 !! (i.e. a single occurrence of the geometry). Other copies of

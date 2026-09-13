@@ -542,19 +542,21 @@
 !!   .sgo files  scripts covering entire workflow \n
 !!   .ctl files  skeleton control files used by .sgo files \n
 !! \arg ./smardda/smardda-pfc/tools Python utilities for regression testing and
-!! VTK result comparison; see \ref sec_regression.
-!! \arg Test-deck files - smiteraux  (tests.bash) and smiteraux2
-!! https://git.iter.org/projects/BND/repos/smiteraux/browse
-!! are data files (geometry and equilibria) used by the .sgo scripts.
-!! The test-decks should be regarded as a valuable resource, providing
-!! examples that can quickly be modified to address new problems, illustrate
-!! workflows including use of MPI parallelism, etc.
+!!  VTK result comparison; see \ref sec_regression.
+!! \arg Test-deck files - smiteraux (smiteraux1 on github) and smiteraux2
+!!  https://git.iter.org/projects/BND/repos/smiteraux/browse \n
+!!  https://github.com:smardda/smiteraux1.git \n
+!!  https://github.com:smardda/smiteraux2.git \n
+!!  have data files (geometry and equilibria) used by the .sgo scripts.
+!!  The test-decks should be regarded as a valuable resource, providing
+!!  examples that can quickly be modified to address new problems, illustrate
+!!  workflows including use of MPI parallelism, etc.
 !! \arg ./smardda/smardda-pfc/doc/mpidoc/smiterMPI_dev_manual.pdf
-!! describes initial MPI implementation by Huw Leggate
+!!  describes initial MPI implementation by Huw Leggate
 !! \arg ParaView Guide - a printed version for ParaView 4.3
-!! may be purchased via the web-site http://www.paraview.org, or an electronic version
-!! of the latest release (6.2 as of July 2026) is a free download.
-!! For hints for using ParaView with SMARDDA-PFC see \ref sec2paraview
+!!  may be purchased via the web-site http://www.paraview.org, or an electronic version
+!!  of the latest release (6.2 as of July 2026) is a free download.
+!!  For hints for using ParaView with SMARDDA-PFC see \ref sec2paraview
 !! 
 !! \subsection sec1install SMARDDA-PFC Installation
 !! 
@@ -568,7 +570,7 @@
 !! source ./exec/build intel \n
 !! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
 !! together will mpi-parallel versions gfortranmpi and gfortranmpi_dbg.
-!! \arg Ensure that for subsequent session environment variable
+!! \arg Ensure that for subsequent sessions, environment variable
 !! SMALIB_DIR is set correctly as returned by build, as this is where
 !! SMARDDA-PFC will search for library code.
 !!
@@ -586,7 +588,7 @@
 !! \ref sec3 "Building and running SMARDDA-PFC with MPI"
 !! \arg ParaView needs a one-off re-setting of defaults (for
 !! better \Bold{smpfcint} integration) as described in \ref sec2paraview .
-!! \arg SMARDDA-PFC has test-decks (data files for which are in the smiteraux repo),
+!! \arg SMARDDA-PFC has test-decks (data files for which are in the smiteraux repos),
 !! see \ref sec4 for more details, which should be used to check the installation.
 !!
 !! It may be helpful to note also that
@@ -688,7 +690,7 @@
 !! \arg SMAN.ctl -> smanal, analysis of results defined in .vtk file by row or otherwise
 !! \arg VTKF.ctl -> vtktfm,  transform .vtk format geometry from mm to m \n
 !! The use of other .ctl and .sgo files by the test-decks is described in detail
-!! in the README for smiteraux.
+!! in the README for smiteraux/smiteraux1.
 !!
 !! \subsection sec2geoq geoq code
 !! The geoq code may be used to analyse the flux function \f$ \psi \f$,
@@ -1285,7 +1287,7 @@
 !!  as part of the system software environment and selected through the \c module 
 !! system.
 !!
-!! An example of SLURM script for running SMARDDA with MPI  o the UKAEA Cumulus 
+!! An example of SLURM script for running SMARDDA with MPI on the UKAEA Cumulus 
 !! cluster is provided in
 !! \c $SMITER_DIR/smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm.
 !!
@@ -1409,9 +1411,9 @@
 !! for \c ITER-valid (see \ref sec5Ivalid) and \c JET-radn (see \ref sec5Jrad),
 !!  using
 !!
-!! \c smiteraux-full/test_mpi_ITER-valid.bash and
+!! \c smiteraux2/test_mpi_ITER-valid.bash and
 !!
-!! \c smiteraux-full/test_mpi_JET-radn.bash.
+!! \c smiteraux2/test_mpi_JET-radn.bash.
 !!
 !! These scripts can therefore be used as an example/template for preparing other 
 !! monolithic SMITER MPI cases on a local system.
@@ -1856,7 +1858,7 @@
 !! demonstrate correct functioning of all the parts of
 !! SMARDDA-PFC commonly used for particle power deposition, including
 !! software parallelism using MPI.
-!! Data for the test-deck is in the smiteraux directory,
+!! Data for the test-deck is in the smiteraux directory (smiteraux1 on github),
 !! together with files "_notes.txt" on how to produce geometry for the validation
 !! test cases.
 !!
@@ -2063,7 +2065,7 @@
 !! \subsection sec5cases Test Cases
 !! The cases are labelled using a notation which emphasises the nature of the test and the machine
 !! geometry employed. \n
-!! The deck is executed using the script tests.bash in the smiteraux-full directory (previous outputs
+!! The deck is executed using the script tests.bash in the smiteraux2 directory (previous outputs
 !! should first be removed using the tests_clean.bash script).
 !! Alternatively, each case may be separately invoked by
 !! \code
@@ -2122,6 +2124,7 @@
 !! wall consisting of quadrilaterals made by extrusion in the toroidal direction of a "silhouette"
 !! jwall.txt supplied as 003 by Oliver Bardsley 21/5/21
 !! to jetwall_RZ.dat in Data/Geometry , removing first line, copying 2nd to end.
+!! The antenna file was produced by the now obsolete ParaView-based script ./spheregen.bash
 !! The radiative power deposition is plotted 
 !! \image html radn3.png
 !! \image latex radn3.eps "Contours of radiation field superimposed on PFC silhouette" width=10cm
@@ -2133,7 +2136,7 @@
 !! This test case is also used to test software parallelism using MPI.
 !!
 !! An example script for running the case directly with MPI is
-!! \c smiteraux-full/test_mpi_JET-radn.bash.
+!! \c smiteraux2/test_mpi_JET-radn.bash.
 !!
 !! The script performs the three JET-radn radiation calculations using the monolithic
 !! \c smiter executable. 
@@ -2160,7 +2163,7 @@
 !! This test case is also used to test software parallelism using MPI.
 !!
 !! An example script for running the case directly with MPI is
-!! \c smiteraux-full/test_mpi_ITER-valid.bash.
+!! \c smiteraux2/test_mpi_ITER-valid.bash.
 !!
 !! The script creates a separate \c ITER-valid_MPI run directory containing
 !! the results of the MPI execution.

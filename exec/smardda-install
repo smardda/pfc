@@ -20,10 +20,10 @@ function install_file {
 
 SMITER_DIR="$(realpath "${SCRIPT_DIR}/..")"
 if [ -z "${SMALIB_DIR}" ]; then
-    SMALIB_DIR="$(realpath "${SCRIPT_DIR}"/../smardda-lib)"
+    SMALIB_DIR="$(realpath "${SCRIPT_DIR}"/../smalib)"
 fi
 if [ ! -d "${SMALIB_DIR}" ]; then
-    echo "cannot locate smardda-lib; please set 'SMALIB_DIR' variable"
+    echo "cannot locate smalib; please set 'SMALIB_DIR' variable"
     exit 1
 fi
 

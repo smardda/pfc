@@ -3,7 +3,7 @@
 if [[ -n "$SMITER_DIR" ]] ; then
     HS=$SMITER_DIR
 else
-    HS=$HOME/smardda-pfc
+    HS=$HOME/pfc
 fi
 INT=$HS/int
 #INT=~/dial #fix for testing
