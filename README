@@ -39,11 +39,11 @@ module load texlive/2015
 cd ./doc/srcdoc/latex/; pdflatex refman
 else a version suitable for the target machine will have to be found and installed)
 
-To run the test deck, to be found in separate directory smiter-aux,
-https://git.iter.org/projects/BND/repos/smiter-aux/browse
+To run the test deck, to be found in separate directory smiteraux,
+https://git.iter.org/projects/BND/repos/smiteraux/browse
 orchestrated by file tests.bash, it is important to ensure the following
 shell variable is set, for example
-export HSAUX=~/smiter-aux
+export HSAUX=~/smiteraux
 Linux modules dated post-2011 are generally required.
 The following module versions are indicative:
 module load qt/4.8.7

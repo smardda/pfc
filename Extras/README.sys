@@ -36,7 +36,7 @@ CADfix software requires a significant amount of training.
 Paraview can also be used to convert triangulated surface geometries from a number
 of different packages into the legacy (ASCII) vtk format.
 
-The directory ~warter/smiter-aux contains the smiter test deck and should be
+The directory ~warter/smiteraux contains the smiter test deck and should be
 copied into the user's home space. The file tests.bash runs the text-deck.
 
 The script tes.sgo in $SMITER_DIR/Extras show how SMITER works in detail, given the

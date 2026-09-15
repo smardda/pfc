@@ -24,7 +24,7 @@ elif [ -z "${HSAOLD}" ]; then
 fi
 
 if [ ! -d "${HSAUX}" ]; then
-	echo "smiter-aux directory \$HSAUX=${HSAUX} does not exist, try different \$HSAUX "
+	echo "smiteraux directory \$HSAUX=${HSAUX} does not exist, try different \$HSAUX "
 	echo "Script quitting"
 	exit 1
 fi
