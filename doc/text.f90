@@ -349,7 +349,7 @@
 !!
 !! The basic standard for EQDSK G may be found at:
 !! https://fusion.gat.com/theory/Efitgeqdsk (with password)
-!! or try https://w3.pppl.gov/ntcc/TORAY/G_EQDSK.pdf
+!! or try https://w3.pppl.gov/ntcc/TORAY/G_EQDSK.pdf.
 !! SMARDDA-PFC has been programmed to read many (more than seven)
 !! different eqdsk formats, and negate flux \f$ \psi \f$ where necessary
 !! to try to ensure that the field has the same handedness as ITER (the
@@ -373,7 +373,7 @@
 !! \ref netcdfinput, which coverts to .eqdsk format, whereas the latter requires
 !! preliminary editing using smalib/Extras/equ.ed
 !! 
-!! \subsection sec1cli Command line interface
+!! \subsection sec1cli Command Line Interface
 !!
 !! (If SMARDDA-PFC has been installed in directory ~/smardda/smardda-pfc, the SMARDDA-PFC
 !! codes may be added to the user's path with the shell commands: \n
@@ -447,7 +447,7 @@
 !! firefox or xdg-open ./smardda/smardda-pfc/doc/srcdoc/html/classes.html
 !! (index under "Data Fields" sub-heading)
 !! 
-!! \subsection sec1output SMARDDA-PFC output files
+!! \subsection sec1output SMARDDA-PFC Output Files
 !!
 !! All the codes produce a log file, which contains typically time-and-date stamps,
 !! information about the files used, a selection of key parameters, execution times and
@@ -541,8 +541,9 @@
 !! \arg ./smardda/smardda-pfc/Extras \n
 !!   .sgo files  scripts covering entire workflow \n
 !!   .ctl files  skeleton control files used by .sgo files \n
-!! \arg ./smardda/smardda-pfc/tools Python utilities for regression testing and
-!!  VTK result comparison; see \ref sec_regression.
+!! \arg ./smardda/smardda-pfc/tools Python utilities for comparing VTK files and
+!! determining whether they agree within specified numerical tolerances, useful
+!! for interactive diagnostics and regression testing; see \ref sec_regression.
 !! \arg Test-deck files - smiteraux (smiteraux1 on github) and smiteraux2
 !!  https://git.iter.org/projects/BND/repos/smiteraux/browse \n
 !!  https://github.com:smardda/smiteraux1.git \n
@@ -566,10 +567,12 @@
 !! IMAS git repository http://git.iter.org/projects/BND/repos/smardda/smardda-lib/browse
 !! and follow instructions in README, noting that
 !! \arg produce executables and optionally documentation (script will enquire)
-!! by typing when in the smardda/smalib OR smardda/smardda-lib directory \n
-!! source ./exec/build intel \n
-!! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
-!! together will mpi-parallel versions gfortranmpi and gfortranmpi_dbg.
+!! by typing when in the smardda/smalib OR smardda/smardda-lib directory
+!! \code
+!! source ./exec/build gfortran
+!! \endcode
+!! The intel build option and the debug options intel_dbg and gfortran_dbg are also available,
+!! together with the MPI parallel options gfortranmpi and gfortranmpi_dbg.
 !! \arg Ensure that for subsequent sessions, environment variable
 !! SMALIB_DIR is set correctly as returned by build, as this is where
 !! SMARDDA-PFC will search for library code.
@@ -580,10 +583,13 @@
 !! http://git.iter.org/projects/BND/repos/smardda/smardda-pfc/browse \n
 !! and follow instructions in README, noting that
 !! \arg produce executables and optionally documentation (script will enquire)
-!! by typing in the smardda/smardda-pfc top directory \n
-!! source ./exec/build intel \n
-!! gfortran and the debug options  intel_dbg and gfortran_dbg are also available
-!! \arg *except* for building and running SMARDDA-PFC with MPI, including the required
+!! by typing in the smardda/smardda-pfc top directory
+!! \code
+!! source ./exec/build intel
+!!\endcode
+!! The intel build option and the debug options intel_dbg and gfortran_dbg are also available,
+!! together with the MPI parallel options gfortranmpi and gfortranmpi_dbg.
+!! \arg For building and running SMARDDA-PFC with MPI, including the required
 !! compiler/MPI software environment and the MPI build options, see
 !! \ref sec3 "Building and running SMARDDA-PFC with MPI"
 !! \arg ParaView needs a one-off re-setting of defaults (for
@@ -758,7 +764,7 @@
 !! \subsection sec2magtfm magtfm code
 !! The vacuum magnetic field is defined in a .txt file, in what will be referred to as mag format. Details of the 
 !! required contents may be deduced by inspection of the example file 
-!! ./smiteraux/Data/Equilibrium/testov5.txt, given that:
+!! ./smiteraux1/Data/Equilibrium/testov5.txt, given that:
 !!
 !! mag format data has to overlap in toroidal angle  \f$ \zeta \f$, i.e. field data for the 
 !! first point in  \f$ \zeta \f$  is repeated on the last point.  Note that  \f$ \zeta \f$  is 
@@ -1132,7 +1138,7 @@
 !! for graphing using gnuplot (comment out first line with leading "#", replace
 !! commas with spaces) or spreadsheet software.
 !!
-!! \subsection sec2sensit Sensitivity studies using SMARDDA-PFC
+!! \subsection sec2sensit Sensitivity Studies using SMARDDA-PFC
 !!
 !! The sensitivity considered here is that to misalignments of the first wall
 !! panels, as described by \n
@@ -1206,13 +1212,13 @@
 !! 6. (number of transforms applied) - (number of inverse transforms applied)
 !!
 !!
-!! \section sec3 Building and running SMARDDA-PFC with MPI
+!! \section sec3 Building and Running SMARDDA-PFC with MPI
 !!
-!! SMARDDA-PFC can be built and run using MPI (Message Passing Interface).
-!! MPI is a portable message-passing standard for distributed-memory parallel 
-!! programming, while an MPI implementation, such as Open MPI or MPICH, 
-!! provides the compiler wrappers, libraries and launch commands required to build
-!! and run MPI applications.
+!! SMARDDA-PFC can be built with MPI support and run using MPI (Message Passing
+!! Interface). MPI is a portable message-passing standard for distributed-memory
+!! parallel programming, while an MPI implementation, such as Open MPI or MPICH,
+!! provides the compiler wrappers, libraries and launch commands required
+!! to build and run MPI applications.
 !!
 !! Building SMARDDA-PFC with MPI requires a Fortran compiler and MPI implementation
 !! which are compatible with each other. Together these form the compiler/MPI 
@@ -1228,25 +1234,25 @@
 !! MPI Fortran wrapper   : mpifort
 !! \endcode
 !!
-!! The same GNU Fortran/Open MPI toolchain is reproduced by the GitLab CI
-!! MPI job.
+!! The same GNU Fortran/Open MPI toolchain is used by the MPI job in the
+!! GitLab CI pipeline.
 !!
-!! The SMARDDA-PFC MPI build and execution workflow has been tested on local 
-!! systems and on HPC systems, including the UKAEA Cumulus cluster and the 
+!! The SMARDDA-PFC MPI build and parallel execution workflow has been tested on
+!! local systems and on HPC systems, including the UKAEA Cumulus cluster and the
 !! Durham University HPC cluster. It is also exercised  automatically by the GitLab 
 !! CI pipeline by running with MPI the regression case \ref sec4T3g from \ref sec4.
 !!
 !! Other compiler/MPI toolchains may also be suitable for SMARDDA-PFC, but they
 !! have not yet been tested. Support for additional toolchains is planned as future work.
 !!
-!! \subsection sec3_mpi_environment MPI software environment
+!! \subsection sec3_mpi_environment MPI Software Environment
 !!
-!! The compiler/MPI environment used to build and the run SMARDDA-PFC depends on
+!! The compiler/MPI environment used to build and run SMARDDA-PFC depends on
 !! the system.
 !!
-!! \subsubsection mpi_local Local systems
+!! \subsubsection mpi_local Local Systems
 !!
-!! On a local system the required compiler and MPI implementation  (for example 
+!! On a local system the required compiler and MPI implementation (for example,
 !! Open MPI or MPICH) must be installed and available before building SMARDDA-PFC
 !! with MPI.
 !!
@@ -1259,15 +1265,16 @@
 !! sudo apt install openmpi-bin libopenmpi-dev
 !! \endcode
 !!
-!! On macOS using MacPorts, OpenMPI can be installed with
+!! On macOS, Open MPI can be installed with
 !!
 !! \code{.sh}
 !! sudo port install openmpi
 !! \endcode
 !!
-!! Other MPI implementation, such as MPICH, may also be used.
+!! Other MPI implementations, such as MPICH, may also be used.
 !!
-!! The active MPI Fortran compiler wrapper can be checked with
+!! The active MPI Fortran wrapper and the underlying compiler version
+!! can be checked with
 !!
 !! \code{.sh}
 !! which mpifort
@@ -1281,33 +1288,31 @@
 !! mpifort --showme
 !! \endcode
 !!
-!! \subsubsection mpi_hpc HPC systems
+!! \subsubsection mpi_hpc HPC Systems
 !!
-!! On HPC systems, the required compiler and MPI implementation are  normally provided
-!!  as part of the system software environment and selected through the \c module 
-!! system.
+!! On HPC systems, the required compiler and MPI implementation are  normally
+!! provided as part of the system software environment and selected through the
+!! \c module system.
 !!
-!! An example of SLURM script for running SMARDDA with MPI on the UKAEA Cumulus 
-!! cluster is provided in
-!! \c $SMITER_DIR/smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm.
-!!
-!! This example uses the GNU \c foss/2022a toolchain:
+!! For example, on the UKAEA Cumulus cluster the GNU/Open MPI toolchain used
+!! for the SMARDDA-PFC MPI tests is provided by
 !!
 !! \code{.sh}
 !! module purge
 !! module load foss/2022a
 !! \endcode
 !!
-!! The exact module selection is system dependent and should therefore be checked
-!! for the HPC system being used.
+!! Additional modules may be required by individual test cases or post-processing
+!! tools. The exact module selection is system dependent and should therefore be
+!! checked for the HPC system being used.
 !!
 !! \subsection mpi_build Building SMARDDA with MPI
 !!
-!! Once a suitable compiler/MPI environment is available, SMARDDA-LIB and 
-!! SMARDDA-PFC can be built using the MPI build option.
+!! Once a suitable compiler/MPI environment is available, both SMARDDA-LIB
+!! and SMARDDA-PFC must be built using the MPI support.
 !! 
-!! For the GNU/Open MPi build currently supported and tested, both are built by
-!! passing \c gfortranmpi to the two build scripts:
+!! For the GNU Fortran/Open MPI build currently supported and tested,
+!! \c gfortranmpi is passed to the build script of each component:
 !!
 !! \code{.sh}
 !! bash $SMALIB_DIR/exec/build gfortranmpi
@@ -1328,12 +1333,12 @@
 !! how the compiler/MPI toolchain is provided: by a locally
 !! installed MPI implementation on a local system, or by the compiler/MPI
 !! toolchain selected on the HPC system.
-!! The GNU/Open MPI build shown above is also exercised by the GitLab CI MPI
-!! job.
+!! The GNU Fortran/Open MPI build shown above is also used  by the MPI
+!! job in the GitLab CI pipeline.
 !!
 !! \subsection sec3mpirun Running SMARDDA-PFC with MPI
 !! 
-!! \subsubsection mpi_case_preparation Preparing a case for the monolithic SMITER
+!! \subsubsection mpi_case_preparation Preparing a Case for the Monolithic SMITER
 !!
 !! For MPI execution, SMARDDA-PFC provides the monolithic \c smiter executable,
 !! which combines the GEOQ, HDSGEN and POWCAL stages in a single program. The 
@@ -1346,7 +1351,7 @@
 !! The executable is run from the top-level case directory, above the
 !! S/, G/, H/ and P/ directories.
 !!
-!! !! In this directory structure:
+!! In this directory structure:
 !!
 !! - S contains the GEOQ control file for the shadowing geometry;
 !! - G contains the GEOQ control file for the results geometry;
@@ -1377,15 +1382,15 @@
 !! The MPI execution scripts described below automate this preparation and
 !! can also be used as examples for preparing other monolithic SMITER cases.
 !!
-!! \subsubsection mpi_running_local Local MPI execution
+!! \subsubsection mpi_running_local Local MPI Execution
 !!
 !! Once a case has been prepared for execution by the monolithic
 !! \c smiter executable, it can be run using the launcher provided by the active
 !! MPI implementation. The exact launcher command may depend on the MPI 
 !! implementation and system.
 !!
-!! For example, on a local system with Open MPI environment, four MPI processes of 
-!! SMITER can be launched with:
+!! For example, on a local system with an Open MPI environment, four MPI
+!! processes of SMITER can be launched with:
 !!
 !! \code{.sh}
 !! mpiexec -np 4 $SMITER_DIR/exec/smiter \
@@ -1395,10 +1400,10 @@
 !!     P/<powcal>.ctl
 !! \endcode
 !!
-!! The EQX40-shado14r-resf14r-3g regression test of \ref sec4 described in \ref sec4T3g
+!! The EQX40-shado14r-resf14r-3g regression test of \ref sec4, described in \ref sec4T3g,
 !! is automated by
 !!
-!! \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash
+!! \c smiteraux1/test_mpi_EQX40-shado14r-resf14r-3g.bash
 !!
 !! The script creates the top-level MPI run directory and its S/, G/, H/ and
 !! P/ subdirectories, prepares the required control files and input links, and
@@ -1407,7 +1412,7 @@
 !! When run outside Slurm, the supplied script uses \c mpiexec and defaults to
 !! four MPI processes.
 !!
-!! Additional examples of parallel execution with MPI are provided in Test-Deck 2 
+!! Additional examples of parallel execution with MPI are provided in \ref sec5
 !! for \c ITER-valid (see \ref sec5Ivalid) and \c JET-radn (see \ref sec5Jrad),
 !!  using
 !!
@@ -1415,50 +1420,81 @@
 !!
 !! \c smiteraux2/test_mpi_JET-radn.bash.
 !!
-!! These scripts can therefore be used as an example/template for preparing other 
+!! These scripts can therefore be used as examples for preparing other
 !! monolithic SMITER MPI cases on a local system.
 !!
-!! \subsubsection mpi_running_hpc HPC execution
+!! \subsubsection mpi_running_hpc HPC Execution
 !!
 !! On an HPC system, computational resources are normally allocated through
-!! the batch scheduler. The compiler/MPI environment, number of MPI tasks,
-!! task placement and other resource settings depend on the HPC system.
+!! a batch scheduler such as \c Slurm.
+!! For an overview of Slurm, see
+!! https://slurm.schedmd.com/quickstart.html.
 !!
-!! A Slurm launcher for the EQX40-shado14r-resf14r-3g regression test is 
-!! provided in
+!! The following Slurm launchers are provided for the MPI execution
+!! scripts described in \ref mpi_running_local
 !!
-!! \c $SMITER_DIR/smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm
+!! \code{.sh}
+!! smiteraux1/test_mpi_EQX40-shado14r-resf14r-3g.slurm
+!! smiteraux2/test_mpi_ITER-valid.slurm
+!! smiteraux2/test_mpi_JET-radn.slurm
+!! \endcode
 !!
-!! This launcher was written for the UKAEA Cumulus HPC cluster. It:
-!!
-!! - requests the required HPC resources from Slurm;
-!! - loads the compiler/MPI toolchain using the module system;
-!! - sets the SMARDDA environment variables;
-!! - runs the MPI test 
-!! \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash , the same test script
-!! used for local execution and described in \ref mpi_running_local.
-!!
-!! When executed under Slurm,  the Bash script detects \c SLURM_NTASKS and
-!! uses the number of MPI tasks allocated by the scheduler.
-!!
-!! In the supplied Cumulus launcher, one node with six MPI tasks is requested,
-!! and SMITER is launched with \c mpirun.
-!!
-!! In the supplied Cumulus launcher, one node with six MPI tasks is requested
-!! and SMITER is launched with \c mpirun.
-!!
-!! The compiler/MPI module selection, Slurm partition, number of nodes and tasks, 
-!! run-time limit and SMARDDA installation paths in this example are system dependent
-!! and should be adapted to the HPC system being used.
-!!
-!! The job is then submitted to Slurm from the \c smiteraux directory with
+!! Slurm batch jobs are submitted using \c sbatch. For example, from the
+!! \c smiteraux1 directory the EQX40-shado14r-resf14r-3g test case can be
+!!  submitted with
 !!
 !! \code{.sh}
 !! sbatch test_mpi_EQX40-shado14r-resf14r-3g.slurm
 !! \endcode
 !!
+!! The \c sbatch command and \c SBATCH options are documented at
+!! https://slurm.schedmd.com/sbatch.html.
 !!
-!! \section sec_swverification Software verification and regression testing
+!! The three Slurm launchers provided were written for the UKAEA Cumulus HPC
+!! cluster and tested there. Each launcher:
+!! - requests the required HPC resources;
+!! - loads the compiler/MPI toolchain and any additional required software
+!!   using the module system;
+!! - sets the SMARDDA environment variables;
+!! - runs the corresponding MPI test case.
+!!
+!! When executed under Slurm, the Bash scripts detect \c SLURM_NTASKS and
+!! use the number of MPI tasks allocated by the scheduler. SMITER is then
+!! launched with \c mpirun.
+!!
+!! The Slurm resource settings determine how the MPI job is allocated. In
+!! particular, \c --nodes specifies the number of compute nodes, \c --ntasks
+!! the total number of MPI tasks, \c --ntasks-per-node the
+!! distribution of tasks across nodes, and \c --cpus-per-task the number
+!! of CPUs assigned to each MPI task. Hardware multithreading can be disabled
+!! with \c --hint=nomultithread.
+!!
+!! For example, one of the provided Cumulus launchers uses:
+!!
+!! \code{.sh}
+!! #SBATCH --partition=cpu
+!! #SBATCH --nodes=1
+!! #SBATCH --ntasks=6
+!! #SBATCH --ntasks-per-node=6
+!! #SBATCH --cpus-per-task=1
+!! #SBATCH --hint=nomultithread
+!! #SBATCH --time=00:20:00
+!! \endcode
+!!
+!! This requests one compute node with six MPI tasks and one CPU per task,
+!! with hardware multithreading disabled. The value specified by \c --ntasks
+!! is made available by Slurm through \c SLURM_NTASKS and is used by the
+!! corresponding Bash execution script as the number of MPI processes.
+!!
+!! The compiler/MPI module selection, Slurm partition, number of nodes and tasks,
+!! run-time limit and SMARDDA installation paths in these examples are system
+!! dependent and should be adapted to the HPC system being used.
+!!
+!! The supplied MPI execution and Slurm launcher scripts include extensive
+!! internal documentation and can also be used as examples when preparing MPI
+!! runs for other SMARDDA-PFC cases.
+!!
+!! \section sec_swverification Software Verification, Validation and Regression Testing
 !!
 !! As indicated in \ref sec4, visual
 !! inspection of test deck results is often adequate to establish that the 
@@ -1475,66 +1511,85 @@
 !! typically lead to the move of a small number of elements of the surface triangulation
 !! from shadow to illumination and vice versa, making detailed numerical
 !! comparison of results from different ports a challenge.
+!!
+!! VTK field comparison tools using configurable numerical tolerances provide
+!! a quantitative assessment of differences between results and may help
+!! distinguish expected numerical variation from changes requiring investigation. 
+!!
 !! The rest of this section is concerned with the tools provided and their employment
 !! to meet this challenge quantitatively, whilst minimising the need for user intervention.
 !! The first test-deck follows as \ref sec4 .
 !!
-!! \subsection sec_regression Automated regression testing
+!! \subsection sec_regression Continuous Integration and Automated Regression Testing
 !!
 !! Automated regression testing is used in the GitLab Continuous Integration (CI)
 !! pipeline to check newly generated simulation results against accepted
-!! non-regression reference files whenever software changes are pushed,
+!! reference files whenever software changes are pushed,
 !! providing rapid feedback and supporting further analysis. 
 !!
-!! At present, 
-!! automated non-regression testing covers only particle power-deposition
-!! calculations through the test suite Test-Deck 1 (see \ref sec4). The regression
-!! suite should be extended to cover other SMARDDA-PFC calculation paths.
+!! At present, automated regression testing covers only particle
+!! power-deposition calculations through the test suite Test-Deck 1
+!! (see \ref sec4).
+!! The regression suite should be extended to cover other SMARDDA-PFC
+!! calculation paths, including the double-null equilibrium and radiative
+!! power-deposition cases in Test-Deck 2 (see \ref sec5).
 !!
 !! The Test-Deck 1 cases are executed by the test deck runner 
-!! $SMITER_DIR/smiteraux/\Bold{tests.bash},
-!! which generates the serial simulation results to be checked. The  non-regression 
-!! reference files are stored in $SMITER_DIR/smiter-aux-results. 
+!! $SMITER_DIR/smiteraux1/\Bold{tests.bash},
+!! which generates the serial simulation results to be checked. The
+!! reference files are stored in $SMITER_DIR/smiteraux-results. 
 !!
-!! The generated serial results are compared 
-!! with the reference results using the non-regression comparison driver 
-!! $SMITER_DIR/Extras/\Bold{tests_diff.bash}.
-!!
-!! A separate CI job builds SMARDDA-PFC with MPI support and runs 
-!! \Bold{test_mpi_EQX40-shado14r-resf14r-3g.bash}.
-!! At present,
-!! this executes the Test-Deck 1 case \ref sec4T3g using four MPI processes
-!! and compates the generated P/ VTK results against the reference result
-!! using \Bold{vtk_folder_compare.py}.
-!!
-!! The regression testing part of the CI workflow can be reproduced  manually with:
-!!
-!! \code
-!! cd $SMITER_DIR/smiteraux
-!! bash ./tests.bash
-!! cd $SMITER_DIR
-!! tar -xf smiter-aux-results/smiteraux.tar.xz -C smiter-aux-results
-!! bash ./Extras/tests_diff.bash smiteraux smiter-aux-results/smiter-aux
-!! \endcode
-!!
-!! The same workflow can also be run manually to investigate the effect of 
-!! changes in the execution environment, such as compiler, hardware architecture,
-!! or the number of MPI processes.
-!!
+!! The generated serial results are compared with the reference results using
+!! the comparison driver $SMITER_DIR/Extras/\Bold{tests_diff.bash}.
 !! $SMITER_DIR/Extras/\Bold{tests_diff.bash} compares
-!! several types of simulation output, including .log, .out, .hds, .ps and .vtk files,
+!! several types of simulation output, including .log, .out, .hds,
+!! .ps and .vtk files,
 !! using the appropriate comparison method for each file type.
 !!
-!! In the CI pipeline, \Bold{tests_diff.bash} uses the default tolerances. When run
-!! manually, different tolerances can be specified for diagnostic or verification
-!! purposes
+!! A separate CI job builds SMARDDA-PFC with MPI support and runs 
+!! \Bold{test_mpi_EQX40-shado14r-resf14r-3g.bash}, which executes the
+!! Test-Deck 1 case \ref sec4T3g using four MPI processes.
 !!
-!! For VTK results processed by \Bold{tests_diff.bash}, which contain the main
-!! numerical simulation fields, the regression-testing workflow can be 
-!! summarized as:
+!! For VTK results in both the serial and MPI jobs of the CI pipeline,
+!! exact agreement is checked first. When exact agreement is not found,
+!! a numerical comparison using tolerances is performed using the Python
+!! comparison and diagnostic tool \Bold{vtk_folder_compare.py} 
+!! with its default numerical tolerances (see \ref sec_vtk_folder_compare).
+!!
+!! The serial regression testing workflow of the CI pipeline can be reproduced
+!! manually with:
+!!
+!! \code{.sh}
+!! cd $SMITER_DIR/smiteraux1
+!! bash ./tests.bash
+!! cd $SMITER_DIR
+!! tar -xf smiteraux-results/smiteraux.tar.xz -C smiteraux-results
+!! bash ./Extras/tests_diff.bash smiteraux1 smiteraux-results/smiteraux1
+!! \endcode
+!!
+!! The MPI regression testing workflow of the CI pipeline can be reproduced
+!! manually with:
+!! \code{.sh}
+!! cd $SMITER_DIR/smiteraux1
+!! bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
+!! cd $SMITER_DIR
+!! tar -xf smiteraux-results/smiteraux.tar.xz -C smiteraux-results
+!! python3 ./tools/vtk_folder_compare.py \
+!!      smiteraux-results/smiteraux1/Test-EQX40-shado14r-resf14r-3g \
+!!      smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI
+!! \endcode
+!!
+!! Regression comparisons can also be run manually whenever needed, for example
+!! to investigate the effect of changes in the execution environment,
+!! such as compiler, hardware architecture, or the number of MPI processes.
+!! When the comparison 
+!! tools are run manually, different tolerances can be specified for diagnostic
+!! or verification purposes.
+!!
+!! The VTK regression testing workflow can therefore be summarized as:
 !!
 !!
-!! \code
+!! \code{.sh}
 !!                  Newly generated VTK results
 !!                            |
 !!                            v
@@ -1553,27 +1608,30 @@
 !!                         PASS / WARNING / FAIL
 !! \endcode
 !!
-!! VTK files are first checked for bitwise identity. Bitwise identity provides
+!! The PASS, WARNING and FAIL outcomes follow the default rules implemented by
+!! \Bold{vtk_folder_compare.py}; see \ref sec_vtkinterpretation for details.
+!!
+!! Bitwise identity provides
 !! a fast and unambiguous indication that no numerical change has occurred
 !! in the stored result. However, exact binary agreement is configuration-dependent 
 !! and is not by itself a measure of numerical correctness. Results produced with 
 !! different compilers, optimisation options, hardware architectures or parallel 
 !! execution configurations may differ at floating-point level while remaining 
 !! numerically equivalent.
-!! Files that are not bitwise identical
-!! are compared using the Python VTK diagnostic tools in $SMITER_DIR/tools:
+!!
+!! Numerical comparison of VTK results is provided by the Python VTK
+!! comparison and diagnostic tools in $SMITER_DIR/tools:
 !!
 !! - \ref sec_vtk_fieldcompare 
 !! - \ref sec_vtk_mesh_compare
 !! - \ref sec_vtk_folder_compare 
 !!
-!! which  provide field and mesh comparisons using configurable tolerances,
+!! These tools provide field and mesh comparisons using configurable
+!! numerical tolerances,
 !! and can also be run independently on selected files or directories for
-!! detailed investigation.
-!!
-!! The VTK regression tools described below are designed for the legacy
-!! VTK format produced by SMARDDA-PFC. This is an implementation choice
-!! and support for other VTK formats could be added if needed.
+!! detailed investigation. They are designed for the simple legacy VTK format
+!! produced by SMARDDA-PFC. This is an implementation choice and support
+!! for other VTK formats could be added if needed.
 !!
 !! \subsubsection sec_vtk_fieldcompare vtk_fieldcompare.py
 !!
@@ -1587,7 +1645,7 @@
 !!
 !! Command line usage and available options can be displayed using:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_fieldcompare.py --help
 !! usage: vtk_fieldcompare.py [-h] [--atol ATOL] [--rtol RTOL] [--strict] file_a file_b
@@ -1607,14 +1665,14 @@
 !!
 !! For example:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_fieldcompare.py  \
 !!      reference.vtk candidate.vtk
 !! \endcode
 !! uses the default tolerances, while 
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_fieldcompare.py \
 !!      --atol 1e-6 --rtol 1e-4 \
@@ -1637,7 +1695,7 @@
 !! uses meshio for file reading.
 !! Some SMARDDA-PFC legacy VTK files contain cell structures that
 !! meshio cannot read reliably.
-!! So far this has occurred only for some legacy VTK files under folder H,
+!! So far this has occurred only for some legacy VTK files in the H directory,
 !! which do not contain scalar or vector fields to compare. 
 !!
 !! The tool $SMITER_DIR/tools/\Bold{vtk_mesh_compare.py} therefore uses
@@ -1645,12 +1703,12 @@
 !! comparison when the fieldcompare/meshio reading path fails.
 !! Point coordinates are compared using configurable absolute and relative
 !! tolerances. 
-!! The \c --skip-points option can be used to skip the coordinate comparison and check only the
-!! mesh topology.
+!! The \c --skip-points option can be used to skip the coordinate comparison
+!! and check only the mesh topology.
 !!
 !! Command line usage and available options can be displayed using:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_mesh_compare.py --help
 !! usage: vtk_mesh_compare.py [-h] [--atol ATOL] [--rtol RTOL] [--skip-points] mesh_a mesh_b
@@ -1671,7 +1729,7 @@
 !!
 !! For example:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_mesh_compare.py \
 !!      reference.vtk candidate.vtk
@@ -1686,13 +1744,13 @@
 !! reference results and a directory containing newly computed results.
 !! Corresponding VTK files are first checked for bitwise identity.
 !! VTK files that differ are then compared using the \Bold{vtk_fieldcompare.py}
-!! tool with tolerances. The tool \Bold{vtk_mesh_compare.py} provides a
-!! more robust fallback when the fieldcompare/meshio reading path fails.
+!! tool with the specified numerical tolerances. The tool \Bold{vtk_mesh_compare.py}
+!! provides a more robust fallback when the fieldcompare/meshio reading path fails.
 !! 
 !! Command line
 !! usage and available options can be displayed using:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_folder_compare.py --help
 !! usage: vtk_folder_compare.py [-h] [--files FILES [FILES ...]] [--atol ATOL] [--rtol RTOL] [--strict] dir_a dir_b
@@ -1715,7 +1773,7 @@
 !!
 !! For example:
 !!
-!! \code
+!! \code{.sh}
 !! cd $SMITER_DIR
 !! python3 ./tools/vtk_folder_compare.py \
 !!      --atol 1e-8 --rtol 1e-5 \
@@ -1727,15 +1785,16 @@
 !!
 !! The default tolerances used by \Bold{vtk_folder_compare.py} are those
 !! adopted for folder-level regression comparison and are less strict than
-!! the defaults of the standalone \Bold{vtk_fieldcompare.py} diagnostic tool.
+!! the numerical tolerances of the standalone \Bold{vtk_fieldcompare.py} diagnostic tool.
 !!
 !!
-!! \subsection sec_vtkinterpretation Interpreting VTK comparison results
+!! \subsection sec_vtkinterpretation Interpreting VTK Comparison Results
 !!
-!! For SMARDDA-PFC VTK results, Q and radn are treated as critical scalar
+!! For SMARDDA-PFC VTK results, \c Q and \c radn are treated as critical scalar
 !! fields. By default, these fields determine the overall outcome of the
 !! comparison between two VTK files, while the other fields are still
 !! compared and reported for diagnostic purposes.
+!!
 !! The comparison of two VTK files can produce four overall outcomes:
 !!
 !! - PASSED - bitwise identical
@@ -1762,8 +1821,8 @@
 !! xTol = \frac{|a-b|}
 !!              {\max\left(rtol \cdot \max(|a|,|b|),\,atol\right)}
 !! \f]
-!!  It can be
-!! interpreted as a multiple of the allowed local tolerance:
+!!
+!! It can be interpreted as a multiple of the allowed local tolerance:
 !! - xTol = 1 means that the difference is exactly at the tolerance limit;
 !! - xTol = 2 means that the difference is twice the allowed tolerance;
 !! - xTol = 10 means that the difference is ten times the allowed tolerance.
@@ -1775,40 +1834,52 @@
 !! comparison, from results that are fully within tolerance to results requiring
 !! progressively more detailed investigation.
 !! The examples also show that the choice of numerical tolerance is part of the
-!! verification process. The default values provide a starting point for
-!! regression testing. Suitable tolerances should be large enough to avoid false
-!! failures caused by insignificant machine precision issues, but small 
+!! verification process. The default values provide a starting point, but 
+!! more suitable tolerances may be identified from the comparison results.
+!! Tolerances should be large enough to avoid false
+!! failures caused by insignificant machine-precision issues, but small 
 !! enough to detect significant deviations for the quantities of interest.
 !!
-!! \image html passed.png "A comparison in which all fields are within tolerance is reported as PASSED" width=75%
+!! \subsubsection vtk_outcomes PASSED and WARNING comparisons
+!! When all fields are within tolerance, the comparison is reported as PASSED.
+!! \image html passed.png "A PASSED comparison - all fields are within tolerance" width=90%
+!! \image latex passed.png "A PASSED comparison - all fields are within tolerance" width=0.0\textwidth
+!!
+!! When the critical fields (\c Q ad \c radn) are within tolerance but other fields
+!! are outside tolerance, the comparison is reported as WARNING.
+!! \image html warning.png "A WARNING comparison: critical fields are within tolerance but other fields are outside " width=90%
+!! \image latex warning.png "A WARNING comparison: critical fields are within tolerance but other fields are outside" width=0.9\textwidth
 !!
 !!
-!! \image html warning.png "Example of a WARNING: critical fields are within tolerance but other fields are outside tolerance" width=75%
+!! \subsubsection vtk_failed_examples FAILED comparisons and xTol diagnostics
 !!
-!! When a critical field (Q or radn) is out-of-tolerance, the comparison is
+!! When a critical field (\c Q or \c radn) is out-of-tolerance, the comparison is
 !! reported as FAILED. 
 !!
 !! The three examples below show how to interpret the report information and how
 !! the xTol diagnostics can be used to assess the size of the 
 !! differences and to estimate the effect of changing the selected tolerances.
 !!
-!! \image html vtk_fieldcompare_marginal.png  "Example of a marginal tolerance exceedance"  width=75%
+!! \image html vtk_fieldcompare_marginal.png  "Example of a marginal tolerance exceedance"  width=90%
+!! \image latex vtk_fieldcompare_marginal.png  "Example of a marginal tolerance exceedance"  width=0.9\textwidth
 !!
-!! In this first example, atol=1e-6 and rtol=1e-4 are used. For the critical
-!! Q field, 12 of 879 cells are outside tolerance and the maximum xTol is 2.52.
-!! Of the 12 failed values, eight have 1 < xTol <= 2 and four have 2 < xTol <= 10;
-!! there are no larger discrepancies. Without rerunning the comparison with more
-!! permissive tolerance, we can infer that if both atol and rtol were increased
+!! In the marginal tolerance-exceedance example, atol=1e-6 and rtol=1e-4 are used.
+!! For the critical Q field, 12 of 879 cells are outside tolerance and the 
+!! maximum xTol is 2.52. Of the 12 failed values, eight have 1<xTol<=2 and four
+!! have 2<xTol<=10; there are no larger discrepancies.
+!! Without rerunning the comparison with more permissive tolerances, we can infer
+!! that if both atol and rtol were increased
 !! by a factor of 10, xTol would decrease by the same factor. The maximum Q xTol 
 !! would therefore decrease from 2.52 to 0.25 and all Q values would fall within 
 !! tolerance. This indicates a relatively small tolerance exceedance. However
 !! whether the wider tolerances are acceptable must still be agreed with the modeller.
 !!
+!! \image html vtk_fieldcompare_not_marginal.png "Example of a large out-of-tolerance exceedance" width=90%
+!! \image latex vtk_fieldcompare_not_marginal.png "Example of a large out-of-tolerance exceedance" width=0.9\textwidth
 !!
-!! \image html vtk_fieldcompare_not_marginal.png "Example of a large out-of-tolerance exceedance" width=75%
-!! 
-!! In this second example the default values atol=1e-8 and rtol=1e-5 are used.
-!! For the critical Q field, 153 of 5088 cells are outside tolerance and
+!! In the large tolerance-exceedance example,the default values atol=1e-8 
+!! and rtol=1e-5 are used.
+!! For the critical Q field, 153 of 5088 cells are outside tolerance and the
 !! maximum xTol is 196. The distribution also shows that five Q values
 !! have xTol > 100. If both tolerances were increased by a factor of 100
 !! (atol=1e-6 and rtol=1e-3) all values with the original xTol<=100 would move
@@ -1820,11 +1891,12 @@
 !! The choice of tolerance must still be agreed with the modeller.
 !! 
 !!
-!! \image html vtk_fieldcompare_shdw-noshdw.png "Example of a localized discrepancy requiring investigation beyond tolerance adjustment" width=75%
+!! \image html vtk_fieldcompare_shdw-noshdw.png "Example of a localized discrepancy requiring investigation beyond tolerance adjustment" width=90%
+!! \image latex vtk_fieldcompare_shdw-noshdw.png "Example of a localized discrepancy requiring investigation beyond tolerance adjustment" width=0.9\textwidth
 !!
-!! In this third example, atol=1e-06 and rtol=1e-4 are used. Only one of
+!! In the localized discrepancy example, atol=1e-06 and rtol=1e-4 are used. Only one of
 !! the 879 Q values is out of tolerance, but the discrepancy is qualitatively
-!! different from the previous examples. At cell 624 Q is 0 in the reference
+!! different from the previous examples. At cell 624, Q is 0 in the reference
 !! result and 307.756 in the candidate result, giving xTol=1e4. Also, all
 !! the other fields show large tolerance exceedances at the same cell.
 !! In particular, Msign changes from 0 in the reference results to 
@@ -1832,17 +1904,15 @@
 !! at the same cell, together with the significant change from zero to non-zero Q,
 !! may indicate a change in a discrete part of the calculation,
 !! for example whether an element is classified as illuminated or shadowed.
-!! Such discrepancy should not be accepted simply by relaxing the tolerance.
+!! For a discrete change like this, simply relaxing the tolerance would not
+!! eliminate the underlying difference.
 !! Whether such a localised difference affecting only one cell may be considered
 !! negligible or requires further investigation must ultimately be assessed
-!! with the modeller. For a discrete change like this, simply increasing the
-!! tolerance or replacing the reference result may not solve the problem.
-!! Ambiguous results may need to be excluded from the automated comparison or
-!! treated with a rule agreed with the modeller.
+!! with the modeller.
 !!
 !! The examples above show how automated regression testing with numerical
 !! tolerances, embedded in a Continuous Integration workflow, contributes to
-!! software verification by helping to distinguish expected floating-point
+!! software V&V by helping to distinguish expected floating-point
 !! variations from changes that require further investigation.
 !! The diagnostic tools also help to identify large discrepancies localised
 !! in a small number of cells that may therefore be difficult to detect by
@@ -1864,9 +1934,9 @@
 !!
 !! A second test-deck smiteraux2 is concerned with double-null equilibria
 !! and radiative power deposition,and also includes testing of software
-!! paralellism using MPI (see \ref sec5).
+!! parallelism using MPI (see \ref sec5).
 !!
-!! It is worth pointing out that for the tests involving fieldines, adjacent energy paths
+!! It is worth pointing out that for the tests involving fieldlines, adjacent energy paths
 !! diverge exponentially so that tiny errors due to different numerical roundoff
 !! and order of execution on different processors/parallel machines are magnified
 !! and may lead to the illumination or shadowing of a small number of different
@@ -1897,9 +1967,9 @@
 !! the results geometry respectively. An optional 4th component
 !! indicates whether a local or global problem was solved.
 !! Thus the geometries may be easily identified among the .vtk files
-!! in ./smiteraux/Data/VTK and visualised using ParaView, although note that
+!! in ./smiteraux1/Data/VTK and visualised using ParaView, although note that
 !! the .vtk files for the validation cases have to be generated from the
-!! .dat files in ./smiteraux/Data/Geometry.
+!! .dat files in ./smiteraux1/Data/Geometry.
 !!
 !! For the two ITER test cases, the first wall silhouette is used to determine
 !! the position of the contact point, hence the value of flux \f$ \psi \f$
@@ -1965,9 +2035,9 @@
 !!
 !! This test is also used to test software parallelism using MPI.
 !! An example script for running  the case directly  with MPI 
-!! is \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.bash.
+!! is \c smiteraux1/test_mpi_EQX40-shado14r-resf14r-3g.bash.
 !! For execution through the Slurm batch scheduler, an example of launcher
-!! is \c smiteraux/test_mpi_EQX40-shado14r-resf14r-3g.slurm,
+!! is \c smiteraux1/test_mpi_EQX40-shado14r-resf14r-3g.slurm,
 !! which invokes the same Bash script.
 !!
 !! The same MPI case is also run as part of the Gitlab CI MPI regression  test.
@@ -2137,6 +2207,8 @@
 !!
 !! An example script for running the case directly with MPI is
 !! \c smiteraux2/test_mpi_JET-radn.bash.
+!! For execution through the Slurm batch scheduler, the launcher is provided in
+!! \c smiteraux2/test_mpi_JET-radn.slurm.
 !!
 !! The script performs the three JET-radn radiation calculations using the monolithic
 !! \c smiter executable. 
@@ -2156,14 +2228,16 @@
 !! the corresponding triangles at the top left corner of the top left antenna
 !! grille bar, orientation indicated by picture at right.
 !! (The plot demonstrates agreement with detailed results supplied by M. Brank.)
-!! \image html Iant3_red.png
-!! \image latex Iant3_red.eps
+!! \image html iant3.png
+!! \image latex iant3.eps
 !!
 !! \paragraph sec5IvalMPI MPI execution
 !! This test case is also used to test software parallelism using MPI.
 !!
 !! An example script for running the case directly with MPI is
 !! \c smiteraux2/test_mpi_ITER-valid.bash.
+!! For execution through the Slurm batch scheduler, a launcher is provided in
+!! \c smiteraux2/test_mpi_ITER-valid.slurm.
 !!
 !! The script creates a separate \c ITER-valid_MPI run directory containing
 !! the results of the MPI execution.

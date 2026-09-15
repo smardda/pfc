@@ -13,16 +13,17 @@ export dd_doc
 # Module handling
 mcfound=n
 if uname -n | grep -q iter; then
-echo "Warning - this script may invoke old/unavailable software and hardware"
+#echo "Warning - this script may invoke old/unavailable software and hardware"
 # ITER hpc
 mcfound=y
-. /usr/share/Modules/init/sh
+#. /usr/share/Modules/init/sh
 #module purge # can undefine SMITER_DIR
 module use /work/imas/etc/modulefiles
 #module load flex/2.5.39
-module load doxygen/1.8.8
+module load Doxygen/1.14.0-GCCcore-14.3.0
+
 if grep -q avx2 /proc/cpuinfo ; then
-  module load iompi/2018a
+  module load iimpi/2025b
 else
   module load intel/17.0.4
   export MPDIR=/shared/libraries/mpi/mvapich2/2.3b-intel2017
@@ -34,9 +35,10 @@ else
   export MV2_ENABLE_AFFINITY=0 # 
 fi
 export F90=${F90:-mpif90} # uncomment for MPI build
-module use /work/imas/opt/EasyBuild/modules/all
+#module use /work/imas/opt/EasyBuild/modules/all
 #module load Perl/5.20.3-goolf-1.5.16 # for latexmk to work
-module load texlive/2015
+#module load texlive/2015
+module load texlive/20250308-intel-compilers-2025.2.0
 # module load Java/1.8.0_162 # For MDSplus compilation
 fi
 if uname -n | grep -q freia; then
