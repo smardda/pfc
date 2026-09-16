@@ -17,3 +17,5 @@
 !tools/**
 !.gitmodule
 !.gitlab-ci.yml
+!lgpl-3.0.txt
+!LICENCE.txt

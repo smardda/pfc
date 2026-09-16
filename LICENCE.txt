@@ -1,0 +1,2 @@
+This repository is subject to the GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007,
+see accompanying file lgpl-3.0.txt

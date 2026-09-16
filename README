@@ -17,16 +17,21 @@ To proceed to build from here (and only from here), type
 export SMITER_DIR=$PWD
 source ./exec/build intel
 The argument to build which is optional, will cause the script to try to use the Intel fortran compiler, 
-which is advisable on ITER hpc machines as a Fortran compiler release post-2011 is needed.
+which is advisable on ITER hpc machines as a Fortran compiler release post-2011 is needed,
+otherwise gfortran is invoked for compilation.
 Note that this script
 (1) recommends you source the file ./Extras/setup so that the main
 SMARDDA-PFC executables are placed on your path.
 (2) sets the shell variables SMITER_DIR and SMALIB_DIR; you may find it a good idea to ensure
 that SMITER_DIR and SMALIB_DIR are always set by modifying your .bashrc file, by adding the lines,
 for example
-export SMITER_DIR=~/smardda/smardda-pfc
-export SMALIB_DIR=~/smardda/smardda-lib
-(3) takes an optional argument N stopping the production of documentation
+export SMITER_DIR=~/smardda/pfc
+export SMALIB_DIR=~/smardda/smalib
+(3) takes an optional argument N stopping the production of documentation,
+but is not recommended for non-expert use since
+the browser-friendly user documentation produced by default is much more detailed
+than the notes on usage in this file, invoke e.g. using firefox with
+xdg-open $SMITER_DIR/doc/srcdoc/html/index.html
 
 bash shell release 3.2 or later (i.e. from 2005 or later) is needed.
 ParaView may be downloaded separately from www.paraview.org if not already installed.
@@ -34,13 +39,16 @@ ParaView may be downloaded separately from www.paraview.org if not already insta
 To produce the html documentation in $SMITER_DIR/doc, note
 particularly that doxygen 1.8.6+ is needed.
 (For creation of user manual as a pdf the texlive/2015 module is needed:
-if it is installed as on freia, then the commands are:
+if it is installed in the usual way, then the commands are:
 module load texlive/2015
 cd ./doc/srcdoc/latex/; pdflatex refman
 else a version suitable for the target machine will have to be found and installed)
 
-To run the test deck, to be found in separate directory smiteraux,
+To run the test deck(s), to be found in separate directories - smiteraux on ITER,
 https://git.iter.org/projects/BND/repos/smiteraux/browse
+smiteraux1 and smiteraux2 on github 
+https://github.com:smardda/smiteraux1.git
+https://github.com:smardda/smiteraux2.git
 orchestrated by file tests.bash, it is important to ensure the following
 shell variable is set, for example
 export HSAUX=~/smiteraux
@@ -64,7 +72,7 @@ For efficient smpfcint interaction with ParaView, the following settings are nee
 Settings->General, Click on gearwheel, untick Show Splash Screen, tick AutoApply (near top)
 (Also useful is parallel projection:
 [vtk file loaded] -> Properties tab, Click gearwheel, tick Camera Parallel projection (near bottom)
-See SMARDDA-PFC user manual webpages for further details of (i)smiter use.
+See SMARDDA-PFC user manual webpages for further details of smpfcint use.
 file://$SMITER_DIR/doc/srcdoc/html/index.html
 (assuming that doxygen doxyfile has been executed correctly in  $SMITER_DIR/doc).
 Note that the CADfix-TM interface between CATIA-TM and SMARDDA/SMARDDA-PFC is not supported by ITER.
@@ -79,6 +87,6 @@ Developers should notice that the SMARDDA modules were developed according to th
 conventions set out in http://dx.doi.org/10.13140/RG.2.2.27018.41922} mirroring
 https://scientific-publications.ukaea.uk/wp-content/uploads/CCFE-R-1534.pdf
 Production of support files and scripts for developers has been initiated.
-These may be accessed  from 
+These may be accessed upon request from 
 git@github.com:smardda/develop.git
 
