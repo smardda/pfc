@@ -13,6 +13,7 @@
 !smalib
 !smiteraux1
 !smiter-aux-results
+!smiteraux2
 !tools
 !tools/**
 !.gitmodule

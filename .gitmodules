@@ -7,3 +7,6 @@
 [submodule "smiteraux1"]
 	path = smiteraux1
 	url = ../smiteraux1.git
+[submodule "smiteraux2"]
+	path = smiteraux2
+	url = ../smiteraux2.git
