@@ -1,6 +1,3 @@
-[submodule "smiter-aux-results"]
-	path = smiter-aux-results
-	url = ../smiter-aux-results.git
 [submodule "smalib"]
 	path = smalib
 	url = ../smalib.git
