@@ -7,7 +7,7 @@ on:
 
 jobs:
   serial-build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -44,3 +44,15 @@ jobs:
         run: |
           find smiteraux1/References -type f | sort
           find smiteraux2/References -type f | sort
+
+      - name: Build smalib
+        run: bash smalib/exec/build gfortran
+      
+      - name: Build pfc
+        run: bash exec/build gfortran 
+
+      - name: Run serial test in smiteraux1
+        working-directory: smiteraux1
+        run: |
+          bash ./tests_clean.bash
+          bash ./tests.bash
