@@ -11,14 +11,14 @@ jobs:
 
     steps:
       - name: Checkout pfc and submodules
-      - uses: actions/checkout@v6
-      with:
+        uses: actions/checkout@v6
+        with:
         submodules: recursive
 
       - name: Show submodules
         run: git submodule status
 
       - name: Check regression references
-        run:
+        run: |
           find smiteraux1/References -type f | sort
           find smiteraux2/References -type f | sort
