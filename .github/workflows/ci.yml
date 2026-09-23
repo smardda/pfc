@@ -1,0 +1,24 @@
+name: SMARDDA CI
+
+on:
+  push:
+    branches:
+      - rework-submodule-structure
+
+jobs:
+  verify-submodules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout pfc and submodules
+      - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+      - name: Show submodules
+        run: git submodule status
+
+      - name: Check regression references
+        run:
+          find smiteraux1/References -type f | sort
+          find smiteraux2/References -type f | sort
