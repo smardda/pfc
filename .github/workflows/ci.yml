@@ -58,7 +58,7 @@ jobs:
           bash ./tests.bash
       - name: Run serial tests in smiteraux2
         working-directory: smiteraux2
-        run:
+        run: |
           bash ./tests_clean.bash
           bash ./tests.bash
 
