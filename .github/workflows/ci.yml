@@ -51,14 +51,21 @@ jobs:
       - name: Build pfc
         run: bash exec/build gfortran -n
 
-      - name: Run serial test in smiteraux1
+      - name: Run serial tests in smiteraux1
         working-directory: smiteraux1
         run: |
           bash ./tests_clean.bash
           bash ./tests.bash
+      - name: Run serial tests in smiteraux2
+        working-directory: smiteraux2
+        run:
+          bash ./tets_clean.bash
+          bash ./tests.bash
 
       - name: Compare VTK results with VTK reference files
-        run: bash ./Extras/tests_diff_vtk.bash  smiteraux1 smiteraux1/References
+        run: |
+          bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
+          bash ./Extras/tests2_diff_vtk.bash smiteteraux2 smiteraux2/References
 
   mpi-build-and-test:
     runs-on: ubuntu-22.04
