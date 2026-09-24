@@ -46,10 +46,10 @@ jobs:
           find smiteraux2/References -type f | sort
 
       - name: Build smalib
-        run: bash smalib/exec/build gfortran
+        run: bash smalib/exec/build gfortran -n
       
       - name: Build pfc
-        run: bash exec/build gfortran
+        run: bash exec/build gfortran -n
 
       - name: Run serial test in smiteraux1
         working-directory: smiteraux1
@@ -57,5 +57,55 @@ jobs:
           bash ./tests_clean.bash
           bash ./tests.bash
 
-      - name: Compare VTK results with VTK references files
+      - name: Compare VTK results with VTK reference files
         run: bash ./Extras/tests_diff_vtk.bash  smiteraux1 smiteraux1/References
+
+  mpi-build-and-test:
+    runs-on: ubuntu-22.04
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      SMALIB_DIR: ${{ github.workspace }}/smalib
+
+    steps:
+      - name: Checkout pfc and submodules
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gfortran \
+            doxygen \
+            gnuplot \
+            graphviz \
+            libhdf5-dev \
+            make \
+            openmpi-bin \
+            libopenmpi-dev \
+            python3 \
+            python3-pip \
+            texlive-font-utils \
+            xz-utils
+          sudo strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+          python3 -m pip install numpy "fieldcompare[all]" vtk
+
+      - name: Build smalib with MPI
+        run: bash smalib/exec/build gfortranmpi -n
+
+      - name: Build pfc with MPI
+        run: bash exec/build gfortranmpi -n
+
+      - name: Run MPI test in smiteraux1
+        working-directory: smiteraux1
+        run: |
+          bash ./tests_clean.bash
+          bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
+
+      - name: Compare MPI VTK results with VTK reference files
+        run: | 
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux1/References/Test-EQX40-shado14r-resf14r-3g/P \
+            smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI/P
