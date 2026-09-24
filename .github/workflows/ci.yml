@@ -35,7 +35,7 @@ jobs:
             texlive-font-utils \
             xz-utils 
           sudo strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
-          python3 -m pip install numpy
+          python3 -m pip install numpy "fieldcompare[all]" vtk
 
       - name: Show submodules
         run: git submodule status
