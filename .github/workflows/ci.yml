@@ -66,6 +66,7 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
       SMALIB_DIR: ${{ github.workspace }}/smalib
+      SMITER_DIR: ${{ github.workspace}}
 
     steps:
       - name: Checkout pfc and submodules
