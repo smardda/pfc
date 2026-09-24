@@ -49,10 +49,13 @@ jobs:
         run: bash smalib/exec/build gfortran
       
       - name: Build pfc
-        run: bash exec/build gfortran 
+        run: bash exec/build gfortran
 
       - name: Run serial test in smiteraux1
         working-directory: smiteraux1
         run: |
           bash ./tests_clean.bash
           bash ./tests.bash
+
+      - name: Compare VTK results with VTK references files
+        run: bash ./Extras/tests_diff_vtk.bash  smiteraux1 smiteraux1/References

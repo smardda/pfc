@@ -92,6 +92,7 @@
 !compare_logs
 !compare_out
 !tests_diff.bash
+!tests_diff_vtk.bash
 !RESmx.ctl
 !SHADmx.ctl
 !HDSm.ctl
