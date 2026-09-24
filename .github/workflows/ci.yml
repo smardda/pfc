@@ -59,13 +59,13 @@ jobs:
       - name: Run serial tests in smiteraux2
         working-directory: smiteraux2
         run:
-          bash ./tets_clean.bash
+          bash ./tests_clean.bash
           bash ./tests.bash
 
       - name: Compare VTK results with VTK reference files
         run: |
           bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
-          bash ./Extras/tests2_diff_vtk.bash smiteteraux2 smiteraux2/References
+          bash ./Extras/tests2_diff_vtk.bash smiteraux2 smiteraux2/References
 
   mpi-build-and-test:
     runs-on: ubuntu-22.04
