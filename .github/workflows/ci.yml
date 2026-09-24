@@ -42,14 +42,6 @@ jobs:
           sudo strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
           python3 -m pip install numpy "fieldcompare[all]" vtk
 
-      - name: Show submodules
-        run: git submodule status
-
-      - name: Check regression references
-        run: |
-          find smiteraux1/References -type f | sort
-          find smiteraux2/References -type f | sort
-
       - name: Build smalib
         run: bash smalib/exec/build gfortran -n
       
@@ -61,16 +53,18 @@ jobs:
         run: |
           bash ./tests_clean.bash
           bash ./tests.bash
+
+      - name: Compare smiteraux1 VTK results with reference files
+        run: bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
+
       - name: Run serial tests in smiteraux2
         working-directory: smiteraux2
         run: |
           bash ./tests_clean.bash
           bash ./tests.bash
 
-      - name: Compare VTK results with VTK reference files
-        run: |
-          bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
-          bash ./Extras/tests2_diff_vtk.bash smiteraux2 smiteraux2/References
+      - name: Compare  smiteraux2 VTK results with VTK reference files
+        run: bash ./Extras/tests2_diff_vtk.bash smiteraux2 smiteraux2/References
 
   mpi-build-and-test:
     runs-on: ubuntu-22.04
@@ -122,8 +116,24 @@ jobs:
           bash ./tests_clean.bash
           bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
 
-      - name: Compare MPI VTK results with VTK reference files
+      - name: Compare smiteraux1 MPI VTK results with reference files
         run: | 
           python3 ./tools/vtk_folder_compare.py \
             smiteraux1/References/Test-EQX40-shado14r-resf14r-3g/P \
             smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI/P
+
+      - name: Run MPI tests in smiteraux2
+        working-directory: smiteraux2
+        run: |
+          bash ./test_mpi_JET-radn.bash
+          bash ./test_mpi_ITER-valid.bash
+
+      - name: Compare smiteraux2 MPI VTK results with reference files
+        run: |
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux2/References/JET-radn/P \
+            smiteraux2/JET-radn_MPI/P
+ 
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux2/References/ITER-valid/P \
+            smiteraux2/ITER-valid_MPI/P
