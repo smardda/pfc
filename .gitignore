@@ -14,8 +14,10 @@
 !smiteraux1
 !smiteraux2
 !tools
-!tools/**
-!.gitmodule
+!tools/vtk_fieldcompare.py
+!tools/vtk_folder_compare.py
+!tools/vtk_mesh_compare.py
+!.gitmodules
 !.gitlab-ci.yml
 !.github/
 !.github/**

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Developed by: Francesca Anna Riccio
 """Compare VTK UnstructuredGrid meshes (geometry + topology only).
 
 This tool reads legacy .vtk and .vtu files through the official VTK Python API.
@@ -12,7 +13,9 @@ Checks:
     - Point coordinates (tolerant)
 
 Point coordinates are compared using NumPy allclose tolerance test:
-    |a - b| <= atol + rtol * |b|
+
+    |mesh_b_points - mesh_a_points| <= atol + rtol * |mesh_a_points|
+
 Exit code:
    0 = PASS
    1 = FAIL
@@ -55,7 +58,8 @@ def parse_arguments() -> argparse.Namespace:
         description=descr_msg,
         epilog=(
             "Point coordinates comparison rule:\n"
-            "  |a - b| <= max(rtol * max(|a|, |b|), atol)\n\n"
+            "  |mesh_b_points - mesh_a_points| <=  "
+            "atol + rtol * |mesh_a_points|\n\n"
         ),
     )
 
@@ -150,8 +154,9 @@ def compare_meshes(
     maxdiff = float(diff.max()) if diff.size else 0.0
 
     # Comparison using tolerances:
-    # |a - b| <= max(rtol * max(|a|, |b|), atol)
-    if not np.allclose(pa, pb, rtol=rtol, atol=atol, equal_nan=True):
+    # np.allclose(a, b) uses:
+    # |a - b| <= atol + rtol * |b|
+    if not np.allclose(pb, pa, rtol=rtol, atol=atol, equal_nan=True):
         print(
             f"{IND}mesh compare status  : ❌ FAILED - ",
             "point coordinates out of tolerance",
@@ -163,7 +168,10 @@ def compare_meshes(
     print(f"{IND}mesh compare status : ✅ PASSED - point coordinates within tolerance")
     print(f"{IND}Maximum difference  : {maxdiff:.3e}")
     print(f"{IND}Tolerance           : atol={atol}, rtol={rtol}")
-    print(f"{IND}Tolerance rule      : |a-b| <= atol + rtol * |b|")
+    print(
+        f"{IND}Tolerance rule      : "
+        "|mesh_b_points - mesh_a_points| <= atol + rtol * |mesh_a_points|",
+    )
 
     return 0
 

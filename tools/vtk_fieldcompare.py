@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Developed by: Francesca Anna Riccio
 """Compare two legacy .vtk files using fieldcompare.
 
 1) Bitwise filecmp check
@@ -272,10 +273,9 @@ def print_fields_failed(
         tolerance_msg: str,
         max_diffs: dict,
         tol_bins: dict,
-        result: FieldComparisonSuite
+        result: FieldComparisonSuite,
 ) -> None:
     """Print failed fields."""
-
     print()
     print(f"{IND}{err_msg}", flush=True)
     print(f"{IND}fieldcompare report  : {result.report}", flush=True)
@@ -294,7 +294,7 @@ def print_fields_failed(
         f"{'xTol':>11} "
         f"{'Candidate':>14} "
         f"{'Reference':>14} ",
-        flush=True
+        flush=True,
     )
 
     print(f"{IND}{'_' * 133}", flush=True)
@@ -321,7 +321,7 @@ def print_fields_failed(
     print()
     print(
         f"{IND}Failed-value distribution by tolerance ratio "
-        f"(xTol = |Δ| / tolerance)"
+        f"(xTol = |Δ| / tolerance)",
     )
     for field_name, bins in tol_bins.items():
         if not any(comp.name.startswith(f"{field_name} @") for comp in result.failed):

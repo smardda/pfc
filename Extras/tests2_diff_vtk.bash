@@ -1,28 +1,28 @@
 #! /bin/bash
-# Compare with tolerances selected VTK outputs from SMARDDA/PFC Test Deck 1
+# Compare with tolerances selected VTK outputs from SMARDDA/PFC Test Deck 2
 # against their regression reference files.
 #
-# This scripts needs to know the location of two folder:
-#   HSAUX  - the smiteraux1 directory where tests.bash has been runtwo directories
+# This scripts needs to know the location of two folders:
+#   HSAUX  - the smiteraux2 directory where tests.bash has been run.
 #   HSAOLD - the directory containing the test-deck reference VTK files.
 # 
-# The first argument to this script sets HSAUX.
+# The first argument to this script optionally sets HSAUX.
 # The second argument to this script optionally sets HSAOLD.
 #
 # Defaults:
-#  HSAUX  = ../smiteraux1' (relative to thisscript) 
+#  HSAUX  = ../smiteraux2' (relative to this script) 
 #  HSAOLD  = $HSAUX/References
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-# Get the smiteraux test directory
+# Get the smiteraux2 test directory
 if [ -n "$1" ]; then
 	HSAUX="$1"
 elif [ -z "${HSAUX}" ]; then
-	HSAUX="$(dirname "${SCRIPT_DIR}")/smiteraux1"
+	HSAUX="$(dirname "${SCRIPT_DIR}")/smiteraux2"
 fi
 
-# Get the smiteraux reference directory
+# Get the smiteraux2 reference directory
 if [ -n "$2" ]; then
 	HSAOLD="$2"
 elif [ -z "${HSAOLD}" ]; then
@@ -40,15 +40,6 @@ if [ ! -d "${HSAOLD}" ]; then
 	echo "Script quitting"
 	exit 1
 fi
-
-do_diff() {
-	file_extension="${2##*.}"
-	if [ "${file_extension}" = "log" ]; then
-		"${SCRIPT_DIR}/compare_logs" "$1" "$2"
-	else
-		diff -bu "$1" "$2" >/dev/null
-	fi
-}
 
 # Recursively check all VTK files in these directories
 DIRS=(
