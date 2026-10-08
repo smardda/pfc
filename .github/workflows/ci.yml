@@ -1,0 +1,140 @@
+name: SMARDDA CI
+
+on:
+  push:
+    branches:
+      - restructure-and-expand-test-coverage
+      - master
+
+jobs:
+  serial-build-and-test:
+    runs-on: ubuntu-22.04
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      SMALIB_DIR: ${{ github.workspace }}/smalib
+      SMITER_DIR: ${{ github.workspace}}
+
+    steps:
+      - name: Checkout pfc and submodules
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add SMARDDA executables to PATH
+        run: |
+          echo "${SMITER_DIR}/exec" >> "$GITHUB_PATH"
+          echo "${SMALIB_DIR}/exec" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gfortran \
+            doxygen \
+            gnuplot \
+            graphviz \
+            libhdf5-dev \
+            make \
+            python3 \
+            python3-pip \
+            texlive-font-utils \
+            xz-utils 
+          sudo strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+          python3 -m pip install numpy "fieldcompare[all]" vtk
+
+      - name: Build smalib
+        run: bash smalib/exec/build gfortran -n
+      
+      - name: Build pfc
+        run: bash exec/build gfortran -n
+
+      - name: Run serial tests in smiteraux1
+        working-directory: smiteraux1
+        run: |
+          bash ./tests_clean.bash
+          bash ./tests.bash
+
+      - name: Compare smiteraux1 VTK results with reference files
+        run: bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
+
+      - name: Run serial tests in smiteraux2
+        working-directory: smiteraux2
+        run: |
+          bash ./tests_clean.bash
+          bash ./tests.bash
+
+      - name: Compare  smiteraux2 VTK results with VTK reference files
+        run: bash ./Extras/tests2_diff_vtk.bash smiteraux2 smiteraux2/References
+
+  mpi-build-and-test:
+    runs-on: ubuntu-22.04
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      SMALIB_DIR: ${{ github.workspace }}/smalib
+      SMITER_DIR: ${{ github.workspace}}
+
+    steps:
+      - name: Checkout pfc and submodules
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add SMARDDA executables to PATH
+        run: |
+          echo "${SMITER_DIR}/exec" >> "$GITHUB_PATH"
+          echo "${SMALIB_DIR}/exec" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gfortran \
+            doxygen \
+            gnuplot \
+            graphviz \
+            libhdf5-dev \
+            make \
+            openmpi-bin \
+            libopenmpi-dev \
+            python3 \
+            python3-pip \
+            texlive-font-utils \
+            xz-utils
+          sudo strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5
+          python3 -m pip install numpy "fieldcompare[all]" vtk
+
+      - name: Build smalib with MPI
+        run: bash smalib/exec/build gfortranmpi -n
+
+      - name: Build pfc with MPI
+        run: bash exec/build gfortranmpi -n
+
+      - name: Run MPI test in smiteraux1
+        working-directory: smiteraux1
+        run: |
+          bash ./tests_clean.bash
+          bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
+
+      - name: Compare smiteraux1 MPI VTK results with reference files
+        run: | 
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux1/References/Test-EQX40-shado14r-resf14r-3g/P \
+            smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI/P
+
+      - name: Run MPI tests in smiteraux2
+        working-directory: smiteraux2
+        run: |
+          bash ./test_mpi_JET-radn.bash
+          bash ./test_mpi_ITER-valid.bash
+
+      - name: Compare smiteraux2 MPI VTK results with reference files
+        run: |
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux2/References/JET-radn/P \
+            smiteraux2/JET-radn_MPI/P
+ 
+          python3 ./tools/vtk_folder_compare.py \
+            smiteraux2/References/ITER-valid/P \
+            smiteraux2/ITER-valid_MPI/P
