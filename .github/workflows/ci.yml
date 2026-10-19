@@ -3,8 +3,7 @@ name: SMARDDA CI
 on:
   push:
     branches:
-      - restructure-and-expand-test-coverage
-      - master
+      - '**'
 
 jobs:
   serial-build-and-test:
