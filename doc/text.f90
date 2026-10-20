@@ -546,8 +546,8 @@
 !! for interactive diagnostics and regression testing; see \ref sec_regression.
 !! \arg Test-deck files - smiteraux (smiteraux1 on github) and smiteraux2
 !!  https://git.iter.org/projects/BND/repos/smiteraux/browse \n
-!!  https://github.com:smardda/smiteraux1.git \n
-!!  https://github.com:smardda/smiteraux2.git \n
+!!  https://github.com/smardda/smiteraux1.git \n
+!!  https://github.com/smardda/smiteraux2.git \n
 !!  have data files (geometry and equilibria) used by the .sgo scripts.
 !!  The test-decks should be regarded as a valuable resource, providing
 !!  examples that can quickly be modified to address new problems, illustrate
@@ -583,19 +583,21 @@
 !! http://git.iter.org/projects/BND/repos/smardda/smardda-pfc/browse \n
 !! and follow instructions in README, noting that
 !! \arg produce executables and optionally documentation (script will enquire)
-!! by typing in the smardda/smardda-pfc top directory
+!! by typing in the smardda/smardda-pfc top directory \n
 !! \code
-!! source ./exec/build intel
+!! source ./exec/build gfortran
 !!\endcode
 !! The intel build option and the debug options intel_dbg and gfortran_dbg are also available,
 !! together with the MPI parallel options gfortranmpi and gfortranmpi_dbg.
-!! \arg For building and running SMARDDA-PFC with MPI, including the required
-!! compiler/MPI software environment and the MPI build options, see
-!! \ref sec3 "Building and running SMARDDA-PFC with MPI"
 !! \arg ParaView needs a one-off re-setting of defaults (for
 !! better \Bold{smpfcint} integration) as described in \ref sec2paraview .
-!! \arg SMARDDA-PFC has test-decks (data files for which are in the smiteraux repos),
-!! see \ref sec4 for more details, which should be used to check the installation.
+!! \arg SMARDDA-PFC has two test-decks, with data files in the
+!! smiteraux1 and smiteraux2 directories, which should be used
+!! to check the installation. See \ref sec4 and \ref sec5 for details.
+!!
+!! For building and running SMARDDA-PFC with MPI, including the required
+!! compiler/MPI software environment and the MPI build options, see
+!! \ref sec3 "Building and Running SMARDDA-PFC with MPI"
 !!
 !! It may be helpful to note also that
 !! \arg the commands \n
@@ -1379,8 +1381,8 @@
 !! from the top-level run directory, either by creating links there or by 
 !! modifying the corresponding paths in the control files.
 !! 
-!! The MPI execution scripts described below automate this preparation and
-!! can also be used as examples for preparing other monolithic SMITER cases.
+!! The MPI execution scripts described in the following sections automate
+!! this preparation.
 !!
 !! \subsubsection mpi_running_local Local MPI Execution
 !!
@@ -1518,7 +1520,6 @@
 !!
 !! The rest of this section is concerned with the tools provided and their employment
 !! to meet this challenge quantitatively, whilst minimising the need for user intervention.
-!! The first test-deck follows as \ref sec4 .
 !!
 !! \subsection sec_regression Continuous Integration and Automated Regression Testing
 !!
@@ -1527,28 +1528,54 @@
 !! reference files whenever software changes are pushed,
 !! providing rapid feedback and supporting further analysis. 
 !!
-!! At present, automated regression testing covers only particle
-!! power-deposition calculations through the test suite Test-Deck 1
-!! (see \ref sec4).
-!! The regression suite should be extended to cover other SMARDDA-PFC
-!! calculation paths, including the double-null equilibrium and radiative
-!! power-deposition cases in Test-Deck 2 (see \ref sec5).
+!! At present, automated regression testing covers both Test-Deck 1 (see \ref sec4)
+!! and Test-Deck 2 (see \ref sec5), including particle power-deposition,
+!! double-null equilibrium and radiative power-deposition calculations.
 !!
 !! The Test-Deck 1 cases are executed by the test deck runner 
 !! $SMITER_DIR/smiteraux1/\Bold{tests.bash},
 !! which generates the serial simulation results to be checked. The
-!! reference files are stored in $SMITER_DIR/smiteraux-results. 
+!! version-controlled VTK reference files are stored in
+!! $SMITER_DIR/smiteraux1/References directory.
 !!
-!! The generated serial results are compared with the reference results using
-!! the comparison driver $SMITER_DIR/Extras/\Bold{tests_diff.bash}.
-!! $SMITER_DIR/Extras/\Bold{tests_diff.bash} compares
-!! several types of simulation output, including .log, .out, .hds,
-!! .ps and .vtk files,
+!! The Test-Deck 2 cases are executed by the test deck runner
+!! $SMITER_DIR/smiteraux2/\Bold{tests.bash},
+!! which generates the serial simulation results to be checked. The
+!! version-controlled VTK reference files are stored in
+!! $SMITER_DIR/smiteraux2/References directory.
+!!
+!! The generated serial VTK results are compared with the version-controlled
+!! VTK reference files stored in References directories using
+!! the comparison drivers $SMITER_DIR/Extras/\Bold{tests1_diff_vtk.bash} and
+!! $SMITER_DIR/Extras/\Bold{tests2_diff_vtk.bash} respectively.
+!!
+!! Separate CI jobs build SMARDDA-PFC with MPI support and run
+!! selected cases from both test-decks  using four MPI processes:
+!!
+!! - Test-Deck 1: \ref sec4T3g, executed using
+!!   \Bold{test_mpi_EQX40-shado14r-resf14r-3g.bash};
+!! - Test-Deck 2: \ref sec5Jrad, executed using
+!!   \Bold{test_mpi_JET-radn.bash}.
+!!
+!! The generated MPI VTK results are compared with the corresponding
+!! version-controlled reference files in the corresponding
+!! References directory.
+!!
+!! The same VTK comparison scripts are used in the CI pipeline
+!! and can also be run manually
+!!
+!! VTK comparisons provide the standard regression checks on the
+!! simulation results. When a more detailed investigation is needed
+!! involving other output types, $SMITER_DIR/Extras/\Bold{tests_diff.bash}
+!! provides an additional comparison of Test-Deck 1 outputs against the
+!! archived reference results. It compares .log, .out, .hds, .ps and .vtk files,
 !! using the appropriate comparison method for each file type.
-!!
-!! A separate CI job builds SMARDDA-PFC with MPI support and runs 
-!! \Bold{test_mpi_EQX40-shado14r-resf14r-3g.bash}, which executes the
-!! Test-Deck 1 case \ref sec4T3g using four MPI processes.
+!! This full-output comparison is intended for occasional diagnostic use.
+!! The reference outputs are supplied in
+!! $SMITER_DIR/smiteraux-results/smiteraux.tar.xz.
+!! If the reference directory is missing, tests_diff.bash extracts
+!! the archive and renames the extracted directory to
+!! $SMITER_DIR/smiteraux-results/smiteraux1.
 !!
 !! For VTK results in both the serial and MPI jobs of the CI pipeline,
 !! exact agreement is checked first. When exact agreement is not found,
@@ -1556,27 +1583,43 @@
 !! comparison and diagnostic tool \Bold{vtk_folder_compare.py} 
 !! with its default numerical tolerances (see \ref sec_vtk_folder_compare).
 !!
-!! The serial regression testing workflow of the CI pipeline can be reproduced
-!! manually with:
+!! The serial regression testing workflow for Test-Deck 1 in the CI pipeline
+!! can be reproduced manually with:
 !!
 !! \code{.sh}
 !! cd $SMITER_DIR/smiteraux1
 !! bash ./tests.bash
 !! cd $SMITER_DIR
-!! tar -xf smiteraux-results/smiteraux.tar.xz -C smiteraux-results
-!! bash ./Extras/tests_diff.bash smiteraux1 smiteraux-results/smiteraux1
+!! bash ./Extras/tests1_diff_vtk.bash smiteraux1 smiteraux1/References
 !! \endcode
 !!
-!! The MPI regression testing workflow of the CI pipeline can be reproduced
-!! manually with:
+!! The serial regression testing workflow for Test-Deck 2 in the CI pipeline
+!! can be reproduced manually with:
+!!
+!! \code{.sh}
+!! cd $SMITER_DIR/smiteraux2
+!! bash ./tests.bash
+!! cd $SMITER_DIR
+!! bash ./Extras/tests2_diff_vtk.bash smiteraux2 smiteraux2/References
+!! \endcode
+!!
+!! The MPI regression testing
+!! workflow of the CI pipeline can be reproduced manually with:
 !! \code{.sh}
 !! cd $SMITER_DIR/smiteraux1
 !! bash ./test_mpi_EQX40-shado14r-resf14r-3g.bash
 !! cd $SMITER_DIR
-!! tar -xf smiteraux-results/smiteraux.tar.xz -C smiteraux-results
 !! python3 ./tools/vtk_folder_compare.py \
-!!      smiteraux-results/smiteraux1/Test-EQX40-shado14r-resf14r-3g \
-!!      smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI
+!!      smiteraux1/References/Test-EQX40-shado14r-resf14r-3g/P \
+!!      smiteraux1/Test-EQX40-shado14r-resf14r-3g_MPI/P
+!! \endcode
+!! \code{.sh}
+!! cd $SMITER_DIR/smiteraux2
+!! bash ./test_mpi_JET-radn.bash
+!! cd $SMITER_DIR
+!! python3 ./tools/vtk_folder_compare.py \
+!!      smiteraux2/References/JET-radn/P \
+!!      smiteraux2/JET-radn_MPI/P
 !! \endcode
 !!
 !! Regression comparisons can also be run manually whenever needed, for example
@@ -1629,7 +1672,7 @@
 !! These tools provide field and mesh comparisons using configurable
 !! numerical tolerances,
 !! and can also be run independently on selected files or directories for
-!! detailed investigation. They are designed for the simple legacy VTK format
+!! detailed investigation. They are designed for the legacy VTK format
 !! produced by SMARDDA-PFC. This is an implementation choice and support
 !! for other VTK formats could be added if needed.
 !!
@@ -1802,7 +1845,7 @@
 !! - FAILED - Q or radn is outside tolerance
 !! - WARNING - Q/radn are within tolerance but other fields are outside tolerance
 !!
-!! When  the \c --strict option is used, any field outside tolerance causes
+!! When the \c --strict option is used, any field outside tolerance causes
 !! the comparison to fail.
 !!
 !! The standard \Bold{fieldcompare} report identifies the first out-of-tolerance
@@ -1811,7 +1854,7 @@
 !! out-of-tolerance values and providing additional diagnostics, including:
 !!
 !! - the number of values for which |a - b| is outside tolerance;
-!! - the cell containing the maximum |a - b|, together with the values a and  b;
+!! - the cell containing the maximum |a - b|, together with the values a and b;
 !! - the maximum tolerance ratio xTol and its cell, together with the values a and b; 
 !! - the distribution of out-of-tolerance values over different xTol ranges.
 !!
