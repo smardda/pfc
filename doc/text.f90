@@ -1562,20 +1562,7 @@
 !! References directory.
 !!
 !! The same VTK comparison scripts are used in the CI pipeline
-!! and can also be run manually
-!!
-!! VTK comparisons provide the standard regression checks on the
-!! simulation results. When a more detailed investigation is needed
-!! involving other output types, $SMITER_DIR/Extras/\Bold{tests_diff.bash}
-!! provides an additional comparison of Test-Deck 1 outputs against the
-!! archived reference results. It compares .log, .out, .hds, .ps and .vtk files,
-!! using the appropriate comparison method for each file type.
-!! This full-output comparison is intended for occasional diagnostic use.
-!! The reference outputs are supplied in
-!! $SMITER_DIR/smiteraux-results/smiteraux.tar.xz.
-!! If the reference directory is missing, tests_diff.bash extracts
-!! the archive and renames the extracted directory to
-!! $SMITER_DIR/smiteraux-results/smiteraux1.
+!! and can also be run manually.
 !!
 !! For VTK results in both the serial and MPI jobs of the CI pipeline,
 !! exact agreement is checked first. When exact agreement is not found,
